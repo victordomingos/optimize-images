@@ -59,7 +59,7 @@ def do_optimization(image_file):
 
     while True:
         with io.BytesIO() as file_bytes:
-            img.save(file_bytes, progressive=True, optimize=True, quality=90, format=img_format)
+            img.save(file_bytes, progressive=True, optimize=True, quality=85, format=img_format)
             
             saved_bytes = os.path.getsize(image_file) - file_bytes.tell()
             if saved_bytes > 1000:
