@@ -53,21 +53,30 @@ def search_images(dirpath, recursive=True):
 def do_optimization(image_file):
     img = Image.open(image_file)
     img_format = img.format
-    #img.thumbnail(size, Image.ANTIALIAS)
-    #img.save(tmp_file, progressive=True, optimize=True, quality=95)
+    
+    # Remove EXIF data
+    data = list(img.getdata())
+    no_exif_img = Image.new(img.mode, img.size)
+    no_exif_img.putdata(data)
+    
     saved_bytes = 0
 
     while True:
         with io.BytesIO() as file_bytes:
-            img.save(file_bytes, progressive=True, optimize=True, quality=85, format=img_format)
+            no_exif_img.save(file_bytes, progressive=True, optimize=True, quality=80, format=img_format)
             
             saved_bytes = os.path.getsize(image_file) - file_bytes.tell()
-            if saved_bytes > 1000:
-                print("writing", image_file, os.path.getsize(image_file), file_bytes.tell(), saved_bytes)
+            if saved_bytes > 100:
+                start_size = os.path.getsize(image_file) / 1024
+                end_size = file_bytes.tell() / 1024
+                saved = saved_bytes / 1024
+                percent = saved / start_size * 100
+                print(f'✅ {image_file} {start_size:.1f}kB->{end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
                 file_bytes.seek(0, 0)
                 with open(image_file, 'wb') as f_output:
                     f_output.write(file_bytes.read())
             else:
+                print(f'🔴 {image_file} (skipped)')
                 saved_bytes = 0
             break
     return saved_bytes
@@ -92,10 +101,12 @@ def main(*args):
             total_bytes_saved += bytes_saved
     
     if found_files:
+        total_saved = total_bytes_saved / 1024
+        average = total_bytes_saved / found_files /1024
         print(f"{40*'-'}\n")
         print(f"   FILES FOUND: {found_files}")
         print(f"   Total files optimized: {total_optimized}")    
-        print(f"   Total bytes saved: {total_bytes_saved}\n")    
+        print(f"   Total space saved: {total_saved:.1f}kB (avg: {average:.1f}kB)\n")  
     else:
         print("No image files were found in the specified directory.\n")
     
