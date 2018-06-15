@@ -7,10 +7,10 @@ using PIL
 © 2018 Victor Domingos (MIT License)
 """
 import os
-import contextlib
+#import contextlib
 import io 
 
-from pathlib import Path
+#from pathlib import Path
 from argparse import ArgumentParser
 from PIL import Image
 
@@ -70,12 +70,12 @@ def do_optimization(image_file):
                 end_size = file_bytes.tell() / 1024
                 saved = saved_bytes / 1024
                 percent = saved / start_size * 100
-                print(f'✅ {image_file} -> {end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
+                print(f'✅  {image_file} -> {end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
                 file_bytes.seek(0, 0)
                 with open(image_file, 'wb') as f_output:
                     f_output.write(file_bytes.read())
             else:
-                print(f'🔴 [SKIPPED] {image_file}')
+                print(f'🔴  [SKIPPED] {image_file}')
                 saved_bytes = 0
             break
     return saved_bytes
@@ -83,6 +83,7 @@ def do_optimization(image_file):
 
 def main(*args):
     args = parser.parse_args(*args)
+    src_path = os.path.expanduser(args.path)
     recursive = not args.no_recursion
     found_files = 0
     total_optimized = 0
@@ -91,16 +92,18 @@ def main(*args):
 
     # if single file, do_optimization()
     # else search_images and loop through them with do_optimization()
-    if not args.path :
+    if not src_path :
         parser.exit(status=0, message="\nPlease specifiy the path of the image or folder to process.\n\n")
 
-    if os.path.isdir(args.path):
+    if os.path.isdir(src_path):
         if recursive:
-            recursion_txt = ""
+            recursion_txt = "Recursively searching"
+        else:
+            recursion_txt = "Searching"
 
-        print(f"\nSearching and optimizing image files in {args.path}\n")
+        print(f"\n{recursion_txt} and optimizing image files in {args.path}\n")
 
-        images = (i for i in search_images(args.path, recursive=recursive))
+        images = (i for i in search_images(src_path, recursive=recursive))
         for image in images:
             found_files += 1
             bytes_saved = int(do_optimization(image))
@@ -108,11 +111,11 @@ def main(*args):
                 total_optimized += 1
                 total_bytes_saved += bytes_saved
 
-    elif os.path.isfile(args.path):
+    elif os.path.isfile(src_path):
         found_files = 1
         total_optimized = 0
         total_bytes_saved = 0
-        do_optimization(args.path)
+        do_optimization(src_path)
     else:
         print("No image files were found. Please enter a valid path to the image file or")
         print("the folder containing any images to be processed.")
@@ -124,13 +127,16 @@ def main(*args):
 
     if found_files:
         total_saved = total_bytes_saved / 1024
-        average = total_bytes_saved / found_files /1024
+        if total_bytes_saved:
+            average = total_bytes_saved / total_optimized /1024
+        else:
+            average = 0
         print(f"{40*'-'}\n")
-        print(f"   FILES FOUND: {found_files}")
+        print(f"   Files found (supported formats): {found_files}")
         print(f"   Total files optimized: {total_optimized}")    
         print(f"   Total space saved: {total_saved:.1f}kB (avg: {average:.1f}kB)\n")  
     else:
-        print("No image files were found in the specified directory.\n")
+        print("No supported image files were found in the specified directory.\n")
     
 
 if __name__ == "__main__":
