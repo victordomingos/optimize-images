@@ -20,32 +20,32 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
-
+  
 ## Examples of usage:
 
 Get a little help about how to use this application:
 
-`optimize-images.py -h`
+`optimize-images.py -h`  
 `optimize-images.py --help`
 
-
+  
 Try to optimize a single image file:
 
 `optimize-images.py filename.jpg`
 
-
+  
 Try to optimize all image files in current working directory and all of its
 subdirectories:
 
-`optimize-images.py ./`
+`optimize-images.py ./`  
 
-
+  
 Try to optimize all image files in current working directory, without recursion:
 
-`optimize-images.py ./ -nr`
+`optimize-images.py ./ -nr`  
 `optimize-images.py ./ --no-recursion`
 
-
+  
 ## Installation and dependencies:
 
 No special instructions by now, as this is currently an experimental, early
@@ -59,7 +59,7 @@ built-in Pillow 2.9.0 in Pythonista for iOS).
 * iOS
   - No dependencies, besides Pythonista's built-in modules.
 
-
+  
 ## Did you find a bug or do you have a suggestion?
 
 Please let me know, by opening a new issue or a pull request.
