@@ -24,7 +24,7 @@ parser.add_argument('path',
     nargs="?", 
     default=os.getcwd(),
     type=str,
-    help='The path to the folder containing the images to be optimized.')
+    help='The path to the image file or to the folder containing the images to be optimized.')
 
 parser.add_argument('-nr', "--no-recursion",
     action='store_true',
@@ -71,12 +71,12 @@ def do_optimization(image_file):
                 end_size = file_bytes.tell() / 1024
                 saved = saved_bytes / 1024
                 percent = saved / start_size * 100
-                print(f'✅ {image_file} {start_size:.1f}kB->{end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
+                print(f'✅ {image_file} -> {end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
                 file_bytes.seek(0, 0)
                 with open(image_file, 'wb') as f_output:
                     f_output.write(file_bytes.read())
             else:
-                print(f'🔴 {image_file} (skipped)')
+                print(f'🔴 [SKIPPED] {image_file}')
                 saved_bytes = 0
             break
     return saved_bytes
@@ -85,21 +85,42 @@ def do_optimization(image_file):
 def main(*args):
     args = parser.parse_args(*args)
     recursive = not args.no_recursion
-    print(f"\nSearching and optimizing image files in {args.path}\n")
-
-    images = (i for i in search_images(args.path, recursive=recursive))
-
-    
     found_files = 0
     total_optimized = 0
     total_bytes_saved = 0
-    for image in images:
-        found_files += 1
-        bytes_saved = int(do_optimization(image))
-        if bytes_saved:
-            total_optimized += 1
-            total_bytes_saved += bytes_saved
+
+
+    # if single file, do_optimization()
+    # else search_images and loop through them with do_optimization()
+
+    if os.path.isdir(args.path):
+        if recursive:
+            recursion_txt = ""
+
+        print(f"\nSearching and optimizing image files in {args.path}\n")
+
+        images = (i for i in search_images(args.path, recursive=recursive))
+        for image in images:
+            found_files += 1
+            bytes_saved = int(do_optimization(image))
+            if bytes_saved:
+                total_optimized += 1
+                total_bytes_saved += bytes_saved
+
+    elif os.path.isfile(args.path):
+        found_files = 1
+        total_optimized = 0
+        total_bytes_saved = 0
+        do_optimization(args.path)
+    else:
+        print("No image files were found. Please enter a valid path to the image file or")
+        print("the folder containing any images to be processed.")
+
+
+
+
     
+
     if found_files:
         total_saved = total_bytes_saved / 1024
         average = total_bytes_saved / found_files /1024

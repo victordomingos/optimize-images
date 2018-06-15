@@ -4,7 +4,8 @@ you reduce the file size of images.
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will go
-through all of its subdirectories and try to optimize the images found.
+through all of its subdirectories and try to optimize the images found. You
+may however choose to process the specified directory only, without recursion.
 
 Please note that the operation is done DESTRUCTIVELY, by replacing the
 original files with the processed ones. You definitely should duplicate the
@@ -39,12 +40,18 @@ subdirectories:
 `optimize-images.py ./`
 
 
+Try to optimize all image files in current working directory, without recursion:
+
+`optimize-images.py ./ -nr`
+`optimize-images.py ./ --no-recursion`
+
+
 ## Installation and dependencies:
 
 No special instructions by now, as this is currently an experimental, early
 development, version. Just make sure you are running Python 3.6+ and have
 Pillow installed (we are targeting both Pillow 5.1.0 on desktop and the
-builtin Pillow 2.9.0 in Pythonista for iOS).
+built-in Pillow 2.9.0 in Pythonista for iOS).
 
 * On desktop:
   - Pillow==5.1.0
