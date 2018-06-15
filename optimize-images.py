@@ -22,7 +22,6 @@ parser = ArgumentParser(description="Optimize images")
 
 parser.add_argument('path',
     nargs="?", 
-    default=os.getcwd(),
     type=str,
     help='The path to the image file or to the folder containing the images to be optimized.')
 
@@ -92,6 +91,8 @@ def main(*args):
 
     # if single file, do_optimization()
     # else search_images and loop through them with do_optimization()
+    if not args.path :
+        parser.exit(status=0, message="\nPlease specifiy the path of the image or folder to process.\n\n")
 
     if os.path.isdir(args.path):
         if recursive:
