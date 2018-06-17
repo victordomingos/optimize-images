@@ -7,27 +7,48 @@ using PIL
 © 2018 Victor Domingos (MIT License)
 """
 import os
-#import contextlib
-import io 
+import io
+import shutil
+import platform
 
-#from pathlib import Path
 from argparse import ArgumentParser
-from PIL import Image
+from PIL import Image, ImageFile
+from timeit import default_timer as timer
+
+
+if platform.system() == 'Darwin':
+    if platform.machine().startswith('iP'):
+        CURRENT_PLATFORM = "iOS"
+    else:
+        CURRENT_PLATFORM = "macOS"
+else:
+    CURRENT_PLATFORM = "other"
 
 
 SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg', 'gif']
 
 
+if CURRENT_PLATFORM == 'iOS':
+    import console
+    console.clear()
+    console.set_font("Menlo", 10)
+    TERM_WIDTH = 58
+else:
+    TERM_WIDTH, _ = shutil.get_terminal_size((80, 24))
+
+appstart = timer()
 parser = ArgumentParser(description="Optimize images")
 
+path_help = 'The path to the image file or to the folder containing the ' \
+            'images to be optimized.'
 parser.add_argument('path',
-    nargs="?", 
-    type=str,
-    help='The path to the image file or to the folder containing the images to be optimized.')
+                    nargs="?",
+                    type=str,
+                    help=path_help)
 
 parser.add_argument('-nr', "--no-recursion",
-    action='store_true',
-    help="Don't recurse through subdirectories")
+                    action='store_true',
+                    help="Don't recurse through subdirectories")
 
 
 def search_images(dirpath, recursive=True):
@@ -50,32 +71,47 @@ def search_images(dirpath, recursive=True):
 
 
 def do_optimization(image_file):
+    img_timer_start = timer()
     img = Image.open(image_file)
     img_format = img.format
-    
+
     # Remove EXIF data
     data = list(img.getdata())
     no_exif_img = Image.new(img.mode, img.size)
     no_exif_img.putdata(data)
-    
+
     saved_bytes = 0
 
     while True:
         with io.BytesIO() as file_bytes:
-            no_exif_img.save(file_bytes, progressive=True, optimize=True, quality=80, format=img_format)
-            
+            try:
+                no_exif_img.save(file_bytes,
+                        quality=70,
+                        optimize=True,
+                        progressive=True,
+                        format=img_format)
+            except IOError:
+                ImageFile.MAXBLOCK = no_exif_img.size[0] * no_exif_img.size[1]
+                no_exif_img.save(file_bytes,
+                        quality=70,
+                        optimize=True,
+                        progressive=True,
+                        format=img_format)
+
             saved_bytes = os.path.getsize(image_file) - file_bytes.tell()
             if saved_bytes > 100:
-                start_size = os.path.getsize(image_file) / 1024
-                end_size = file_bytes.tell() / 1024
-                saved = saved_bytes / 1024
+                start_size = os.path.getsize(image_file) / 1000
+                end_size = file_bytes.tell() / 1000
+                saved = saved_bytes / 1000
                 percent = saved / start_size * 100
-                print(f'✅  {image_file} -> {end_size:.1f}kB [{saved:.1f}kB/{percent:.1f}%]')
                 file_bytes.seek(0, 0)
                 with open(image_file, 'wb') as f_output:
                     f_output.write(file_bytes.read())
+                img_time = timer() - img_timer_start
+
+                print(f'✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}\n   {start_size:.1f}kB -> {end_size:.1f}kB ({saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)')      
             else:
-                print(f'🔴  [SKIPPED] {image_file}')
+                print(f'🔴 [SKIPPED] {image_file[-(TERM_WIDTH-13):].ljust(TERM_WIDTH-13)}')
                 saved_bytes = 0
             break
     return saved_bytes
@@ -86,13 +122,11 @@ def main(*args):
     src_path = os.path.expanduser(args.path)
     recursive = not args.no_recursion
     found_files = 0
+    total_src_size = 0
     total_optimized = 0
     total_bytes_saved = 0
 
-
-    # if single file, do_optimization()
-    # else search_images and loop through them with do_optimization()
-    if not src_path :
+    if not src_path:
         parser.exit(status=0, message="\nPlease specifiy the path of the image or folder to process.\n\n")
 
     if os.path.isdir(src_path):
@@ -101,10 +135,11 @@ def main(*args):
         else:
             recursion_txt = "Searching"
 
-        print(f"\n{recursion_txt} and optimizing image files in {args.path}\n")
+        print(f"\n{recursion_txt} and optimizing image files in:\n{args.path}\n")
 
         images = (i for i in search_images(src_path, recursive=recursive))
         for image in images:
+            total_src_size += os.path.getsize(image)
             found_files += 1
             bytes_saved = int(do_optimization(image))
             if bytes_saved:
@@ -112,33 +147,36 @@ def main(*args):
                 total_bytes_saved += bytes_saved
 
     elif os.path.isfile(src_path):
+        total_src_size = os.path.getsize(src_path)
         found_files = 1
         total_optimized = 0
         total_bytes_saved = 0
         do_optimization(src_path)
     else:
-        print("No image files were found. Please enter a valid path to the image file or")
-        print("the folder containing any images to be processed.")
-
-
-
-
-    
+        print("No image files were found. Please enter a valid path to the " \
+              "image file or the folder containing any images to be processed.")
+        exit()
 
     if found_files:
-        total_saved = total_bytes_saved / 1024
+        total_saved = total_bytes_saved / 1000
+        time_passed = timer() - appstart
+        fps = found_files / time_passed
+        opt_p_sec = total_optimized / time_passed
+            
         if total_bytes_saved:
-            average = total_bytes_saved / total_optimized /1024
+            average = total_bytes_saved / total_optimized /1000
+            percent = total_bytes_saved / total_src_size * 100
         else:
             average = 0
+            percent = 0
+            
         print(f"{40*'-'}\n")
-        print(f"   Files found (supported formats): {found_files}")
-        print(f"   Total files optimized: {total_optimized}")    
-        print(f"   Total space saved: {total_saved:.1f}kB (avg: {average:.1f}kB)\n")  
+        print(f"  Processed {found_files} files ({total_src_size/1000000:.1f}MB) in {time_passed:.1f}s ({fps:.1f} f/s).")
+        print(f"  Optimized {total_optimized} files  ({opt_p_sec:.1f} f/s).")
+        print(f"  Total space saved: {total_saved:.1f}kB ({percent:.1f}%, avg: {average:.1f}kB)")
     else:
         print("No supported image files were found in the specified directory.\n")
     
 
 if __name__ == "__main__":
     main()
-
