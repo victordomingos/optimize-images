@@ -109,7 +109,7 @@ def do_optimization(image_file):
                     f_output.write(file_bytes.read())
                 img_time = timer() - img_timer_start
 
-                print(f'✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}\n   {start_size:.1f}kB -> {end_size:.1f}kB ({saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)')      
+                print(f'✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)')      
             else:
                 print(f'🔴 [SKIPPED] {image_file[-(TERM_WIDTH-13):].ljust(TERM_WIDTH-13)}')
                 saved_bytes = 0
