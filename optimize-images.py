@@ -43,8 +43,7 @@ else:
     TERM_WIDTH, _ = shutil.get_terminal_size((80, 24))
     ourPoolExecutor = concurrent.futures.ProcessPoolExecutor
     from multiprocessing import cpu_count
-
-    WORKERS = cpu_count() + 1
+    WORKERS = cpu_count() + 1  
 
 
 def search_images(dirpath, recursive=True):
@@ -107,7 +106,7 @@ def do_optimization(image_file):
                 img_time = timer() - img_timer_start
 
                 print(
-                    f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-16):].ljust(TERM_WIDTH-16)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)',
+                    f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-17):].ljust(TERM_WIDTH-17)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻 {percent:.1f}%)',
                     end='')
                 status = 1
             else:
