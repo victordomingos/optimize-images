@@ -15,7 +15,7 @@ import concurrent.futures
 from argparse import ArgumentParser
 from PIL import Image, ImageFile
 from timeit import default_timer as timer
- 
+
 
 if platform.system() == 'Darwin':
     if platform.machine().startswith('iP'):
@@ -40,7 +40,7 @@ else:
     TERM_WIDTH, _ = shutil.get_terminal_size((80, 24))
     ourPoolExecutor = concurrent.futures.ProcessPoolExecutor
     from multiprocessing import cpu_count
-    WORKERS = cpu_count() - 1
+    WORKERS = cpu_count() + 1
 
 appstart = timer()
 parser = ArgumentParser(description="Optimize images")
@@ -104,11 +104,11 @@ def do_optimization(image_file):
                         progressive=True,
                         format=img_format)
 
-            
+
             orig_size = os.path.getsize(image_file)
             final_size = file_bytes.tell()
             saved_bytes = orig_size - final_size
-            
+
             if saved_bytes > 100:
                 start_size = os.path.getsize(image_file) / 1000
                 end_size = file_bytes.tell() / 1000
@@ -120,7 +120,7 @@ def do_optimization(image_file):
                 img_time = timer() - img_timer_start
 
                 print(f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-16):].ljust(TERM_WIDTH-16)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)', end='')
-                status = 1   
+                status = 1
             else:
                 print(f'\n🔴  [SKIPPED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}', end='')
                 saved_bytes = 0
@@ -151,20 +151,20 @@ def main(*args):
         print(f"\n{recursion_txt} and optimizing image files in:\n{args.path}\n")
 
         images = (i for i in search_images(src_path, recursive=recursive))
-           
-        if CURRENT_PLATFORM == 'iOS': 
+
+        if CURRENT_PLATFORM == 'iOS':
     	    with ourPoolExecutor(max_workers=WORKERS) as executor:
                 results = executor.map(do_optimization, images)
         else:
     	    with ourPoolExecutor(max_workers=WORKERS) as executor:
                 results = executor.map(do_optimization, images)
-        
-        for r in results:     
+
+        for r in results:
             total_src_size += r[0]
             found_files += 1
             total_bytes_saved = r[2]
             total_optimized += r[3]
-            
+
     elif os.path.isfile(src_path):
         total_src_size, final_size, total_bytes_saved, status = do_optimization(src_path)
         total_optimized = found_files = status
@@ -173,27 +173,27 @@ def main(*args):
               "image file or the folder containing any images to be processed.")
         exit()
 
-    
+
     if found_files:
         total_saved = total_bytes_saved / 1000
         time_passed = timer() - appstart
         fps = found_files / time_passed
         opt_p_sec = total_optimized / time_passed
-            
+
         if total_bytes_saved:
             average = total_bytes_saved / total_optimized /1000
             percent = total_bytes_saved / total_src_size * 100
         else:
             average = 0
             percent = 0
-            
+
         print(f"\n{40*'-'}\n")
         print(f"  Processed {found_files} files ({total_src_size/1000000:.1f}MB) in {time_passed:.1f}s ({fps:.1f} f/s).")
         print(f"  Optimized {total_optimized} files  ({opt_p_sec:.1f} f/s).")
         print(f"  Total space saved: {total_saved:.1f}kB ({percent:.1f}%, avg: {average:.1f}kB)")
     else:
         print("No supported image files were found in the specified directory.\n")
-    
+
 
 if __name__ == "__main__":
     main()
