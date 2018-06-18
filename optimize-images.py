@@ -10,6 +10,7 @@ import os
 import io
 import shutil
 import platform
+import concurrent.futures
 
 from argparse import ArgumentParser
 from PIL import Image, ImageFile
@@ -98,7 +99,11 @@ def do_optimization(image_file):
                         progressive=True,
                         format=img_format)
 
-            saved_bytes = os.path.getsize(image_file) - file_bytes.tell()
+            
+            orig_size = os.path.getsize(image_file)
+            final_size = file_bytes.tell()
+            saved_bytes = orig_size - final_size
+            
             if saved_bytes > 100:
                 start_size = os.path.getsize(image_file) / 1000
                 end_size = file_bytes.tell() / 1000
@@ -109,12 +114,15 @@ def do_optimization(image_file):
                     f_output.write(file_bytes.read())
                 img_time = timer() - img_timer_start
 
-                print(f'✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)')      
+                print(f'\n✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-16):].ljust(TERM_WIDTH-16)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)', end='')
+                status = 1   
             else:
-                print(f'🔴 [SKIPPED] {image_file[-(TERM_WIDTH-13):].ljust(TERM_WIDTH-13)}')
+                print(f'\n🔴 [SKIPPED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}', end='')
                 saved_bytes = 0
+                final_size = orig_size
+                status = 0
             break
-    return saved_bytes
+    return (orig_size, final_size, saved_bytes, status)
 
 
 def main(*args):
@@ -138,25 +146,25 @@ def main(*args):
         print(f"\n{recursion_txt} and optimizing image files in:\n{args.path}\n")
 
         images = (i for i in search_images(src_path, recursive=recursive))
-        for image in images:
-            total_src_size += os.path.getsize(image)
+             
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            results = executor.map(do_optimization, images)
+        
+        for r in results:     
+            total_src_size += r[0]
             found_files += 1
-            bytes_saved = int(do_optimization(image))
-            if bytes_saved:
-                total_optimized += 1
-                total_bytes_saved += bytes_saved
-
+            total_bytes_saved = r[2]
+            total_optimized += r[3]
+            
     elif os.path.isfile(src_path):
-        total_src_size = os.path.getsize(src_path)
-        found_files = 1
-        total_optimized = 0
-        total_bytes_saved = 0
-        do_optimization(src_path)
+        total_src_size, final_size, total_bytes_saved, status = do_optimization(src_path)
+        total_optimized = found_files = status
     else:
         print("No image files were found. Please enter a valid path to the " \
               "image file or the folder containing any images to be processed.")
         exit()
 
+    
     if found_files:
         total_saved = total_bytes_saved / 1000
         time_passed = timer() - appstart
@@ -170,7 +178,7 @@ def main(*args):
             average = 0
             percent = 0
             
-        print(f"{40*'-'}\n")
+        print(f"\n{40*'-'}\n")
         print(f"  Processed {found_files} files ({total_src_size/1000000:.1f}MB) in {time_passed:.1f}s ({fps:.1f} f/s).")
         print(f"  Optimized {total_optimized} files  ({opt_p_sec:.1f} f/s).")
         print(f"  Total space saved: {total_saved:.1f}kB ({percent:.1f}%, avg: {average:.1f}kB)")
