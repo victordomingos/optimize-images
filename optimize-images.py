@@ -15,7 +15,7 @@ import concurrent.futures
 from argparse import ArgumentParser
 from PIL import Image, ImageFile
 from timeit import default_timer as timer
-
+ 
 
 if platform.system() == 'Darwin':
     if platform.machine().startswith('iP'):
@@ -34,8 +34,13 @@ if CURRENT_PLATFORM == 'iOS':
     console.clear()
     console.set_font("Menlo", 10)
     TERM_WIDTH = 58
+    ourPoolExecutor = concurrent.futures.ThreadPoolExecutor
+    WORKERS = 2
 else:
     TERM_WIDTH, _ = shutil.get_terminal_size((80, 24))
+    ourPoolExecutor = concurrent.futures.ProcessPoolExecutor
+    from multiprocessing import cpu_count
+    WORKERS = cpu_count()
 
 appstart = timer()
 parser = ArgumentParser(description="Optimize images")
@@ -114,10 +119,10 @@ def do_optimization(image_file):
                     f_output.write(file_bytes.read())
                 img_time = timer() - img_timer_start
 
-                print(f'\n✅ [OPTIMIZED] {image_file[-(TERM_WIDTH-16):].ljust(TERM_WIDTH-16)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)', end='')
+                print(f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-16):].ljust(TERM_WIDTH-16)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻{saved:.1f}kB/{percent:.1f}%, {img_time:.2f}s)', end='')
                 status = 1   
             else:
-                print(f'\n🔴 [SKIPPED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}', end='')
+                print(f'\n🔴  [SKIPPED] {image_file[-(TERM_WIDTH-15):].ljust(TERM_WIDTH-15)}', end='')
                 saved_bytes = 0
                 final_size = orig_size
                 status = 0
@@ -146,9 +151,13 @@ def main(*args):
         print(f"\n{recursion_txt} and optimizing image files in:\n{args.path}\n")
 
         images = (i for i in search_images(src_path, recursive=recursive))
-             
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            results = executor.map(do_optimization, images)
+           
+        if CURRENT_PLATFORM == 'iOS': 
+    	    with ourPoolExecutor(max_workers=WORKERS) as executor:
+                results = executor.map(do_optimization, images)
+        else:
+    	    with ourPoolExecutor(max_workers=WORKERS) as executor:
+                results = executor.map(do_optimization, images)
         
         for r in results:     
             total_src_size += r[0]
