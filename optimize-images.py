@@ -40,7 +40,7 @@ else:
     TERM_WIDTH, _ = shutil.get_terminal_size((80, 24))
     ourPoolExecutor = concurrent.futures.ProcessPoolExecutor
     from multiprocessing import cpu_count
-    WORKERS = cpu_count()
+    WORKERS = cpu_count() - 1
 
 appstart = timer()
 parser = ArgumentParser(description="Optimize images")
