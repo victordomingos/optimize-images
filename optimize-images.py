@@ -106,7 +106,7 @@ def do_optimization(image_file):
                 img_time = timer() - img_timer_start
 
                 print(
-                    f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-17):].ljust(TERM_WIDTH-17)}\n    {start_size:.1f}kB -> {end_size:.1f}kB (🔻 {percent:.1f}%)',
+                    f'\n✅  [OPTIMIZED] {image_file[-(TERM_WIDTH-17):].ljust(TERM_WIDTH-17)}\n     {start_size:.1f}kB -> {end_size:.1f}kB 🔻 {percent:.1f}%',
                     end='')
                 status = 1
             else:
@@ -155,13 +155,11 @@ def main(*args):
         images = (i for i in search_images(src_path, recursive=recursive))
 
         with ourPoolExecutor(max_workers=WORKERS) as executor:
-            results = executor.map(do_optimization, images)
-
-        for r in results:
-            total_src_size += r[0]
-            found_files += 1
-            total_bytes_saved = r[2]
-            total_optimized += r[3]
+            for r in executor.map(do_optimization, images):
+                total_src_size += r[0]
+                found_files += 1
+                total_bytes_saved = r[2]
+                total_optimized += r[3]
 
     elif os.path.isfile(src_path):
         total_src_size, final_size, total_bytes_saved, status = do_optimization(src_path)
@@ -187,7 +185,7 @@ def main(*args):
         print(f"\n{40*'-'}\n")
         print(
             f"  Processed {found_files} files ({total_src_size/1000000:.1f}MB) in {time_passed:.1f}s ({fps:.1f} f/s).")
-        print(f"  Optimized {total_optimized} files  ({opt_p_sec:.1f} f/s).")
+        print(f"  Optimized {total_optimized} files.")
         print(f"  Total space saved: {total_saved:.1f}kB ({percent:.1f}%, avg: {average:.1f}kB)")
     else:
         print("No supported image files were found in the specified directory.\n")
