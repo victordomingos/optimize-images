@@ -57,7 +57,7 @@ def adjust_for_platform():
             font = ("Menlo", 15)
         else:
             font = ("Menlo", 10)
-        console.set_font(font)
+        console.set_font(*font)
         screen_width = ui.get_screen_size().width
         char_width = ui.measure_string('.',font=font).width
         line_width = int(screen_width / char_width-1.5)
