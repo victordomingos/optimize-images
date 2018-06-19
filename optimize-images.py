@@ -39,21 +39,27 @@ SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg', 'gif']
 def detect_platform():
     if platform.system() == 'Darwin':
         if platform.machine().startswith('iP'):
-            return "iOS"
+            return "iOS", "iPhone"
         else:
-            return "macOS"
+            return "desktop", "macOS"
     else:
         return "other"
 
 
 CURRENT_PLATFORM = detect_platform()
 
-if CURRENT_PLATFORM == 'iOS':
+if CURRENT_PLATFORM[0] == 'iOS':
     import console
 
     console.clear()
-    console.set_font("Menlo", 10)
-    TERM_WIDTH = 58
+    device = CURRENT_PLATFORM[1]
+    if device.startswith('iPad'):
+        console.set_font("Menlo", 15)
+        TERM_WIDTH = 82
+    # Adapt for smaller screen size in iPhone and iPod touch
+    else:
+        console.set_font("Menlo", 10)
+        TERM_WIDTH = 58
     ourPoolExecutor = concurrent.futures.ThreadPoolExecutor
     WORKERS = 2
 else:
