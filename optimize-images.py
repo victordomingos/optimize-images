@@ -144,7 +144,7 @@ def show_file_status(img, original, final, was_optimized):
         short_img = img[-(TERM_WIDTH - 17):].ljust(TERM_WIDTH - 17)
         percent = 100 - (final / original * 100)
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'     {human(original)} -> {human(final)} 🔻 ⁄{human(original-final)}{percent:.1f}%'
+        line2 = f'     {human(original)} -> {human(final)} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = img[-(TERM_WIDTH - 15):].ljust(TERM_WIDTH - 15)
