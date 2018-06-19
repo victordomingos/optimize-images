@@ -59,8 +59,8 @@ def adjust_for_platform():
             font_size = 10
         console.set_font("Menlo", font_size)
         screen_width = ui.get_screen_size().width
-        char_width = ui.measure_string('.',font=("Menlo", font_size)).width
-        line_width = int(screen_width / char_width-1.5) -1
+        char_width = ui.measure_string('.', font=("Menlo", font_size)).width
+        line_width = int(screen_width / char_width - 1.5) - 1
         pool_ex = concurrent.futures.ThreadPoolExecutor
         workers = 2
     else:
