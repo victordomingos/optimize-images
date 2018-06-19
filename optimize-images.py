@@ -170,6 +170,18 @@ def do_optimization(args: Tuple[str, int]) -> Tuple[str, int, int, bool]:
     img = Image.open(image_file)
     img_format = img.format
 
+    """
+    if img.format.upper() == "PNG":
+        c_image = img.convert('RGBA')
+        colors = c_image.getcolors()
+
+        if colors:
+            if len(colors) < 128:
+                img = c_image.convert("P", palette=Image.ADAPTIVE, colors=len(colors))
+            else:
+                img = c_image.convert("P", palette=Image.ADAPTIVE, colors=8)
+    """
+
     # Remove EXIF data
     data = list(img.getdata())
     no_exif_img = Image.new(img.mode, img.size)
@@ -268,9 +280,10 @@ def main(*args):
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
-        img, orig_size, final_size, was_optimized = do_optimization(src_path, quality)
+        img, orig_size, final_size, was_optimized = do_optimization((src_path, quality))
+        total_src_size = orig_size
         if was_optimized:
-            optimized_files += 1
+            optimized_files = 1
             total_bytes_saved = total_bytes_saved + (orig_size - final_size)
         show_file_status(img, orig_size, final_size, was_optimized, line_width)
 
