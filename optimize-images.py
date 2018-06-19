@@ -64,7 +64,7 @@ def adjust_for_platform():
         pool_ex = concurrent.futures.ThreadPoolExecutor
         workers = 2
     else:
-        line_width, _ = shutil.get_terminal_size((80, 24))
+        line_width = shutil.get_terminal_size((80, 24)).columns
         pool_ex = concurrent.futures.ProcessPoolExecutor
         from multiprocessing import cpu_count
         workers = cpu_count() + 1
@@ -93,14 +93,26 @@ def get_args(*args):
     parser.add_argument('-nr', "--no-recursion",
                         action='store_true',
                         help="Don't recurse through subdirectories.")
-    args = parser.parse_args()
-    src_path = os.path.expanduser(args.path)
-    recursive = not args.no_recursion
 
-    if not src_path:
+    parser.add_argument('-q', "--quality",
+                        type=int,
+                        default=70,
+                        help="The quality setting for JPEG files (an integer value, between 1 and 100). The default is 70.")
+
+    args = parser.parse_args()
+    recursive = not args.no_recursion
+    quality = args.quality
+
+    if args.path:
+        src_path = os.path.expanduser(args.path)
+    else:
         parser.exit(status=0, message="\nPlease specify the path of the image or folder to process.\n\n")
 
-    return src_path, recursive
+    if quality > 100 or quality < 1:
+        msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
+        parser.exit(status=0, message=msg)
+
+    return src_path, recursive, quality
 
 
 def human(number: int, suffix='B') -> str:
@@ -135,9 +147,25 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def do_optimization(image_file: str) -> Tuple[str, int, int, bool]:
+def do_optimization(args: Tuple[str, int]) -> Tuple[str, int, int, bool]:
+    """ Try to reduce file size of an image.
+
+    Expects a tuple with a string containing the image file path and an
+    integer specifying the quality value, as argument.
+
+    If file reduction is successful, this function will replace the original
+    file with the optimized version.
+
+    :param args: A tuple composed by a string (image file path) and an integer (JPEG quality)
+    :return: image_file, orig_size, final_size, was_optimized
+    """
+    image_file, quality = args
     folder, filename = os.path.split(image_file)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
+    orig_size = os.path.getsize(image_file)
+
+    # only use progressive if file size is bigger
+    use_progressive_jpg = orig_size > 10000
 
     img = Image.open(image_file)
     img_format = img.format
@@ -149,19 +177,18 @@ def do_optimization(image_file: str) -> Tuple[str, int, int, bool]:
 
     try:
         no_exif_img.save(temp_file_path,
-                         quality=70,
+                         quality=quality,
                          optimize=True,
-                         progressive=True,
+                         progressive=use_progressive_jpg,
                          format=img_format)
     except IOError:
         ImageFile.MAXBLOCK = no_exif_img.size[0] * no_exif_img.size[1]
         no_exif_img.save(temp_file_path,
-                         quality=70,
+                         quality=quality,
                          optimize=True,
-                         progressive=True,
+                         progressive=use_progressive_jpg,
                          format=img_format)
 
-    orig_size = os.path.getsize(image_file)
     final_size = os.path.getsize(temp_file_path)
 
     # Only replace the original file if compression did save significant space
@@ -212,7 +239,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int, byt
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive = get_args()
+    src_path, recursive, quality = get_args()
 
     found_files = 0
     optimized_files = 0
@@ -227,7 +254,7 @@ def main(*args):
             recursion_txt = "Searching"
         print(f"\n{recursion_txt} and optimizing image files in:\n{src_path}\n")
 
-        images = (i for i in search_images(src_path, recursive=recursive))
+        images = ((i, quality) for i in search_images(src_path, recursive=recursive))
         with ourPoolExecutor(max_workers=workers) as executor:
             for img, orig_size, final_size, was_optimized \
                     in executor.map(do_optimization, images):
@@ -241,7 +268,7 @@ def main(*args):
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
-        img, orig_size, final_size, was_optimized = do_optimization(src_path)
+        img, orig_size, final_size, was_optimized = do_optimization(src_path, quality)
         if was_optimized:
             optimized_files += 1
             total_bytes_saved = total_bytes_saved + (orig_size - final_size)
