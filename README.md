@@ -37,13 +37,13 @@ Try to optimize a single image file:
 Try to optimize all image files in current working directory and all of its
 subdirectories:
 
-`optimize-images.py ./`  
+`optimize-images.py ./`
 
   
 Try to optimize all image files in current working directory, without recursion:
 
-`optimize-images.py ./ -nr`  
-`optimize-images.py ./ --no-recursion`
+`optimize-images.py -nr ./`  
+`optimize-images.py --no-recursion ./`
 
   
 ## Installation and dependencies:
