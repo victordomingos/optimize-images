@@ -99,6 +99,9 @@ def get_args(*args):
                         default=70,
                         help="The quality setting for JPEG files (an integer value, between 1 and 100). The default is 70.")
 
+    parser.add_argument('-rc', "--reduce-colors",
+                        action='store_true',
+                        help="Reduce colors in PNG or GIF images (uses an adaptive color palette with dithering). This option can have a big impact on file size, but please note that will also  affect image quality.")
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
@@ -112,7 +115,7 @@ def get_args(*args):
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)
 
-    return src_path, recursive, quality
+    return src_path, recursive, quality, args.reduce_colors
 
 
 def human(number: int, suffix='B') -> str:
@@ -147,19 +150,19 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def do_optimization(args: Tuple[str, int]) -> Tuple[str, int, int, bool]:
+def do_optimization(args: Tuple[str, int, int]) -> Tuple[str, int, int, bool]:
     """ Try to reduce file size of an image.
 
-    Expects a tuple with a string containing the image file path and an
-    integer specifying the quality value, as argument.
+    Expects a tuple with a string containing the image file path, an
+    integer specifying the quality value for JPG, and a boolean indicating if the application should try to reduce the color palette for PNG/GIF.
 
     If file reduction is successful, this function will replace the original
     file with the optimized version.
 
-    :param args: A tuple composed by a string (image file path) and an integer (JPEG quality)
+    :param args: A tuple composed by a string (image file path), an integer for JPEG quality and a boolean indicating if the application should try to reduce the color palette for PNG/GIF.
     :return: image_file, orig_size, final_size, was_optimized
     """
-    image_file, quality = args
+    image_file, quality, reduce_colors = args
     folder, filename = os.path.split(image_file)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(image_file)
@@ -170,36 +173,30 @@ def do_optimization(args: Tuple[str, int]) -> Tuple[str, int, int, bool]:
     img = Image.open(image_file)
     img_format = img.format
 
-    """
-    if img.format.upper() == "PNG":
-        c_image = img.convert('RGBA')
-        colors = c_image.getcolors()
-
-        if colors:
-            if len(colors) < 128:
-                img = c_image.convert("P", palette=Image.ADAPTIVE, colors=len(colors))
-            else:
-                img = c_image.convert("P", palette=Image.ADAPTIVE, colors=8)
-    """
-
     # Remove EXIF data
     data = list(img.getdata())
     no_exif_img = Image.new(img.mode, img.size)
     no_exif_img.putdata(data)
 
+    if reduce_colors and img.format.upper() in ("PNG", "GIF"):
+        img = no_exif_img.convert('RGB')
+        img = img.convert("P", palette=Image.ADAPTIVE)
+    else:
+        img = no_exif_img
+        
     try:
-        no_exif_img.save(temp_file_path,
-                         quality=quality,
-                         optimize=True,
-                         progressive=use_progressive_jpg,
-                         format=img_format)
+        img.save(temp_file_path,
+                 quality=quality,
+                 optimize=True,
+                 progressive=use_progressive_jpg,
+                 format=img_format)
     except IOError:
-        ImageFile.MAXBLOCK = no_exif_img.size[0] * no_exif_img.size[1]
-        no_exif_img.save(temp_file_path,
-                         quality=quality,
-                         optimize=True,
-                         progressive=use_progressive_jpg,
-                         format=img_format)
+        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+        img.save(temp_file_path,
+                 quality=quality,
+                 optimize=True,
+                 progressive=use_progressive_jpg,
+                 format=img_format)
 
     final_size = os.path.getsize(temp_file_path)
 
@@ -251,8 +248,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int, byt
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive, quality = get_args()
-
+    src_path, recursive, quality, reduce_colors = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -266,7 +262,7 @@ def main(*args):
             recursion_txt = "Searching"
         print(f"\n{recursion_txt} and optimizing image files in:\n{src_path}\n")
 
-        images = ((i, quality) for i in search_images(src_path, recursive=recursive))
+        images = ((i, quality, reduce_colors) for i in search_images(src_path, recursive=recursive))
         with ourPoolExecutor(max_workers=workers) as executor:
             for img, orig_size, final_size, was_optimized \
                     in executor.map(do_optimization, images):
@@ -280,7 +276,7 @@ def main(*args):
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
-        img, orig_size, final_size, was_optimized = do_optimization((src_path, quality))
+        img, orig_size, final_size, was_optimized = do_optimization((src_path, quality, reduce_colors))
         total_src_size = orig_size
         if was_optimized:
             optimized_files = 1
