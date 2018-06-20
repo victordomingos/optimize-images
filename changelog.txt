@@ -1,0 +1,24 @@
+
+
+Version history:
+================
+
+
+---
+v.1.0 - 20/06/2018 (First public release)
+ * No special dependencies, besides PIL/Pillow (this enables full compatibility
+   with iPhones and iPads running Pythonista 3)
+ * Basic CLI argument parsing, with separate groups of arguments for JPEG and
+   PNG images.
+ * Multiprocessing support on multicore and multiprocessor computers for really
+   fast operation.
+ * Multithreading support on Pythonista/iOS, for slightly improved performance
+   (too bad, multiprocessing is currently not supported on that environment).
+ * Supports optimization of both folders and individual files.
+ * Option to avoid recursion into subdirectories (by default, it will recurse).
+ * Option for manually setting JPEG quality (by default, 70%).
+ * Option for reducing the number of colors by applying adaptive palette to PNG
+   images (by default, 256 colors).
+ * Option for manually setting a different maximum number of colors while
+   reducing colors.
+
