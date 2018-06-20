@@ -90,15 +90,27 @@ def get_args(*args):
     parser.add_argument('-nr', "--no-recursion", action='store_true',
                         help="Don't recurse through subdirectories.")
 
-    q_help = "The quality setting for JPEG files (an integer value, between " \
-             "1 and 100). The default is 70."
-    parser.add_argument('-q', "--quality", type=int, default=70, help=q_help)
+    jpg_msg = 'The following options apply only to JPEG image files.'
+    jpg_group = parser.add_argument_group('JPEG specific options',
+                                        description=jpg_msg)
+    q_help = "The quality for JPEG files (an integer value, between 1 and " \
+             "100). A lower value will reduce the image quality and the " \
+             "file size. The default value is 70."
+    jpg_group.add_argument('-q', "--quality", type=int, default=70, help=q_help)
 
-    rc_help = "Reduce colors (PNG/GIF) using an adaptive color palette with" \
+    gifpng_msg = 'The following options apply only to GIF and PNG image files.'
+    gifpng_group = parser.add_argument_group('PNG/GIF specific options',
+                                        description=gifpng_msg)
+
+    rc_help = "Reduce colors (PNG/GIF) using an adaptive color palette with " \
               "dithering. This option can have a big impact on file size, " \
               "but please note that will also affect image quality."
-    parser.add_argument('-rc', "--reduce-colors", action='store_true',
+    gifpng_group.add_argument('-rc', "--reduce-colors", action='store_true',
                         help=rc_help)
+    mc_help = "The maximum number of colors for PNG/GIF images when using " \
+              "the reduce colors (-rc) option (an integer value, between 1 " \
+              "and 256). The default is 256."
+    gifpng_group.add_argument('-mc', "--max-colors", type=int, default=256, help=mc_help)
 
     args = parser.parse_args()
     recursive = not args.no_recursion
@@ -114,7 +126,7 @@ def get_args(*args):
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)
 
-    return src_path, recursive, quality, args.reduce_colors, 18
+    return src_path, recursive, quality, args.reduce_colors, args.max_colors
 
 
 def human(number: int, suffix='B') -> str:
@@ -200,33 +212,25 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     orig_colors = 0
     final_colors = 0
 
-    if reduce_colors and img.format.upper() in ("PNG", "GIF"):
-        if img.mode == "RGB":
-            img = img.convert("P", palette=Image.ADAPTIVE, colors=max_colors)
-            colors = img.getpalette()
-            final_colors = len(colors)//3
-        elif img.mode == "RGBA":
+    if reduce_colors and img_format.upper() in ("PNG", "GIF"):
+        mode = "P"
+        if orig_mode == "RGB":
+            palette = Image.ADAPTIVE
+            final_colors = max_colors
+        elif orig_mode == "RGBA":
+            palette = Image.ADAPTIVE
+            final_colors = max_colors
             img = flattenAlpha(img)
-            img = img.convert("P", palette=Image.ADAPTIVE, colors=max_colors)
+        elif orig_mode == "P":
             colors = img.getpalette()
-            final_colors = len(colors)//3
-        elif img.mode == "P":
-            colors = img.getpalette()
-            orig_colors = len(colors)//3
+            orig_colors = len(colors) // 3
             if orig_colors >= 256:
-                img = img.convert("P", palette=Image.ADAPTIVE, colors=max_colors)
+                palette = Image.ADAPTIVE
                 final_colors = max_colors
             else:
                 palette = colors
-                img = img.convert("P", palette=palette, colors=orig_colors//3)
-                final_colors = orig_colors // 3
-
-
-    # Remove EXIF data
-    data = list(img.getdata())
-    no_exif_img = Image.new(img.mode, img.size, 255)
-    no_exif_img.putdata(data)
-
+                final_colors = orig_colors
+        img = img.convert(mode, palette=palette, colors=final_colors)
 
     try:
         img.save(temp_file_path,
@@ -244,8 +248,8 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
 
     final_size = os.path.getsize(temp_file_path)
 
-    # Only replace the original file if compression did save significant space
-    if orig_size - final_size > 0:  # Minimal number of saved bytes
+    # Only replace the original file if compression did save any space
+    if orig_size - final_size > 0:
         shutil.move(temp_file_path, os.path.expanduser(image_file))
         was_optimized = True
     else:
@@ -332,7 +336,8 @@ def main(*args):
                 if was_optimized:
                     optimized_files += 1
                     total_bytes_saved = total_bytes_saved + (orig_size - final_size)
-                show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized,
+                show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
+                                 was_optimized,
                                  line_width)
 
     # Optimize a single image
@@ -344,7 +349,8 @@ def main(*args):
         if was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (orig_size - final_size)
-        show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized,
+        show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
+                         was_optimized,
                          line_width)
 
     else:

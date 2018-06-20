@@ -21,7 +21,7 @@ by any several other image optimization utilities that are based on some well
 known external binaries.
 
   
-## Examples of usage:
+## Basic usage:
 
 Get a little help about how to use this application:
 
@@ -39,13 +39,73 @@ subdirectories:
 
 `optimize-images.py ./`
 
-  
+
 Try to optimize all image files in current working directory, without recursion:
 
 `optimize-images.py -nr ./`  
 `optimize-images.py --no-recursion ./`
 
-  
+
+## Format specific options:
+
+The following format specific settings are optional and may be used
+simultaneously, for instance when processing a directory that may
+contain images in more than one format. The appropriate format-specific
+options entered by the user will then be automatically selected and
+applied for each image.
+
+### JPEG:
+
+#### Quality (-q or --quality)
+
+Set the quality for JPEG files (an integer value, between 1 and 100).
+A lower value will reduce both the image quality and the file size. The
+default value is 70.
+
+Try to optimize all image files in current working directory and all of its
+subdirectories, applying a quality of 65% to JPEG files:
+
+`optimize-images.py -q 65 ./`  
+`optimize-images.py --quality 65 ./`
+
+
+### GIF and PNG:
+
+#### Reduce colors (-rc or --reduce-colors)
+
+Reduce colors (PNG/GIF) using an adaptive color palette with dithering.
+This option can have a big impact on file size, but please note that
+will also affect image quality in a very noticeable way, especially in
+images that have color gradients and/or transparency.
+
+Try to optimize a single image file in current working directory,
+applying and adaptive color palette with the default amount of colors
+(256):
+
+`optimize-images.py -rc ./imagefile.png`  
+`optimize-images.py --reduce-colors ./imagefile.png`
+
+
+#### Maximum number of colors (-mc or --max-colors)
+
+Use this option to specify the maximum number of colors for PNG/GIF
+images when using the reduce colors (-rc) option (an integer value,
+between 1 and 256). The default value is 256.
+
+Try to optimize a single image file in current working directory,
+reducing the color palette to a specific value:
+
+`optimize-images.py -rc -mc 128 ./imagefile.png`  
+`optimize-images.py --reduce-colors --max-colors 128 ./imagefile.png`
+
+Try to optimize all image files in current working directory and all of
+its subdirectories, applying a quality of 65% to JPEG files and
+reducing the color palette of PNG and GIF files to just 64 colors:
+
+`optimize-images.py -q 60 -rc -mc 64 ./`  
+`optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./`
+
+
 ## Installation and dependencies:
 
 No special instructions by now, as this is currently an experimental, early
