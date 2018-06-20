@@ -34,7 +34,7 @@ from PIL import Image, ImageFile
 from timeit import default_timer as timer
 from typing import Tuple, Iterable
 
-SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg', 'gif']
+SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg']
 
 
 def adjust_for_platform():
@@ -98,19 +98,19 @@ def get_args(*args):
              "file size. The default value is 70."
     jpg_group.add_argument('-q', "--quality", type=int, default=70, help=q_help)
 
-    gifpng_msg = 'The following options apply only to GIF and PNG image files.'
-    gifpng_group = parser.add_argument_group('PNG/GIF specific options',
-                                        description=gifpng_msg)
+    png_msg = 'The following options apply only to PNG image files.'
+    png_group = parser.add_argument_group('PNG specific options',
+                                        description=png_msg)
 
-    rc_help = "Reduce colors (PNG/GIF) using an adaptive color palette with " \
+    rc_help = "Reduce colors (PNG) using an adaptive color palette with " \
               "dithering. This option can have a big impact on file size, " \
               "but please note that will also affect image quality."
-    gifpng_group.add_argument('-rc', "--reduce-colors", action='store_true',
+    png_group.add_argument('-rc', "--reduce-colors", action='store_true',
                         help=rc_help)
-    mc_help = "The maximum number of colors for PNG/GIF images when using " \
+    mc_help = "The maximum number of colors for PNG images when using " \
               "the reduce colors (-rc) option (an integer value, between 1 " \
               "and 256). The default is 256."
-    gifpng_group.add_argument('-mc', "--max-colors", type=int, default=256, help=mc_help)
+    png_group.add_argument('-mc', "--max-colors", type=int, default=256, help=mc_help)
 
     args = parser.parse_args()
     recursive = not args.no_recursion
@@ -161,7 +161,14 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def flattenAlpha(img):
+def flatten_alpha(img):
+    """Remove alpha transparency from PNG images
+
+    Expects a PIL.Image object and returns an pbject of the same type with the
+    changes applied.
+
+    Special thanks to Erik Bethke (https://stackoverflow.com/q/41576637)
+    """
     alpha = img.split()[-1]  # Pull off the alpha layer
     ab = alpha.tobytes()  # Original 8-bit alpha
     checked = []  # Create a new array to store the cleaned up alpha layer bytes
@@ -185,7 +192,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
 
     Expects a tuple with a string containing the image file path, an
     integer specifying the quality value for JPG, and a boolean indicating if
-    the application should try to reduce the color palette for PNG/GIF.
+    the application should try to reduce the color palette for PNG.
 
     If file reduction is successful, this function will replace the original
     file with the optimized version and return some report data (file path,
@@ -194,7 +201,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
 
     :param args: A tuple composed by a string (image file path), an integer
     for JPEG quality, a boolean indicating if the application should try to
-    reduce the color palette for PNG/GIF and an integer (maximum number of
+    reduce the color palette for PNG and an integer (maximum number of
     colors for the palette when applying color reduction).
     :return: image_file, img_format, orig_mode, result_mode, orig_size, final_size, was_optimized
     """
@@ -212,7 +219,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     orig_colors = 0
     final_colors = 0
 
-    if reduce_colors and img_format.upper() in ("PNG", "GIF"):
+    if reduce_colors and img_format.upper()=="PNG":
         mode = "P"
         if orig_mode == "RGB":
             palette = Image.ADAPTIVE
@@ -220,7 +227,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
         elif orig_mode == "RGBA":
             palette = Image.ADAPTIVE
             final_colors = max_colors
-            img = flattenAlpha(img)
+            img = flatten_alpha(img)
         elif orig_mode == "P":
             colors = img.getpalette()
             orig_colors = len(colors) // 3

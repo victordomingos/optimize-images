@@ -69,11 +69,11 @@ subdirectories, applying a quality of 65% to JPEG files:
 `optimize-images.py --quality 65 ./`
 
 
-### GIF and PNG:
+### PNG:
 
 #### Reduce colors (-rc or --reduce-colors)
 
-Reduce colors (PNG/GIF) using an adaptive color palette with dithering.
+Reduce colors (PNG) using an adaptive color palette with dithering.
 This option can have a big impact on file size, but please note that
 will also affect image quality in a very noticeable way, especially in
 images that have color gradients and/or transparency.
@@ -88,7 +88,7 @@ applying and adaptive color palette with the default amount of colors
 
 #### Maximum number of colors (-mc or --max-colors)
 
-Use this option to specify the maximum number of colors for PNG/GIF
+Use this option to specify the maximum number of colors for PNG
 images when using the reduce colors (-rc) option (an integer value,
 between 1 and 256). The default value is 256.
 
@@ -100,7 +100,7 @@ reducing the color palette to a specific value:
 
 Try to optimize all image files in current working directory and all of
 its subdirectories, applying a quality of 65% to JPEG files and
-reducing the color palette of PNG and GIF files to just 64 colors:
+reducing the color palette of PNG files to just 64 colors:
 
 `optimize-images.py -q 60 -rc -mc 64 ./`  
 `optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./`
