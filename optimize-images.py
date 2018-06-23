@@ -254,6 +254,16 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     
     # if maxw or maxh: resize img
     if max_w or max_h:
+        w, h = img.size
+        if max_w > w or max_w == 0:
+            max_w = w
+        if max_h > h or max_h == 0:
+            max_h = h
+        
+        # todo: adjust values to keep proportions
+        
+        
+        img.thumbnail((max_w, max_h))
         was_downsized = True
     else:
         was_downsized = False
