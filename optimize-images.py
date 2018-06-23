@@ -34,6 +34,8 @@ from PIL import Image, ImageFile
 from timeit import default_timer as timer
 from typing import Tuple, Iterable
 
+__version__ = '1.1'
+
 SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg']
 
 
@@ -86,6 +88,11 @@ def get_args(*args):
                 "images to be optimized. By default, it will try to process " \
                 "any images found in all of its subdirectories."
     parser.add_argument('path', nargs="?", type=str, help=path_help)
+    
+    parser.add_argument('-v', '--version', action='version', version=__version__)
+    
+    sf_help = "Display the list of image formats currently supported by this application."
+    parser.add_argument('-sf', '--supported-formats', action='store_true', help=sf_help) 
 
     parser.add_argument('-nr', "--no-recursion", action='store_true',
                         help="Don't recurse through subdirectories.")
@@ -115,6 +122,10 @@ def get_args(*args):
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
+    
+    if args.supported_formats:
+        msg = f"\nImage formats currently supported: {', '.join(SUPPORTED_FORMATS).strip().upper()}.\n\n"
+        parser.exit(status=0, message=msg)
 
     if args.path:
         src_path = os.path.expanduser(args.path)

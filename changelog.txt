@@ -5,6 +5,11 @@ Version history:
 
 
 ---
+v.1.1 -
+ * Added a new CLI argument to display current version.
+ * Added a new CLI argument to display a list of the currently supported image formats.
+
+---
 v.1.0 - 20/06/2018 (First public release)
  * No special dependencies, besides PIL/Pillow (this enables full compatibility
    with iPhones and iPads running Pythonista 3)
