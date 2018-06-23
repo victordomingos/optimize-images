@@ -97,6 +97,23 @@ def get_args(*args):
     parser.add_argument('-nr', "--no-recursion", action='store_true',
                         help="Don't recurse through subdirectories.")
 
+
+    size_msg = "These options will be applied individually to each " \
+               "image being processed. Any image that has a dimension " \
+               "exceeding a specified value will be downsized as the first " \
+               "optimization step. The resizing will not take effect if, " \
+               "after the whole optimization process, the resulting file " \
+               "size isn't any smaller than the original. These options are " \
+               "disabled by default."
+    size_group = parser.add_argument_group('Image resizing options',
+                                        description=size_msg)
+                                        
+    mw_help = "The maximum width (in pixels)."
+    size_group.add_argument('-mw', "--max-width", type=int, default=0, help=mw_help)
+    
+    mh_help = "The maximum height (in pixels)."
+    size_group.add_argument('-mh', "--max-height", type=int, default=0, help=mh_help)
+
     jpg_msg = 'The following options apply only to JPEG image files.'
     jpg_group = parser.add_argument_group('JPEG specific options',
                                         description=jpg_msg)
@@ -124,7 +141,7 @@ def get_args(*args):
     quality = args.quality
     
     if args.supported_formats:
-        msg = f"\nImage formats currently supported: {', '.join(SUPPORTED_FORMATS).strip().upper()}.\n\n"
+        msg = f"\nThese are the image formats currently supported (please note that any files without one of these file extensions will be ignored): {', '.join(SUPPORTED_FORMATS).strip().upper()}.\n\n"
         parser.exit(status=0, message=msg)
 
     if args.path:
@@ -136,8 +153,13 @@ def get_args(*args):
     if quality > 100 or quality < 1:
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)
+        
+    if args.max_width < 0 or args.max_height < 0:
+        msg = "\nPlease specify image dimensions as positive integers.\n\n"
+        parser.exit(status=0, message=msg)
+        
 
-    return src_path, recursive, quality, args.reduce_colors, args.max_colors
+    return src_path, recursive, quality, args.reduce_colors, args.max_colors, args.max_width, args.max_height
 
 
 def human(number: int, suffix='B') -> str:
@@ -216,7 +238,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     colors for the palette when applying color reduction).
     :return: image_file, img_format, orig_mode, result_mode, orig_size, final_size, was_optimized
     """
-    image_file, quality, reduce_colors, max_colors = args
+    image_file, quality, reduce_colors, max_colors, max_w, max_h = args
     folder, filename = os.path.split(image_file)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(image_file)
@@ -229,6 +251,13 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     orig_mode = img.mode
     orig_colors = 0
     final_colors = 0
+    
+    # if maxw or maxh: resize img
+    if max_w or max_h:
+        was_downsized = True
+    else:
+        was_downsized = False
+    
 
     if reduce_colors and img_format.upper()=="PNG":
         mode = "P"
@@ -279,11 +308,11 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
             pass
 
     result_mode = img.mode
-    return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized
+    return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized
 
 
 def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, orig_colors: int, final_colors: int,
-                     original: int, final: int, was_optimized: bool, line_width: int):
+                     original: int, final: int, was_optimized: bool, was_downsized: bool, line_width: int):
     if was_optimized:
         short_img = img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (final / original * 100)
@@ -300,8 +329,9 @@ def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, or
         else:
             colors = ""
 
+        downstr = ' (downsized)' if was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {format}/{orig_mode}{o_colors}: {h_orig} -> {format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
+        line2 = f'    {format}/{orig_mode}{o_colors}: {h_orig} -> {format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%{downstr}'
         img_status = line1 + line2
     else:
         short_img = img[-(line_width - 15):].ljust(line_width - 15)
@@ -331,7 +361,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int,
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -345,9 +375,9 @@ def main(*args):
             recursion_txt = "Searching"
         print(f"\n{recursion_txt} and optimizing image files in:\n{src_path}\n")
 
-        images = ((i, quality, reduce_colors, max_colors) for i in search_images(src_path, recursive=recursive))
+        images = ((i, quality, reduce_colors, max_colors, max_w, max_h) for i in search_images(src_path, recursive=recursive))
         with ourPoolExecutor(max_workers=workers) as executor:
-            for img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized \
+            for img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized \
                     in executor.map(do_optimization, images):
                 found_files += 1
                 total_src_size += orig_size
@@ -355,7 +385,7 @@ def main(*args):
                     optimized_files += 1
                     total_bytes_saved = total_bytes_saved + (orig_size - final_size)
                 show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                                 was_optimized,
+                                 was_optimized, was_downsized, 
                                  line_width)
 
     # Optimize a single image

@@ -35,7 +35,7 @@ Check the installed version of this application:
 `optimize-images.py --version`
   
   
-View a list of the supported image formats:
+View a list of the supported image formats by their usual filename extensions (please note that files without the corresponding file extension will be ignored):
 
 `optimize-images.py -sf`    
 `optimize-images.py --supported-formats`
@@ -56,6 +56,33 @@ Try to optimize all image files in current working directory, without recursion:
 
 `optimize-images.py -nr ./`  
 `optimize-images.py --no-recursion ./`
+
+
+## Format independent options:
+
+### Image resizing:
+
+These options will be applied individually to each image being processed. Any 
+image that has a dimension exceeding a specified value will be downsized as 
+the first optimization step. The resizing will not take effect if, after the 
+whole optimization process, the resulting file size isn't any smaller than 
+the original. These options are disabled by default.
+
+#### Maximum width (-mw or --max-width)
+#### Maximum height (-mh ou --max-height)
+
+
+Try to optimize all image files in current working directory, with recursion, downsizing each of them to a maximum width of 1600 pixels:
+
+`optimize-images.py -mw 1600 ./`  
+`optimize-images.py --max-width 1600 ./`
+
+
+Try to optimize all image files in current working directory, without recursion, downsizing each of them to a maximum height of 800 pixels:
+
+`optimize-images.py -nr -mh 1600 ./`  
+`optimize-images.py --no-recursion --max-height 800 ./`
+
 
 
 ## Format specific options:
