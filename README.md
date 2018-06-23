@@ -28,6 +28,18 @@ Get a little help about how to use this application:
 `optimize-images.py -h`  
 `optimize-images.py --help`
 
+
+Check the installed version of this application:
+
+`optimize-images.py -v`    
+`optimize-images.py --version`
+  
+  
+View a list of the supported image formats:
+
+`optimize-images.py -sf`    
+`optimize-images.py --supported-formats`
+
   
 Try to optimize a single image file:
 
