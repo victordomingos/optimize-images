@@ -8,9 +8,11 @@ Version history:
 v.1.1 - 24/06/2018
  * Added new options to allow downsizing of images to a maximum width and/or
    height before applying any other optimization.
- * Added a new option to keep EXIF data in JPEG images (by default, it will be discarded).
+ * Added a new option to keep EXIF data in JPEG images (by default, it will
+   be discarded).
  * Added a new CLI argument to display current version.
- * Added a new CLI argument to display a list of the currently supported image formats.
+ * Added a new CLI argument to display a list of the currently supported image
+   formats.
  * Added some bigger JPEG photos with EXIF to text-images.zip.
 
 ---
