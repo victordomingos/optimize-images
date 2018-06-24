@@ -29,6 +29,8 @@ import shutil
 import platform
 import concurrent.futures
 
+import piexif
+
 from argparse import ArgumentParser
 from PIL import Image, ImageFile
 from timeit import default_timer as timer
@@ -121,6 +123,9 @@ def get_args(*args):
              "100). A lower value will reduce the image quality and the " \
              "file size. The default value is 70."
     jpg_group.add_argument('-q', "--quality", type=int, default=70, help=q_help)
+    
+    jpg_group.add_argument('-ke', "--keep-exif", action='store_true',
+                        help="Keep image EXIF data (by default, EXIF data is discarded).")
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group('PNG specific options',
@@ -158,7 +163,7 @@ def get_args(*args):
         msg = "\nPlease specify image dimensions as positive integers.\n\n"
         parser.exit(status=0, message=msg)
         
-    return src_path, recursive, quality, args.reduce_colors, args.max_colors, args.max_width, args.max_height
+    return src_path, recursive, quality, args.reduce_colors, args.max_colors, args.max_width, args.max_height, args.keep_exif
 
 
 def human(number: int, suffix='B') -> str:
@@ -257,7 +262,7 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
         return False 
     
 
-def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, str, int, int, bool]:
+def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, str, str, int, int, bool]:
     """ Try to reduce file size of an image.
 
     Expects a tuple with a string containing the image file path, an
@@ -271,15 +276,16 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
 
     :param args: A tuple composed by a string (image file path), an integer
     for JPEG quality, a boolean indicating if the application should try to
-    reduce the color palette for PNG and an integer (maximum number of
-    colors for the palette when applying color reduction).
+    reduce the color palette for PNG, an integer (maximum number of
+    colors for the palette when applying color reduction) and a boolean
+    indicating if EXIF metadata should be kept.
     :return: image_file, img_format, orig_mode, result_mode, orig_size, final_size, was_optimized
     """
-    image_file, quality, reduce_colors, max_colors, max_w, max_h = args
+    image_file, quality, reduce_colors, max_colors, max_w, max_h, keep_exif = args
     folder, filename = os.path.split(image_file)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(image_file)
-
+    
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
@@ -288,6 +294,10 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     orig_mode = img.mode
     orig_colors = 0
     final_colors = 0
+    try:
+        had_exif = True if piexif.load(image_file)['Exif'] else False
+    except:
+        had_exif = False
     
     # if maxw or maxh: resize img
     if max_w or max_h:
@@ -316,7 +326,7 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
         img = img.convert(mode, palette=palette, colors=final_colors)
 
     try:
-        img.save(temp_file_path,
+         img.save(temp_file_path,
                  quality=quality,
                  optimize=True,
                  progressive=use_progressive_jpg,
@@ -328,6 +338,15 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
                  optimize=True,
                  progressive=use_progressive_jpg,
                  format=img_format)
+    
+    if keep_exif and img_format == 'JPEG' and had_exif:
+        try:
+            piexif.transplant(os.path.expanduser(image_file), temp_file_path)
+            has_exif = True
+        except:
+            has_exif = False
+    else:
+        has_exif = False
 
     final_size = os.path.getsize(temp_file_path)
 
@@ -344,11 +363,11 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
             pass
 
     result_mode = img.mode
-    return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized
+    return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif
 
 
 def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, orig_colors: int, final_colors: int,
-                     original: int, final: int, was_optimized: bool, was_downsized: bool, line_width: int):
+                     original: int, final: int, was_optimized: bool, was_downsized: bool, had_exif: bool, has_exif: bool, line_width: int):
     if was_optimized:
         short_img = img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (final / original * 100)
@@ -364,10 +383,12 @@ def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, or
             colors = f"-{final_colors}"
         else:
             colors = ""
-
+        
+        exif_str1 = 'ℹ️ ' if had_exif else ''
+        exif_str2 = 'ℹ️ ' if has_exif else ''
         downstr = '⤵ ' if was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {format}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
+        line2 = f'    {exif_str1}{format}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = img[-(line_width - 15):].ljust(line_width - 15)
@@ -397,7 +418,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int,
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -409,11 +430,12 @@ def main(*args):
             recursion_txt = "Recursively searching"
         else:
             recursion_txt = "Searching"
-        print(f"\n{recursion_txt} and optimizing image files in:\n{src_path}\n")
-
-        images = ((i, quality, reduce_colors, max_colors, max_w, max_h) for i in search_images(src_path, recursive=recursive))
+        exif_txt = '(keeping exif data) ' if keep_exif else ''
+        print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
+        
+        images = ((i, quality, reduce_colors, max_colors, max_w, max_h, keep_exif) for i in search_images(src_path, recursive=recursive))
         with ourPoolExecutor(max_workers=workers) as executor:
-            for img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized \
+            for img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif \
                     in executor.map(do_optimization, images):
                 found_files += 1
                 total_src_size += orig_size
@@ -421,20 +443,20 @@ def main(*args):
                     optimized_files += 1
                     total_bytes_saved = total_bytes_saved + (orig_size - final_size)
                 show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                                 was_optimized, was_downsized, 
+                                 was_optimized, was_downsized, had_exif, has_exif, 
                                  line_width)
 
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
         img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, \
-        final_size, was_optimized = do_optimization((src_path, quality, reduce_colors, max_colors))
+        final_size, was_optimized = do_optimization((src_path, quality, reduce_colors, max_colors, keep_exif, has_exif))
         total_src_size = orig_size
         if was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (orig_size - final_size)
         show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                         was_optimized,
+                         was_optimized, had_exif, has_exif,
                          line_width)
 
     else:
