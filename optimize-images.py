@@ -158,7 +158,6 @@ def get_args(*args):
         msg = "\nPlease specify image dimensions as positive integers.\n\n"
         parser.exit(status=0, message=msg)
         
-
     return src_path, recursive, quality, args.reduce_colors, args.max_colors, args.max_width, args.max_height
 
 
@@ -219,15 +218,24 @@ def flatten_alpha(img):
     img.putalpha(mask)
     return img
 
-def downsize_img(img, max_w, max_h):
-    """
+def downsize_img(img, max_w: int, max_h: int) -> bool:
+    """ Reduce the size of an image to the indicated maximum dimensions
+    
+    This function takes a PIL.Image object and integer values for the maximum
+    allowed width and height (a zero value means no maximum constraint),
+    calculates the size that meets those constraints and resizes the image. The
+    resize is done in place, changing the original object. Returns a boolean
+    indicating if the image was changed. 
     """
     w, h = img.size
+    
+    # Don't upsize images, assume 0 as current size
     if max_w > w or max_w == 0:
         max_w = w
     if max_h > h or max_h == 0:
         max_h = h
     
+    # Constrain image proportions
     if max_h < h:
         max_w_ = w * max_h / max_w
     else:
@@ -237,7 +245,8 @@ def downsize_img(img, max_w, max_h):
         max_h_ = h * max_w / max_h
     else:
         max_h_ = max_h
-        
+    
+    # In case of doubt, opt for the smaller size
     max_h = min(max_h, max_h_)
     max_w = min(max_w, max_w_)
     
