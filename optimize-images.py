@@ -162,7 +162,7 @@ def get_args(*args):
     if args.max_width < 0 or args.max_height < 0:
         msg = "\nPlease specify image dimensions as positive integers.\n\n"
         parser.exit(status=0, message=msg)
-        
+    
     return src_path, recursive, quality, args.reduce_colors, args.max_colors, args.max_width, args.max_height, args.keep_exif
 
 
@@ -449,16 +449,14 @@ def main(*args):
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
-        img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, \
-        final_size, was_optimized = do_optimization((src_path, quality, reduce_colors, max_colors, keep_exif, has_exif))
+        img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif = do_optimization((src_path, quality, reduce_colors, max_colors, max_w, max_h, keep_exif))
         total_src_size = orig_size
         if was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (orig_size - final_size)
         show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                         was_optimized, had_exif, has_exif,
-                         line_width)
-
+                                 was_optimized, was_downsized, had_exif, has_exif, 
+                                 line_width)
     else:
         print("No image files were found. Please enter a valid path to the "
               "image file or the folder containing any images to be processed.")
