@@ -2,17 +2,6 @@
 A little command-line interface (CLI) utility written in pure Python to help
 you reduce the file size of images.
 
-You must explicitly pass it a path to the source image file or to the
-directory containing the image files to be processed. By default, it will go
-through all of its subdirectories and try to optimize the images found. You
-may however choose to process the specified directory only, without recursion.
-
-Please note that the operation is done DESTRUCTIVELY, by replacing the
-original files with the processed ones. You definitely should duplicate the
-source file or folder before using this utility, in order to be able to
-recover any eventual damaged files or any resulting images that don't have the
-desired quality.
-
 This application is intended to be pure Python, with no special dependencies
 besides Pillow, therefore ensuring compatibility with a wide range of systems,
 including iPhones and iPads running Pythonista 3. If you don't have the need
@@ -20,6 +9,32 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
+
+## Default behavior 
+By default, this utility applies lossy compression to JPEG files using a quality setting of 70% (by Pillow's scale), removes any EXIF metadata, tries to optimize each encoder's settings for maximum space reduction and applies the maximum ZLIB compression on PNG. 
+
+You must explicitly pass it a path to the source image file or to the
+directory containing the image files to be processed. By default, it will scan recursively through all subfolders and process any images found using the default or user-provided settings, replacing each original file by its processed version if its file size is smaller than the original.
+
+If no space savings were achieved for a given file, the original version will be kept instead.
+
+## Options
+In addition to the default settings, you may downsize the images to fit a maximum width and/or a maximum height. This image resizing is done as the first step in the image optimization process. 
+
+You may also choose to keep the original EXIF data (if it exists) in the optimized files. Note, however, that this option is currently available only for JPEG files. 
+
+In PNG files, you will achieve a more drastic file size reduction if you choose to reduce the number of colors using an adaptive palette. Be aware that by using this option all PNG images will loose transparency and image quality may be affected in a very noticeable way.
+
+There is also an option to process only the specified directory, without recursion.
+  
+
+## DISCLAIMER
+**Please note that the operation is done DESTRUCTIVELY, by replacing the
+original files with the processed ones. You definitely should duplicate the
+source file or folder before using this utility, in order to be able to
+recover any eventual damaged files or any resulting images that don't have the
+desired quality.**
+  
   
 ## Basic usage:
 
@@ -34,12 +49,12 @@ Check the installed version of this application:
 `optimize-images.py -v`    
 `optimize-images.py --version`
   
-  
+
 View a list of the supported image formats by their usual filename extensions (please note that files without the corresponding file extension will be ignored):
 
 `optimize-images.py -sf`    
 `optimize-images.py --supported-formats`
-
+  
   
 Try to optimize a single image file:
 
@@ -159,15 +174,17 @@ reducing the color palette of PNG files to just 64 colors:
 ## Installation and dependencies:
 
 No special instructions by now, as this is currently an experimental, early
-development, version. Just make sure you are running Python 3.6+ and have
-Pillow installed (we are targeting both Pillow 5.1.0 on desktop and the
-built-in Pillow 2.9.0 in Pythonista for iOS).
+development, version. The `optimize-images.py` script should have executable permissions and should be placed in some folder included in your shell path.
+
+Please make sure that you are running Python 3.6+ and have the following packages installed (we are targeting both Pillow 5.1.0 on desktop and the
+built-in Pillow 2.9.0 in Pythonista for iOS):
 
 * On desktop:
   - Pillow==5.1.0
+  - piexif==1.0.13
 
 * iOS
-  - No dependencies, besides Pythonista's built-in modules.
+  - piexif==1.0.13
 
   
 ## Did you find a bug or do you have a suggestion?
