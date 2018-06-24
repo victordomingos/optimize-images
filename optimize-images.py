@@ -219,6 +219,34 @@ def flatten_alpha(img):
     img.putalpha(mask)
     return img
 
+def downsize_img(img, max_w, max_h):
+    """
+    """
+    w, h = img.size
+    if max_w > w or max_w == 0:
+        max_w = w
+    if max_h > h or max_h == 0:
+        max_h = h
+    
+    if max_h < h:
+        max_w_ = w * max_h / max_w
+    else:
+        max_w_ = max_w
+        
+    if max_w < w:
+        max_h_ = h * max_w / max_h
+    else:
+        max_h_ = max_h
+        
+    max_h = min(max_h, max_h_)
+    max_w = min(max_w, max_w_)
+    
+    if (max_w, max_h) != (w, h):
+        img.thumbnail((max_w, max_h))
+        return True
+    else:
+        return False 
+    
 
 def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, str, int, int, bool]:
     """ Try to reduce file size of an image.
@@ -254,21 +282,10 @@ def do_optimization(args: Tuple[str, int, bool, int]) -> Tuple[str, str, str, st
     
     # if maxw or maxh: resize img
     if max_w or max_h:
-        w, h = img.size
-        if max_w > w or max_w == 0:
-            max_w = w
-        if max_h > h or max_h == 0:
-            max_h = h
-        
-        # todo: adjust values to keep proportions
-        
-        
-        img.thumbnail((max_w, max_h))
-        was_downsized = True
+        was_downsized = downsize_img(img, max_w, max_h)
     else:
         was_downsized = False
     
-
     if reduce_colors and img_format.upper()=="PNG":
         mode = "P"
         if orig_mode == "RGB":
@@ -339,9 +356,9 @@ def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, or
         else:
             colors = ""
 
-        downstr = ' (downsized)' if was_downsized else ''
+        downstr = '⤵ ' if was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {format}/{orig_mode}{o_colors}: {h_orig} -> {format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%{downstr}'
+        line2 = f'    {format}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = img[-(line_width - 15):].ljust(line_width - 15)
