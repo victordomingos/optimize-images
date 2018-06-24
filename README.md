@@ -173,8 +173,7 @@ reducing the color palette of PNG files to just 64 colors:
 
 ## Installation and dependencies:
 
-No special instructions by now, as this is currently an experimental, early
-development, version. The `optimize-images.py` script should have executable permissions and should be placed in some folder included in your shell path.
+The `optimize-images.py` script should be placed in some folder included in your shell path, and should have executable permissions.
 
 Please make sure that you are running Python 3.6+ and have the following packages installed (we are targeting both Pillow 5.1.0 on desktop and the
 built-in Pillow 2.9.0 in Pythonista for iOS):
