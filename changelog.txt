@@ -8,6 +8,8 @@ Version history:
 v.1.1 -
  * Added a new CLI argument to display current version.
  * Added a new CLI argument to display a list of the currently supported image formats.
+ * Added new options to allow downsizing of images to a maximum width and/or
+   height before applying any other optimization.
 
 ---
 v.1.0 - 20/06/2018 (First public release)
