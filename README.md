@@ -106,6 +106,17 @@ subdirectories, applying a quality of 65% to JPEG files:
 
 `optimize-images.py -q 65 ./`  
 `optimize-images.py --quality 65 ./`
+  
+
+#### Keep EXIF data (-ke or --keep-exif)
+
+Keep existing image EXIF data in JPEG images (by default, EXIF data is discarded).
+
+Try to optimize all image files in current working directory and all of its
+subdirectories, applying a quality of 65% to JPEG files and keeping the original EXIF data:
+
+`optimize-images.py -q 65 -ke ./`  
+`optimize-images.py --quality 65 --keep-exif ./`
 
 
 ### PNG:
