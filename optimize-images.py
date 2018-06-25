@@ -261,7 +261,35 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
     else:
         return False 
     
+def do_reduce_colors(img, max_colors):
+    mode = "P"
+    orig_mode = img.mode
+    colors = img.getpalette()
+    if colors:
+        orig_colors = len(colors) // 3
+    else:
+        orig_colors = 0
+    
+    if orig_mode == "RGB":
+        palette = Image.ADAPTIVE
+        final_colors = max_colors
+    elif orig_mode == "RGBA":
+        palette = Image.ADAPTIVE
+        final_colors = max_colors
+        img = flatten_alpha(img)
+    elif orig_mode == "P":
+        colors = img.getpalette()
+        orig_colors = len(colors) // 3
+        if orig_colors >= 256:
+            palette = Image.ADAPTIVE
+            final_colors = max_colors
+        else:
+            palette = colors
+            final_colors = orig_colors
+    img = img.convert(mode, palette=palette, colors=final_colors)
+    return img, orig_colors, final_colors
 
+    
 def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, str, str, int, int, bool]:
     """ Try to reduce file size of an image.
 
@@ -306,24 +334,7 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
         was_downsized = False
     
     if reduce_colors and img_format.upper()=="PNG":
-        mode = "P"
-        if orig_mode == "RGB":
-            palette = Image.ADAPTIVE
-            final_colors = max_colors
-        elif orig_mode == "RGBA":
-            palette = Image.ADAPTIVE
-            final_colors = max_colors
-            img = flatten_alpha(img)
-        elif orig_mode == "P":
-            colors = img.getpalette()
-            orig_colors = len(colors) // 3
-            if orig_colors >= 256:
-                palette = Image.ADAPTIVE
-                final_colors = max_colors
-            else:
-                palette = colors
-                final_colors = orig_colors
-        img = img.convert(mode, palette=palette, colors=final_colors)
+        img, orig_colors, final_colors = do_reduce_colors(img, max_colors)
 
     try:
          img.save(temp_file_path,
