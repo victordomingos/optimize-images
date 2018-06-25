@@ -5,6 +5,15 @@ Version history:
 
 
 ---
+v.1.2 - /06/2018
+ * Created some global constants for iOS console and thread settings.
+ * Adjustments in the downsizing code to better produce the expected behavior.
+
+---
+v.1.1.1 - 24/06/2018
+ * Bug fix in single image optimization.
+
+---
 v.1.1 - 24/06/2018
  * Added new options to allow downsizing of images to a maximum width and/or
    height before applying any other optimization (guess what? It really makes
