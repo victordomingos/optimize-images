@@ -11,7 +11,7 @@ known external binaries.
 
 
 ## Default behavior 
-By default, this utility applies lossy compression to JPEG files using a quality setting of 70% (by Pillow's scale), removes any EXIF metadata, tries to optimize each encoder's settings for maximum space reduction and applies the maximum ZLIB compression on PNG. 
+By default, this utility applies lossy compression to JPEG files using a quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries to optimize each encoder's settings for maximum space reduction and applies the maximum ZLIB compression on PNG. 
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will scan recursively through all subfolders and process any images found using the default or user-provided settings, replacing each original file by its processed version if its file size is smaller than the original.
@@ -114,7 +114,7 @@ applied for each image.
 
 Set the quality for JPEG files (an integer value, between 1 and 100).
 A lower value will reduce both the image quality and the file size. The
-default value is 70.
+default value is 75.
 
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files:

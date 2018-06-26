@@ -7,7 +7,9 @@ Version history:
 ---
 v.1.2 - /06/2018
  * Created some global constants for iOS console and thread settings.
+ * Created a global constant for JPEG quality and raised the default to 75.
  * Adjustments in the downsizing code to better produce the expected behavior.
+ * Other minor changes.
 
 ---
 v.1.1.1 - 24/06/2018

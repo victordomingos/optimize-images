@@ -36,13 +36,14 @@ from PIL import Image, ImageFile
 from timeit import default_timer as timer
 from typing import Tuple, Iterable
 
-__version__ = '1.1'
+__version__ = '1.2'
 
 SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg']
 IPAD_FONT_SIZE = 15
 IPHONE_FONT_SIZE = 10
 IOS_WORKERS = 2
 IOS_FONT = "Menlo"
+DEFAULT_QUALITY = 75
 
 
 def adjust_for_platform():
@@ -125,7 +126,7 @@ def get_args(*args):
     q_help = "The quality for JPEG files (an integer value, between 1 and " \
              "100). A lower value will reduce the image quality and the " \
              "file size. The default value is 70."
-    jpg_group.add_argument('-q', "--quality", type=int, default=70, help=q_help)
+    jpg_group.add_argument('-q', "--quality", type=int, default=DEFAULT_QUALITY, help=q_help)
 
     jpg_group.add_argument('-ke', "--keep-exif", action='store_true',
                            help="Keep image EXIF data (by default, EXIF data is discarded).")
@@ -242,7 +243,8 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
     indicating if the image was changed. 
     """
     w, h = img.size
-
+    orig_mode = img.mode
+    
     # Don't upsize images, assume 0 as current size
     if max_w > w or max_w == 0:
         max_w = w
@@ -250,18 +252,19 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
         max_h = h
 
     if (max_w, max_h) == (w, h): # If no changes, do nothing
-        return False
+        return img, False
     else:  # Choose smaller size that fits in max_w and max_h
-        width_a, height_a = max_w, (h * max_w / w)
-        width_b, height_b = (max_h * w / h), max_h
+        width_a, height_a = max_w, int(round(h * max_w / w))
+        width_b, height_b = int(round(max_h * w / h)), max_h
 
         if (width_a * height_a) < (width_b * height_b):
-            max_w, max_h = width_a, height_a
+            max_w, max_h = width_a, height_a           
         else:
             max_w, max_h = width_b, height_b
-
-        img.thumbnail((max_w, max_h))
-        return True
+            
+        img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
+        
+        return img, True
 
 
 def do_reduce_colors(img, max_colors):
@@ -323,8 +326,13 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
     img = Image.open(image_file)
     img_format = img.format
     orig_mode = img.mode
-    orig_colors = 0
-    final_colors = 0
+    
+    if orig_mode == 'P':
+        orig_colors = len(img.getpalette())//3
+        final_colors = orig_colors
+    else:
+        orig_colors, final_colors = 0, 0
+        
     try:
         had_exif = True if piexif.load(image_file)['Exif'] else False
     except:
@@ -332,13 +340,13 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
 
     # if maxw or maxh: resize img
     if max_w or max_h:
-        was_downsized = downsize_img(img, max_w, max_h)
+        img, was_downsized = downsize_img(img, max_w, max_h)
     else:
         was_downsized = False
 
     if reduce_colors and img_format.upper() == "PNG":
         img, orig_colors, final_colors = do_reduce_colors(img, max_colors)
-
+    
     try:
         img.save(temp_file_path,
                  quality=quality,
@@ -352,7 +360,6 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
                  optimize=True,
                  progressive=use_progressive_jpg,
                  format=img_format)
-
     if keep_exif and img_format == 'JPEG' and had_exif:
         try:
             piexif.transplant(os.path.expanduser(image_file), temp_file_path)
@@ -363,8 +370,9 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
         has_exif = False
 
     final_size = os.path.getsize(temp_file_path)
-
+    
     # Only replace the original file if compression did save any space
+    
     if orig_size - final_size > 0:
         shutil.move(temp_file_path, os.path.expanduser(image_file))
         was_optimized = True
@@ -375,12 +383,12 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
             os.remove(temp_file_path)
         except OSError:
             pass
-
+    
     result_mode = img.mode
     return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif
 
 
-def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, orig_colors: int, final_colors: int,
+def show_file_status(img: str, imgformat: str, orig_mode: str, result_mode: str, orig_colors: int, final_colors: int,
                      original: int, final: int, was_optimized: bool, was_downsized: bool, had_exif: bool,
                      has_exif: bool, line_width: int):
     if was_optimized:
@@ -389,13 +397,14 @@ def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, or
         h_orig = human(original)
         h_final = human(final)
 
+        imgformat = imgformat.replace('JPEG', 'JPG')
         if orig_mode == "P":
-            o_colors = f"-{orig_colors}"
+            o_colors = f"{orig_colors}"
         else:
             o_colors = ""
 
         if result_mode == "P":
-            colors = f"-{final_colors}"
+            colors = f"{final_colors}"
         else:
             colors = ""
 
@@ -403,7 +412,7 @@ def show_file_status(img: str, format: str, orig_mode: str, result_mode: str, or
         exif_str2 = 'ℹ️ ' if has_exif else ''
         downstr = '⤵ ' if was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {exif_str1}{format}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{format}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
+        line2 = f'    {exif_str1}{imgformat}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{imgformat}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = img[-(line_width - 15):].ljust(line_width - 15)
