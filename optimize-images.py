@@ -35,6 +35,7 @@ from argparse import ArgumentParser
 from PIL import Image, ImageFile
 from timeit import default_timer as timer
 from typing import Tuple, Iterable
+from collections import namedtuple
 
 __version__ = '1.2'
 
@@ -44,6 +45,14 @@ IPHONE_FONT_SIZE = 10
 IOS_WORKERS = 2
 IOS_FONT = "Menlo"
 DEFAULT_QUALITY = 75
+
+Task = namedtuple(
+    'Task',
+    'src_path, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del')
+
+TaskResult = namedtuple('TaskResult',
+    'img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, ' \
+    'final_size, was_optimized, was_downsized, had_exif, has_exif')
 
 
 def adjust_for_platform():
@@ -96,13 +105,18 @@ def get_args(*args):
                 "any images found in all of its subdirectories."
     parser.add_argument('path', nargs="?", type=str, help=path_help)
 
-    parser.add_argument('-v', '--version', action='version', version=__version__)
+    parser.add_argument(
+        '-v', '--version', action='version', version=__version__)
 
     sf_help = "Display the list of image formats currently supported by this application."
-    parser.add_argument('-sf', '--supported-formats', action='store_true', help=sf_help)
+    parser.add_argument(
+        '-sf', '--supported-formats', action='store_true', help=sf_help)
 
-    parser.add_argument('-nr', "--no-recursion", action='store_true',
-                        help="Don't recurse through subdirectories.")
+    parser.add_argument(
+        '-nr',
+        "--no-recursion",
+        action='store_true',
+        help="Don't recurse through subdirectories.")
 
     size_msg = "These options will be applied individually to each " \
                "image being processed. Any image that has a dimension " \
@@ -111,39 +125,46 @@ def get_args(*args):
                "after the whole optimization process, the resulting file " \
                "size isn't any smaller than the original. These options are " \
                "disabled by default."
-    size_group = parser.add_argument_group('Image resizing options',
-                                           description=size_msg)
+    size_group = parser.add_argument_group(
+        'Image resizing options', description=size_msg)
 
     mw_help = "The maximum width (in pixels)."
-    size_group.add_argument('-mw', "--max-width", type=int, default=0, help=mw_help)
+    size_group.add_argument(
+        '-mw', "--max-width", type=int, default=0, help=mw_help)
 
     mh_help = "The maximum height (in pixels)."
-    size_group.add_argument('-mh', "--max-height", type=int, default=0, help=mh_help)
+    size_group.add_argument(
+        '-mh', "--max-height", type=int, default=0, help=mh_help)
 
     jpg_msg = 'The following options apply only to JPEG image files.'
-    jpg_group = parser.add_argument_group('JPEG specific options',
-                                          description=jpg_msg)
+    jpg_group = parser.add_argument_group(
+        'JPEG specific options', description=jpg_msg)
     q_help = "The quality for JPEG files (an integer value, between 1 and " \
              "100). A lower value will reduce the image quality and the " \
              "file size. The default value is 70."
-    jpg_group.add_argument('-q', "--quality", type=int, default=DEFAULT_QUALITY, help=q_help)
+    jpg_group.add_argument(
+        '-q', "--quality", type=int, default=DEFAULT_QUALITY, help=q_help)
 
-    jpg_group.add_argument('-ke', "--keep-exif", action='store_true',
-                           help="Keep image EXIF data (by default, EXIF data is discarded).")
+    jpg_group.add_argument(
+        '-ke',
+        "--keep-exif",
+        action='store_true',
+        help="Keep image EXIF data (by default, EXIF data is discarded).")
 
     png_msg = 'The following options apply only to PNG image files.'
-    png_group = parser.add_argument_group('PNG specific options',
-                                          description=png_msg)
+    png_group = parser.add_argument_group(
+        'PNG specific options', description=png_msg)
 
     rc_help = "Reduce colors (PNG) using an adaptive color palette with " \
               "dithering. This option can have a big impact on file size, " \
               "but please note that will also affect image quality."
-    png_group.add_argument('-rc', "--reduce-colors", action='store_true',
-                           help=rc_help)
+    png_group.add_argument(
+        '-rc', "--reduce-colors", action='store_true', help=rc_help)
     mc_help = "The maximum number of colors for PNG images when using " \
               "the reduce colors (-rc) option (an integer value, between 1 " \
               "and 256). The default is 256."
-    png_group.add_argument('-mc', "--max-colors", type=int, default=256, help=mc_help)
+    png_group.add_argument(
+        '-mc', "--max-colors", type=int, default=256, help=mc_help)
 
     cb_help = "Automatically convert to JPEG format any big PNG images that " \
               "have with a large number of colors (presumably a photo or " \
@@ -154,11 +175,13 @@ def get_args(*args):
               "optimized JPG images in their original folders. IMPORTANT: " \
               "IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE " \
               "REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION."
-    png_group.add_argument('-cc', "--convert_big", action='store_true', help=cb_help)
+    png_group.add_argument(
+        '-cc', "--convert_big", action='store_true', help=cb_help)
 
     fd_help = "Force the deletion of the original PNG file when using " \
               "automatic convertion to JPEG."
-    png_group.add_argument('-fd', "--force-delete", action='store_true', help=fd_help)
+    png_group.add_argument(
+        '-fd', "--force-delete", action='store_true', help=fd_help)
 
     args = parser.parse_args()
     recursive = not args.no_recursion
@@ -233,7 +256,8 @@ def flatten_alpha(img):
     """
     alpha = img.split()[-1]  # Pull off the alpha layer
     ab = alpha.tobytes()  # Original 8-bit alpha
-    checked = []  # Create a new array to store the cleaned up alpha layer bytes
+    checked = [
+    ]  # Create a new array to store the cleaned up alpha layer bytes
     # Walk through all pixels and set them either to 0 for transparent or 255 for opaque fancy pants
     transparent = 175  # change to suit your tolerance for what is and is not transparent
     p = 0
@@ -260,26 +284,26 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
     """
     w, h = img.size
     orig_mode = img.mode
-    
+
     # Don't upsize images, assume 0 as current size
     if max_w > w or max_w == 0:
         max_w = w
     if max_h > h or max_h == 0:
         max_h = h
 
-    if (max_w, max_h) == (w, h): # If no changes, do nothing
+    if (max_w, max_h) == (w, h):  # If no changes, do nothing
         return img, False
     else:  # Choose smaller size that fits in max_w and max_h
         width_a, height_a = max_w, int(round(h * max_w / w))
         width_b, height_b = int(round(max_h * w / h)), max_h
 
         if (width_a * height_a) < (width_b * height_b):
-            max_w, max_h = width_a, height_a           
+            max_w, max_h = width_a, height_a
         else:
             max_w, max_h = width_b, height_b
-            
+
         img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
-        
+
         return img, True
 
 
@@ -312,7 +336,7 @@ def do_reduce_colors(img, max_colors):
     return img, orig_colors, final_colors
 
 
-def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, str, str, int, int, bool]:
+def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
     """ Try to reduce file size of an image.
 
     Expects a tuple with a string containing the image file path, an
@@ -331,52 +355,53 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
     indicating if EXIF metadata should be kept.
     :return: image_file, img_format, orig_mode, result_mode, orig_size, final_size, was_optimized
     """
-    image_file, quality, reduce_colors, max_colors, max_w, max_h, keep_exif = args
-    folder, filename = os.path.split(image_file)
+    folder, filename = os.path.split(t.src_path)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
-    orig_size = os.path.getsize(image_file)
+    orig_size = os.path.getsize(t.src_path)
 
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    img = Image.open(image_file)
+    img = Image.open(t.src_path)
     img_format = img.format
     orig_mode = img.mode
-    
+
     if orig_mode == 'P':
-        orig_colors = len(img.getpalette())//3
+        orig_colors = len(img.getpalette()) // 3
         final_colors = orig_colors
     else:
         orig_colors, final_colors = 0, 0
-        
+
     try:
-        had_exif = True if piexif.load(image_file)['Exif'] else False
+        had_exif = True if piexif.load(t.src_path)['Exif'] else False
     except:
         had_exif = False
 
     # if maxw or maxh: resize img
-    if max_w or max_h:
-        img, was_downsized = downsize_img(img, max_w, max_h)
+    if t.max_w or t.max_h:
+        img, was_downsized = downsize_img(img, t.max_w, t.max_h)
     else:
         was_downsized = False
 
-    if reduce_colors and img_format.upper() == "PNG":
-        img, orig_colors, final_colors = do_reduce_colors(img, max_colors)
-    
+    if t.reduce_colors and img_format.upper() == "PNG":
+        img, orig_colors, final_colors = do_reduce_colors(img, t.max_colors)
+
     try:
-        img.save(temp_file_path,
-                 quality=quality,
-                 optimize=True,
-                 progressive=use_progressive_jpg,
-                 format=img_format)
+        img.save(
+            temp_file_path,
+            quality=t.quality,
+            optimize=True,
+            progressive=use_progressive_jpg,
+            format=img_format)
     except IOError:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(temp_file_path,
-                 quality=quality,
-                 optimize=True,
-                 progressive=use_progressive_jpg,
-                 format=img_format)
-    if keep_exif and img_format == 'JPEG' and had_exif:
+        img.save(
+            temp_file_path,
+            quality=t.quality,
+            optimize=True,
+            progressive=use_progressive_jpg,
+            format=img_format)
+    if t.keep_exif and img_format == 'JPEG' and had_exif:
         try:
             piexif.transplant(os.path.expanduser(image_file), temp_file_path)
             has_exif = True
@@ -386,11 +411,11 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
         has_exif = False
 
     final_size = os.path.getsize(temp_file_path)
-    
+
     # Only replace the original file if compression did save any space
-    
+
     if orig_size - final_size > 0:
-        shutil.move(temp_file_path, os.path.expanduser(image_file))
+        shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True
     else:
         final_size = orig_size
@@ -399,45 +424,47 @@ def do_optimization(args: Tuple[str, int, bool, int, bool]) -> Tuple[str, str, s
             os.remove(temp_file_path)
         except OSError:
             pass
+
+    return TaskResult(t.src_path, img_format, orig_mode, img.mode, orig_colors,
+                   final_colors, orig_size, final_size, was_optimized,
+                   was_downsized, had_exif, has_exif)
     
-    result_mode = img.mode
-    return image_file, img_format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif
 
+def show_file_status(r, line_width: int):
+    if r.was_optimized:
+        short_img = r.img[-(line_width - 17):].ljust(line_width - 17)
+        percent = 100 - (r.final_size / r.orig_size * 100)
+        h_orig = human(r.orig_size)
+        h_final = human(r.final_size)
 
-def show_file_status(img: str, imgformat: str, orig_mode: str, result_mode: str, orig_colors: int, final_colors: int,
-                     original: int, final: int, was_optimized: bool, was_downsized: bool, had_exif: bool,
-                     has_exif: bool, line_width: int):
-    if was_optimized:
-        short_img = img[-(line_width - 17):].ljust(line_width - 17)
-        percent = 100 - (final / original * 100)
-        h_orig = human(original)
-        h_final = human(final)
-
-        imgformat = imgformat.replace('JPEG', 'JPG')
-        if orig_mode == "P":
-            o_colors = f"{orig_colors}"
+        imgformat = r.format.replace('JPEG', 'JPG')
+        if r.orig_mode == "P":
+            o_colors = f"{r.orig_colors}"
         else:
             o_colors = ""
 
-        if result_mode == "P":
-            colors = f"{final_colors}"
+        if r.result_mode == "P":
+            colors = f"{r.final_colors}"
         else:
             colors = ""
 
-        exif_str1 = 'ℹ️ ' if had_exif else ''
-        exif_str2 = 'ℹ️ ' if has_exif else ''
-        downstr = '⤵ ' if was_downsized else ''
+        exif_str1 = 'ℹ️ ' if r.had_exif else ''
+        exif_str2 = 'ℹ️ ' if r.has_exif else ''
+        downstr = '⤵ ' if r.was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {exif_str1}{imgformat}/{orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{imgformat}/{result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
+        line2 = f'    {exif_str1}{imgformat}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{imgformat}/{r.result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
-        short_img = img[-(line_width - 15):].ljust(line_width - 15)
+        short_img = r.img[-(line_width - 15):].ljust(line_width - 15)
         img_status = f'\n🔴  [SKIPPED] {short_img}'
     print(img_status, end='')
 
 
-def show_final_report(found_files: int, optimized_files: int, src_size: int,
-                      bytes_saved: int, time_passed: float):
+def show_final_report(found_files: int,
+                      optimized_files: int,
+                      src_size: int,
+                      bytes_saved: int,
+                      time_passed: float):
     fps = found_files / time_passed
 
     if bytes_saved:
@@ -448,8 +475,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int,
         percent = 0
 
     print(f"\n{40*'-'}\n")
-    print(
-        f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s).")
+    print(f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s).")
     print(f"   Optimized {optimized_files} files.")
     print(f"   Average savings: {human(average)} per optimized file")
     print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")
@@ -458,7 +484,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int,
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, convert_big, force_delete = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -471,42 +497,44 @@ def main(*args):
         else:
             recursion_txt = "Searching"
         exif_txt = '(keeping exif data) ' if keep_exif else ''
+        
         print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
 
-        images = ((i, quality, reduce_colors, max_colors, max_w, max_h, keep_exif) for i in
-                  search_images(src_path, recursive=recursive))
+        tasks = (Task(i, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del)
+                 for i in search_images(src_path, recursive=recursive))
+                 
         with ourPoolExecutor(max_workers=workers) as executor:
-            for img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif \
-                    in executor.map(do_optimization, images):
+            for r in executor.map(do_optimization, tasks):
                 found_files += 1
-                total_src_size += orig_size
-                if was_optimized:
+                total_src_size += r.orig_size
+                if r.was_optimized:
                     optimized_files += 1
-                    total_bytes_saved = total_bytes_saved + (orig_size - final_size)
-                show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                                 was_optimized, was_downsized, had_exif, has_exif,
-                                 line_width)
+                    total_bytes_saved = total_bytes_saved + (r.orig_size - r.final_size)
+                show_file_status(r, line_width)
 
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
-        img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size, was_optimized, was_downsized, had_exif, has_exif = do_optimization(
-            (src_path, quality, reduce_colors, max_colors, max_w, max_h, keep_exif))
-        total_src_size = orig_size
-        if was_optimized:
+
+        img_task = Task(src_path, quality, reduce_colors, max_colors, max_w,
+                        max_h, keep_exif)
+
+        r = do_optimization(img_task)
+        total_src_size = r.orig_size
+        if r.was_optimized:
             optimized_files = 1
-            total_bytes_saved = total_bytes_saved + (orig_size - final_size)
-        show_file_status(img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, final_size,
-                         was_optimized, was_downsized, had_exif, has_exif,
-                         line_width)
+            total_bytes_saved = total_bytes_saved + (
+                r.orig_size - r.final_size)
+        show_file_status(r, line_width)
     else:
-        print("No image files were found. Please enter a valid path to the "
+        print("No image files were found. Please enter a valid path to the " \
               "image file or the folder containing any images to be processed.")
         exit()
 
     if found_files:
         time_passed = timer() - appstart
-        show_final_report(found_files, optimized_files, total_src_size, total_bytes_saved, time_passed)
+        show_final_report(found_files, optimized_files, total_src_size,
+                          total_bytes_saved, time_passed)
     else:
         print("No supported image files were found in the specified directory.\n")
 
