@@ -40,37 +40,62 @@ desired quality.**
 
 Get a little help about how to use this application:
 
-`optimize-images.py -h`  
-`optimize-images.py --help`
+```
+optimize-images.py -h
+```
+
+```
+optimize-images.py --help
+```
+
 
 
 Check the installed version of this application:
 
-`optimize-images.py -v`    
-`optimize-images.py --version`
+```
+optimize-images.py -v
+```
+
+```
+optimize-images.py --version
+```
   
 
 View a list of the supported image formats by their usual filename extensions (please note that files without the corresponding file extension will be ignored):
 
-`optimize-images.py -sf`    
-`optimize-images.py --supported-formats`
+```
+optimize-images.py -sf
+```
+
+```
+optimize-images.py --supported-formats
+```
   
   
 Try to optimize a single image file:
 
-`optimize-images.py filename.jpg`
+```
+optimize-images.py filename.jpg
+```
 
   
 Try to optimize all image files in current working directory and all of its
 subdirectories:
 
-`optimize-images.py ./`
+```
+optimize-images.py ./
+```
 
 
 Try to optimize all image files in current working directory, without recursion:
 
-`optimize-images.py -nr ./`  
-`optimize-images.py --no-recursion ./`
+```
+optimize-images.py -nr ./
+```
+
+```
+optimize-images.py --no-recursion ./
+```
 
 
 ## Format independent options:
@@ -89,14 +114,24 @@ the original. These options are disabled by default.
 
 Try to optimize all image files in current working directory, with recursion, downsizing each of them to a maximum width of 1600 pixels:
 
-`optimize-images.py -mw 1600 ./`  
-`optimize-images.py --max-width 1600 ./`
+```
+optimize-images.py -mw 1600 ./
+```
+
+```
+optimize-images.py --max-width 1600 ./
+```
 
 
 Try to optimize all image files in current working directory, without recursion, downsizing each of them to a maximum height of 800 pixels:
 
-`optimize-images.py -nr -mh 1600 ./`  
-`optimize-images.py --no-recursion --max-height 800 ./`
+```
+optimize-images.py -nr -mh 1600 ./
+```
+
+```
+optimize-images.py --no-recursion --max-height 800 ./
+```
 
 
 
@@ -119,8 +154,13 @@ default value is 75.
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files:
 
-`optimize-images.py -q 65 ./`  
-`optimize-images.py --quality 65 ./`
+```
+optimize-images.py -q 65 ./
+```
+
+```
+optimize-images.py --quality 65 ./
+```
   
 
 #### Keep EXIF data (-ke or --keep-exif)
@@ -130,8 +170,13 @@ Keep existing image EXIF data in JPEG images (by default, EXIF data is discarded
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files and keeping the original EXIF data:
 
-`optimize-images.py -q 65 -ke ./`  
-`optimize-images.py --quality 65 --keep-exif ./`
+```
+optimize-images.py -q 65 -ke ./
+```
+
+```
+optimize-images.py --quality 65 --keep-exif ./
+```
 
 
 ### PNG:
@@ -147,8 +192,12 @@ Try to optimize a single image file in current working directory,
 applying and adaptive color palette with the default amount of colors
 (256):
 
-`optimize-images.py -rc ./imagefile.png`  
-`optimize-images.py --reduce-colors ./imagefile.png`
+```
+optimize-images.py -rc ./imagefile.png
+```
+```
+optimize-images.py --reduce-colors ./imagefile.png
+```
 
 
 #### Maximum number of colors (-mc or --max-colors)
@@ -160,15 +209,59 @@ between 1 and 256). The default value is 256.
 Try to optimize a single image file in current working directory,
 reducing the color palette to a specific value:
 
-`optimize-images.py -rc -mc 128 ./imagefile.png`  
-`optimize-images.py --reduce-colors --max-colors 128 ./imagefile.png`
+```
+optimize-images.py -rc -mc 128 ./imagefile.png
+```
+```
+optimize-images.py --reduce-colors --max-colors 128 ./imagefile.png
+```
 
 Try to optimize all image files in current working directory and all of
 its subdirectories, applying a quality of 65% to JPEG files and
 reducing the color palette of PNG files to just 64 colors:
 
-`optimize-images.py -q 60 -rc -mc 64 ./`  
-`optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./`
+```
+optimize-images.py -q 60 -rc -mc 64 ./
+```
+```
+optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./
+```
+
+
+#### Automatic convertion of big PNG images to JPEG (work in progess)
+
+Automatically convert to JPEG format any big PNG images that have with a
+large number of colors (presumably a photo or photo-like image). It uses
+an algorithm to determine whether it is a good idea to convert to JPG
+and automatically decide about it. By default, when using this option,
+the original PNG files will remain untouched and will be kept alongside
+the optimized JPG images in their original folders.
+
+IMPORTANT: IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE
+REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION.**
+
+
+```
+optimize-images.py -cc
+```
+
+```
+optimize-images.py --convert_big
+```
+
+
+You may force the deletion of the original PNG files when using
+automatic convertion to JPEG, by adding the `-fd` or `--force-delete`
+argument:
+
+```
+optimize-images.py -cc -fd
+```
+
+```
+optimize-images.py --convert_big --force-delete
+```
+
 
 
 ## Installation and dependencies:

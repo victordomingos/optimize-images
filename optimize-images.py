@@ -145,6 +145,21 @@ def get_args(*args):
               "and 256). The default is 256."
     png_group.add_argument('-mc', "--max-colors", type=int, default=256, help=mc_help)
 
+    cb_help = "Automatically convert to JPEG format any big PNG images that " \
+              "have with a large number of colors (presumably a photo or " \
+              "photo-like image). It uses an algorithm to determine whether " \
+              "it is a good idea to convert to JPG and automatically decide " \
+              "about it. By default, when using this option, the original PNG " \
+              "files will remain untouched and will be kept alongside the " \
+              "optimized JPG images in their original folders. IMPORTANT: " \
+              "IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE " \
+              "REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION."
+    png_group.add_argument('-cc', "--convert_big", action='store_true', help=cb_help)
+
+    fd_help = "Force the deletion of the original PNG file when using " \
+              "automatic convertion to JPEG."
+    png_group.add_argument('-fd', "--force-delete", action='store_true', help=fd_help)
+
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
@@ -172,7 +187,8 @@ def get_args(*args):
         parser.exit(status=0, message=msg)
 
     return src_path, recursive, quality, args.reduce_colors, args.max_colors, \
-           args.max_width, args.max_height, args.keep_exif
+           args.max_width, args.max_height, args.keep_exif, args.convert_big, \
+           args.force_delete
 
 
 def human(number: int, suffix='B') -> str:
@@ -442,7 +458,7 @@ def show_final_report(found_files: int, optimized_files: int, src_size: int,
 def main(*args):
     appstart = timer()
     line_width, ourPoolExecutor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, convert_big, force_delete = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
