@@ -147,8 +147,8 @@ def get_args():
                "after the whole optimization process, the resulting file " \
                "size isn't any smaller than the original. These options are " \
                "disabled by default."
-    size_group = parser.add_argument_group(
-        'Image resizing options', description=size_msg)
+    size_group = parser.add_argument_group('Image resizing options',
+                                           description=size_msg)
 
     mw_help = "The maximum width (in pixels)."
     size_group.add_argument(
@@ -159,17 +159,16 @@ def get_args():
         '-mh', "--max-height", type=int, default=0, help=mh_help)
 
     jpg_msg = 'The following options apply only to JPEG image files.'
-    jpg_group = parser.add_argument_group(
-        'JPEG specific options', description=jpg_msg)
+    jpg_group = parser.add_argument_group('JPEG specific options',
+                                          description=jpg_msg)
+
     q_help = "The quality for JPEG files (an integer value, between 1 and " \
              "100). A lower value will reduce the image quality and the " \
              "file size. The default value is 70."
-    jpg_group.add_argument(
-        '-q', "--quality", type=int, default=DEFAULT_QUALITY, help=q_help)
+    jpg_group.add_argument('-q', "--quality", type=int,
+                           default=DEFAULT_QUALITY, help=q_help)
 
-    jpg_group.add_argument(
-        '-ke',
-        "--keep-exif",
+    jpg_group.add_argument('-ke', "--keep-exif",
         action='store_true',
         help="Keep image EXIF data (by default, EXIF data is discarded).")
 
@@ -268,7 +267,7 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def flatten_alpha(img):
+def flatten_alpha(img: ImageType) -> ImageType:
     """Remove alpha transparency from PNG images
 
     Expects a PIL.Image object and returns an pbject of the same type with the
@@ -513,9 +512,9 @@ def main():
 
         print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
 
-        tasks = (Task(i, quality, reduce_colors, max_colors, max_w, max_h,
+        tasks = (Task(img_path, quality, reduce_colors, max_colors, max_w, max_h,
                       keep_exif, conv_big, force_del)
-                 for i in search_images(src_path, recursive=recursive))
+                 for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
             for r in executor.map(do_optimization, tasks):
