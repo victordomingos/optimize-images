@@ -64,7 +64,8 @@ class Task(NamedTuple):
 
 class TaskResult(NamedTuple):
     img: str
-    format: str
+    orig_format: str
+    result_format: str
     orig_mode: str
     result_mode: str
     orig_colors: int
@@ -169,8 +170,8 @@ def get_args():
                            default=DEFAULT_QUALITY, help=q_help)
 
     jpg_group.add_argument('-ke', "--keep-exif",
-        action='store_true',
-        help="Keep image EXIF data (by default, EXIF data is discarded).")
+                           action='store_true',
+                           help="Keep image EXIF data (by default, EXIF data is discarded).")
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -197,7 +198,7 @@ def get_args():
               "IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE " \
               "REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION."
     png_group.add_argument(
-        '-cc', "--convert_big", action='store_true', help=cb_help)
+        '-cb', "--convert_big", action='store_true', help=cb_help)
 
     fd_help = "Force the deletion of the original PNG file when using " \
               "automatic convertion to JPEG."
@@ -274,7 +275,7 @@ def flatten_alpha(img: ImageType) -> ImageType:
     changes applied.
 
     Special thanks to Erik Bethke (https://stackoverflow.com/q/41576637)
-    """
+
     alpha = img.split()[-1]  # Pull off the alpha layer
     ab = alpha.tobytes()  # Original 8-bit alpha
     checked = [
@@ -291,7 +292,32 @@ def flatten_alpha(img: ImageType) -> ImageType:
 
     mask = Image.frombytes('L', img.size, bytes(checked))
     img.putalpha(mask)
-    return img
+    """
+    bg_color = (255, 255, 255)
+    png = img.convert('RGBA')
+    background = Image.new('RGBA', png.size, bg_color)
+    return Image.alpha_composite(background, png)
+
+
+def is_big_png_photo(src_path: str) -> bool:
+    """Try to determine if a given image if a big photo in PNG format
+
+    Expects a path to a PNG image file. Returns True if the image is a PNG
+    with an area bigger than XXXX pixels that when resized to XXXXX pixels
+    converts to a JPEG bigger than 300KB. Returns False otherwise.
+
+    Inspired by an idea first presented by Stephen Arthur
+    (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
+    """
+    # Check if PNG, else return false
+
+    # Check if area > XXXX pixels, else return false
+
+    # Resize to XXXX pixels
+
+    # Check if resized JPEG size > 300KB -> return True or False
+
+    return True
 
 
 def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, bool]:
@@ -327,7 +353,7 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
         return img, True
 
 
-def do_reduce_colors(img, max_colors):
+def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
     mode = "P"
     orig_mode = img.mode
     colors = img.getpalette()
@@ -369,59 +395,122 @@ def do_optimization(t: Task) -> TaskResult:
     :param t: A Task object containing all the parameters for the image processing.
     :return: A TaskResult object containing information for single file report.
     """
+    img = Image.open(t.src_path)
+    orig_format = img.format
+    orig_mode = img.mode
+
     folder, filename = os.path.split(t.src_path)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
-
-    # only use progressive if file size is bigger
-    use_progressive_jpg = orig_size > 10000
-
-    img = Image.open(t.src_path)
-    img_format = img.format
-    orig_mode = img.mode
-
     if orig_mode == 'P':
         orig_colors = len(img.getpalette()) // 3
         final_colors = orig_colors
     else:
         orig_colors, final_colors = 0, 0
 
-    try:
-        had_exif = True if piexif.load(t.src_path)['Exif'] else False
-    except:
-        had_exif = False
+    if orig_format.upper() == 'PNG':
+        had_exif = has_exif = False  # Currently no exif methods for PNG files
+        if t.conv_big and is_big_png_photo(t.src_path):
+            # convert to jpg format
+            filename = os.path.splitext(os.path.basename(t.src_path))[0]
+            conv_file_path = os.path.join(folder + "/" + filename + ".jpeg")
 
-    if t.max_w or t.max_h:
-        img, was_downsized = downsize_img(img, t.max_w, t.max_h)
+            if t.max_w or t.max_h:
+                img, was_downsized = downsize_img(img, t.max_w, t.max_h)
+            else:
+                was_downsized = False
+
+            img = flatten_alpha(img)
+            img = img.convert("RGB")
+
+            try:
+                img.save(conv_file_path,
+                         quality=t.quality,
+                         optimize=True,
+                         progressive=True,
+                         format="JPEG")
+            except IOError:
+                ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+                img.save(conv_file_path,
+                         quality=t.quality,
+                         optimize=True,
+                         progressive=True,
+                         format="JPEG")
+
+            # Only save the converted file if conversion did save any space
+            final_size = os.path.getsize(conv_file_path)
+            if orig_size - final_size > 0:
+                was_optimized = True
+                if t.force_del:
+                    try:
+                        os.remove(t.src_path)
+                    except OSError as e:
+                        print("\nError while replacing original PNG with the new JPEG version.\n{e}\n")
+            else:
+                final_size = orig_size
+                was_optimized = False
+                try:
+                    os.remove(conv_file_path)
+                except OSError as e:
+                    print("\nError while removing temporary JPEG converted file.\n{e}\n")
+
+            result_format = "JPEG"
+            return TaskResult(t.src_path, orig_format, result_format, orig_mode, img.mode, orig_colors,
+                              final_colors, orig_size, final_size, was_optimized,
+                              was_downsized, had_exif, has_exif)
+
+        # if PNG and user didn't ask for PNG to JPEG conversion, do this instead.
+        else:
+            result_format = "PNG"
+
+            if t.max_w or t.max_h:
+                img, was_downsized = downsize_img(img, t.max_w, t.max_h)
+            else:
+                was_downsized = False
+
+            if t.reduce_colors:
+                img, orig_colors, final_colors = do_reduce_colors(img, t.max_colors)
+
+            try:
+                img.save(temp_file_path, optimize=True, format=result_format)
+            except IOError:
+                ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+                img.save(temp_file_path, optimize=True, format=result_format)
+
+    # Doing regular JPEG processing here.
     else:
-        was_downsized = False
-
-    if t.reduce_colors and img_format.upper() == "PNG":
-        img, orig_colors, final_colors = do_reduce_colors(img, t.max_colors)
-
-    try:
-        img.save(
-            temp_file_path,
-            quality=t.quality,
-            optimize=True,
-            progressive=use_progressive_jpg,
-            format=img_format)
-    except IOError:
-        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(
-            temp_file_path,
-            quality=t.quality,
-            optimize=True,
-            progressive=use_progressive_jpg,
-            format=img_format)
-    if t.keep_exif and img_format == 'JPEG' and had_exif:
+        result_format = "JPEG"
         try:
-            piexif.transplant(os.path.expanduser(t.src_path), temp_file_path)
-            has_exif = True
+            had_exif = True if piexif.load(t.src_path)['Exif'] else False
         except:
+            had_exif = False
+
+        if t.max_w or t.max_h:
+            img, was_downsized = downsize_img(img, t.max_w, t.max_h)
+        else:
+            was_downsized = False
+
+        # only use progressive if file size is bigger
+        use_progressive_jpg = orig_size > 10000
+        try:
+            img.save(temp_file_path, optimize=True,
+                     progressive=use_progressive_jpg,
+                     format=result_format)
+        except IOError:
+            ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+            img.save(temp_file_path, optimize=True,
+                     progressive=use_progressive_jpg,
+                     format=result_format)
+
+        if t.keep_exif and had_exif:
+            try:
+                piexif.transplant(os.path.expanduser(t.src_path), temp_file_path)
+                has_exif = True
+            except:
+                has_exif = False
+        else:
             has_exif = False
-    else:
-        has_exif = False
+
 
     final_size = os.path.getsize(temp_file_path)
 
@@ -434,22 +523,24 @@ def do_optimization(t: Task) -> TaskResult:
         was_optimized = False
         try:
             os.remove(temp_file_path)
-        except OSError:
-            pass
+        except OSError as e:
+            print("\nError while removing temporary file.\n{e}\n")
 
-    return TaskResult(t.src_path, img_format, orig_mode, img.mode, orig_colors,
+    return TaskResult(t.src_path, orig_format, result_format, orig_mode, img.mode, orig_colors,
                       final_colors, orig_size, final_size, was_optimized,
                       was_downsized, had_exif, has_exif)
 
 
-def show_file_status(r, line_width: int):
+def show_file_status(r: TaskResult, line_width: int):
     if r.was_optimized:
         short_img = r.img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (r.final_size / r.orig_size * 100)
         h_orig = human(r.orig_size)
         h_final = human(r.final_size)
 
-        imgformat = r.format.replace('JPEG', 'JPG')
+        orig_format = r.orig_format.replace('JPEG', 'JPG')
+        result_format = r.result_format.replace('JPEG', 'JPG')
+
         if r.orig_mode == "P":
             o_colors = f"{r.orig_colors}"
         else:
@@ -464,7 +555,7 @@ def show_file_status(r, line_width: int):
         exif_str2 = 'ℹ️ ' if r.has_exif else ''
         downstr = '⤵ ' if r.was_downsized else ''
         line1 = f'\n✅  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {exif_str1}{imgformat}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{imgformat}/{r.result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
+        line2 = f'    {exif_str1}{orig_format}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{result_format}/{r.result_mode}{colors}: {h_final} 🔻 {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = r.img[-(line_width - 15):].ljust(line_width - 15)
