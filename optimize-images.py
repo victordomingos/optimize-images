@@ -189,6 +189,11 @@ def get_args():
     png_group.add_argument(
         '-mc', "--max-colors", type=int, default=256, help=mc_help)
 
+    bg_help = "The background color to use when doing operations that remove " \
+              "transparency, like reducing colors or converting from PNG to JPG."
+    png_group.add_argument(
+        '-bg', "--background-color", type=str, default="255,255,255", help=bg_help)
+
     cb_help = "Automatically convert to JPEG format any big PNG images that " \
               "have with a large number of colors (presumably a photo or " \
               "photo-like image). It uses an algorithm to determine whether " \
