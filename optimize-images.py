@@ -34,8 +34,7 @@ import piexif
 from argparse import ArgumentParser
 from PIL import Image, ImageFile
 from timeit import default_timer as timer
-from typing import Tuple, Iterable
-from collections import namedtuple
+from typing import Iterable, NamedTuple, Tuple, NewType, Union
 
 __version__ = '1.2'
 
@@ -46,16 +45,39 @@ IOS_WORKERS = 2
 IOS_FONT = "Menlo"
 DEFAULT_QUALITY = 75
 
-Task = namedtuple(
-    'Task',
-    'src_path, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del')
-
-TaskResult = namedtuple('TaskResult',
-    'img, format, orig_mode, result_mode, orig_colors, final_colors, orig_size, ' \
-    'final_size, was_optimized, was_downsized, had_exif, has_exif')
+ImageType = NewType('ImageType', Image)
+PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
+TPoolExType = NewType('PPoolExType', concurrent.futures.ThreadPoolExecutor)
 
 
-def adjust_for_platform():
+class Task(NamedTuple):
+    src_path: str
+    quality: int
+    reduce_colors: bool
+    max_colors: int
+    max_w: int
+    max_h: int
+    keep_exif: bool
+    conv_big: bool
+    force_del: bool
+
+
+class TaskResult(NamedTuple):
+    img: str
+    format: str
+    orig_mode: str
+    result_mode: str
+    orig_colors: int
+    final_colors: int
+    orig_size: int
+    final_size: int
+    was_optimized: bool
+    was_downsized: bool
+    had_exif: bool
+    has_exif: bool
+
+
+def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':
         if platform.machine().startswith('iPad'):
             device = "iPad"
@@ -89,7 +111,7 @@ def adjust_for_platform():
     return line_width, pool_ex, workers
 
 
-def get_args(*args):
+def get_args():
     desc = "A command-line utility written in pure Python to reduce the file " \
            "size of images. You must explicitly pass it a path to the image " \
            "file or to the directory containing the image files to be " \
@@ -273,7 +295,7 @@ def flatten_alpha(img):
     return img
 
 
-def downsize_img(img, max_w: int, max_h: int) -> bool:
+def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, bool]:
     """ Reduce the size of an image to the indicated maximum dimensions
     
     This function takes a PIL.Image object and integer values for the maximum
@@ -283,7 +305,6 @@ def downsize_img(img, max_w: int, max_h: int) -> bool:
     indicating if the image was changed. 
     """
     w, h = img.size
-    orig_mode = img.mode
 
     # Don't upsize images, assume 0 as current size
     if max_w > w or max_w == 0:
@@ -336,24 +357,18 @@ def do_reduce_colors(img, max_colors):
     return img, orig_colors, final_colors
 
 
-def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
+def do_optimization(t: Task) -> TaskResult:
     """ Try to reduce file size of an image.
 
-    Expects a tuple with a string containing the image file path, an
-    integer specifying the quality value for JPG, and a boolean indicating if
-    the application should try to reduce the color palette for PNG.
+    Expects a Task object containing all the parameters for the image processing.
 
     If file reduction is successful, this function will replace the original
     file with the optimized version and return some report data (file path,
     image format, image color mode, original file size, resulting file size,
     and resulting status of the optimization.
 
-    :param args: A tuple composed by a string (image file path), an integer
-    for JPEG quality, a boolean indicating if the application should try to
-    reduce the color palette for PNG, an integer (maximum number of
-    colors for the palette when applying color reduction) and a boolean
-    indicating if EXIF metadata should be kept.
-    :return: image_file, img_format, orig_mode, result_mode, orig_size, final_size, was_optimized
+    :param t: A Task object containing all the parameters for the image processing.
+    :return: A TaskResult object containing information for single file report.
     """
     folder, filename = os.path.split(t.src_path)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
@@ -377,7 +392,6 @@ def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
     except:
         had_exif = False
 
-    # if maxw or maxh: resize img
     if t.max_w or t.max_h:
         img, was_downsized = downsize_img(img, t.max_w, t.max_h)
     else:
@@ -403,7 +417,7 @@ def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
             format=img_format)
     if t.keep_exif and img_format == 'JPEG' and had_exif:
         try:
-            piexif.transplant(os.path.expanduser(image_file), temp_file_path)
+            piexif.transplant(os.path.expanduser(t.src_path), temp_file_path)
             has_exif = True
         except:
             has_exif = False
@@ -413,7 +427,6 @@ def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
     final_size = os.path.getsize(temp_file_path)
 
     # Only replace the original file if compression did save any space
-
     if orig_size - final_size > 0:
         shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True
@@ -426,9 +439,9 @@ def do_optimization(t) -> Tuple[str, str, str, str, int, int, bool]:
             pass
 
     return TaskResult(t.src_path, img_format, orig_mode, img.mode, orig_colors,
-                   final_colors, orig_size, final_size, was_optimized,
-                   was_downsized, had_exif, has_exif)
-    
+                      final_colors, orig_size, final_size, was_optimized,
+                      was_downsized, had_exif, has_exif)
+
 
 def show_file_status(r, line_width: int):
     if r.was_optimized:
@@ -481,9 +494,9 @@ def show_final_report(found_files: int,
     print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")
 
 
-def main(*args):
+def main():
     appstart = timer()
-    line_width, ourPoolExecutor, workers = adjust_for_platform()
+    line_width, our_pool_executor, workers = adjust_for_platform()
     src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del = get_args()
     found_files = 0
     optimized_files = 0
@@ -497,13 +510,14 @@ def main(*args):
         else:
             recursion_txt = "Searching"
         exif_txt = '(keeping exif data) ' if keep_exif else ''
-        
+
         print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
 
-        tasks = (Task(i, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del)
+        tasks = (Task(i, quality, reduce_colors, max_colors, max_w, max_h,
+                      keep_exif, conv_big, force_del)
                  for i in search_images(src_path, recursive=recursive))
-                 
-        with ourPoolExecutor(max_workers=workers) as executor:
+
+        with our_pool_executor(max_workers=workers) as executor:
             for r in executor.map(do_optimization, tasks):
                 found_files += 1
                 total_src_size += r.orig_size
@@ -517,17 +531,17 @@ def main(*args):
         found_files += 1
 
         img_task = Task(src_path, quality, reduce_colors, max_colors, max_w,
-                        max_h, keep_exif)
+                        max_h, keep_exif, conv_big, force_del)
 
         r = do_optimization(img_task)
         total_src_size = r.orig_size
         if r.was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (
-                r.orig_size - r.final_size)
+                    r.orig_size - r.final_size)
         show_file_status(r, line_width)
     else:
-        print("No image files were found. Please enter a valid path to the " \
+        print("No image files were found. Please enter a valid path to the "
               "image file or the folder containing any images to be processed.")
         exit()
 
