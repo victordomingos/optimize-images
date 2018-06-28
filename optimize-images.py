@@ -44,6 +44,7 @@ IPHONE_FONT_SIZE = 10
 IOS_WORKERS = 2
 IOS_FONT = "Menlo"
 DEFAULT_QUALITY = 75
+DEFAULT_BG_COLOR = (255, 255, 255)
 
 ImageType = NewType('ImageType', Image)
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
@@ -268,35 +269,18 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def flatten_alpha(img: ImageType) -> ImageType:
+def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
     """Remove alpha transparency from PNG images
 
-    Expects a PIL.Image object and returns an pbject of the same type with the
+    Expects a PIL.Image object and returns an object of the same type with the
     changes applied.
 
-    Special thanks to Erik Bethke (https://stackoverflow.com/q/41576637)
-
-    alpha = img.split()[-1]  # Pull off the alpha layer
-    ab = alpha.tobytes()  # Original 8-bit alpha
-    checked = [
-    ]  # Create a new array to store the cleaned up alpha layer bytes
-    # Walk through all pixels and set them either to 0 for transparent or 255 for opaque fancy pants
-    transparent = 175  # change to suit your tolerance for what is and is not transparent
-    p = 0
-    for pixel in range(0, len(ab)):
-        if ab[pixel] < transparent:
-            checked.append(0)  # Transparent
-        else:
-            checked.append(255)  # Opaque
-        p += 1
-
-    mask = Image.frombytes('L', img.size, bytes(checked))
-    img.putalpha(mask)
+    Special thanks to Yuji Tomita and Takahashi Shuuji
+    (https://stackoverflow.com/a/33507138)
     """
-    bg_color = (255, 255, 255)
-    png = img.convert('RGBA')
-    background = Image.new('RGBA', png.size, bg_color)
-    return Image.alpha_composite(background, png)
+    orig_image = img.convert('RGBA')
+    background = Image.new('RGBA', orig_image.size, bg_color)
+    return Image.alpha_composite(background, orig_image)
 
 
 def is_big_png_photo(src_path: str) -> bool:
@@ -309,12 +293,16 @@ def is_big_png_photo(src_path: str) -> bool:
     Inspired by an idea first presented by Stephen Arthur
     (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
     """
+    #TODO
     # Check if PNG, else return false
 
+    #TODO
     # Check if area > XXXX pixels, else return false
 
+    #TODO
     # Resize to XXXX pixels
 
+    #TODO
     # Check if resized JPEG size > 300KB -> return True or False
 
     return True
@@ -368,7 +356,7 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
     elif orig_mode == "RGBA":
         palette = Image.ADAPTIVE
         final_colors = max_colors
-        img = flatten_alpha(img)
+        img = remove_transparency(img, DEFAULT_BG_COLOR)
     elif orig_mode == "P":
         colors = img.getpalette()
         orig_colors = len(colors) // 3
@@ -420,7 +408,7 @@ def do_optimization(t: Task) -> TaskResult:
             else:
                 was_downsized = False
 
-            img = flatten_alpha(img)
+            img = remove_transparency(img, DEFAULT_BG_COLOR)
             img = img.convert("RGB")
 
             try:
