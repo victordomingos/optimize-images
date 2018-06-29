@@ -43,7 +43,7 @@ IPAD_FONT_SIZE = 15
 IPHONE_FONT_SIZE = 10
 IOS_WORKERS = 2
 IOS_FONT = "Menlo"
-DEFAULT_QUALITY = 75
+DEFAULT_QUALITY = 80
 DEFAULT_BG_COLOR = (255, 255, 255)
 
 ImageType = NewType('ImageType', Image)
@@ -411,7 +411,7 @@ def do_optimization(t: Task) -> TaskResult:
         if t.conv_big and is_big_png_photo(t.src_path):
             # convert to jpg format
             filename = os.path.splitext(os.path.basename(t.src_path))[0]
-            conv_file_path = os.path.join(folder + "/" + filename + ".jpeg")
+            conv_file_path = os.path.join(folder + "/" + filename + ".jpg")
 
             if t.max_w or t.max_h:
                 img, was_downsized = downsize_img(img, t.max_w, t.max_h)

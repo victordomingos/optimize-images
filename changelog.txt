@@ -11,7 +11,7 @@ v.1.2 - /06/2018
    that remove transparency (convert big and reduce colors). (WIP)
  * Changed the transparency removal algorithm to something better.
  * Created some global constants for iOS console and thread settings.
- * Created a global constant for JPEG quality and raised the default to 75.
+ * Created a global constant for JPEG quality and raised the default to 80.
  * Adjustments in the downsizing code to better produce the expected behavior.
  * Other minor changes.
 
