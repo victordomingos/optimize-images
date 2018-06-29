@@ -61,6 +61,7 @@ class Task(NamedTuple):
     keep_exif: bool
     conv_big: bool
     force_del: bool
+    bg_color: Tuple[int,int,int]
 
 
 class TaskResult(NamedTuple):
@@ -190,7 +191,11 @@ def get_args():
         '-mc', "--max-colors", type=int, default=256, help=mc_help)
 
     bg_help = "The background color to use when doing operations that remove " \
-              "transparency, like reducing colors or converting from PNG to JPG."
+              "transparency, like reducing colors or converting from PNG to " \
+              "JPEG (3 comma-separated integer values between 0 and 255 for " \
+              "Red, Green and Blue, e.g.: '255,0,0' for a pure red color). " \
+              "By default it will use " \
+              "white (255,255,255)."
     png_group.add_argument(
         '-bg', "--background-color", type=str, default="255,255,255", help=bg_help)
 
@@ -239,7 +244,7 @@ def get_args():
 
     return src_path, recursive, quality, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete
+           args.force_delete, args.background_color
 
 
 def human(number: int, suffix='B') -> str:
@@ -413,7 +418,7 @@ def do_optimization(t: Task) -> TaskResult:
             else:
                 was_downsized = False
 
-            img = remove_transparency(img, DEFAULT_BG_COLOR)
+            img = remove_transparency(img, t.bg_color)
             img = img.convert("RGB")
 
             try:
@@ -580,7 +585,7 @@ def show_final_report(found_files: int,
 def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -597,7 +602,7 @@ def main():
         print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
 
         tasks = (Task(img_path, quality, reduce_colors, max_colors, max_w, max_h,
-                      keep_exif, conv_big, force_del)
+                      keep_exif, conv_big, force_del, bg_color)
                  for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
@@ -614,7 +619,7 @@ def main():
         found_files += 1
 
         img_task = Task(src_path, quality, reduce_colors, max_colors, max_w,
-                        max_h, keep_exif, conv_big, force_del)
+                        max_h, keep_exif, conv_big, force_del, bg_color)
 
         r = do_optimization(img_task)
         total_src_size = r.orig_size
