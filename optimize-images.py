@@ -192,12 +192,12 @@ def get_args():
 
     bg_help = "The background color to use when doing operations that remove " \
               "transparency, like reducing colors or converting from PNG to " \
-              "JPEG (3 comma-separated integer values between 0 and 255 for " \
-              "Red, Green and Blue, e.g.: '255,0,0' for a pure red color). " \
+              "JPEG (3 integer values, separated by spaces, between 0 and 255 for " \
+              "Red, Green and Blue, e.g.: '255 0 0' for a pure red color). " \
               "By default it will use " \
-              "white (255,255,255)."
+              "white (255 255 255)."
     png_group.add_argument(
-        '-bg', "--background-color", type=str, default="255,255,255", help=bg_help)
+        '-bg', "--background-color", type=int, nargs=3, default=(255,255,255), help=bg_help)
 
     cb_help = "Automatically convert to JPEG format any big PNG images that " \
               "have with a large number of colors (presumably a photo or " \
