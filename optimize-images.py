@@ -25,6 +25,7 @@ known external binaries.
 © 2018 Victor Domingos (MIT License)
 """
 import os
+import re
 import shutil
 import platform
 import concurrent.futures
@@ -61,7 +62,7 @@ class Task(NamedTuple):
     keep_exif: bool
     conv_big: bool
     force_del: bool
-    bg_color: Tuple[int,int,int]
+    bg_color: Tuple[int, int, int]
 
 
 class TaskResult(NamedTuple):
@@ -185,19 +186,25 @@ def get_args():
     png_group.add_argument(
         '-rc', "--reduce-colors", action='store_true', help=rc_help)
     mc_help = "The maximum number of colors for PNG images when using " \
-              "the reduce colors (-rc) option (an integer value, between 1 " \
-              "and 256). The default is 256."
+              "the reduce colors (-rc) option (an integer value, between 0 " \
+              "and 255). The default is 255."
     png_group.add_argument(
         '-mc', "--max-colors", type=int, default=256, help=mc_help)
 
     bg_help = "The background color to use when doing operations that remove " \
               "transparency, like reducing colors or converting from PNG to " \
               "JPEG (3 integer values, separated by spaces, between 0 and 255 for " \
-              "Red, Green and Blue, e.g.: '255 0 0' for a pure red color). " \
-              "By default it will use " \
-              "white (255 255 255)."
+              "Red, Green and Blue, e.g.: '255 0 0' for a pure red color). If " \
+              "ommited, it will default to a white background white (255 255 255)."
     png_group.add_argument(
-        '-bg', "--background-color", type=int, nargs=3, default=(255,255,255), help=bg_help)
+        '-bg', "--bg-color", type=int, nargs=3, help=bg_help)
+
+    hbg_help = "The background color (in hexadecimal, HTML style) to use when " \
+              "doing operations that remove transparency, like reducing colors " \
+              "or converting from PNG to JPEG E.g.: '00FF00' for a pure green " \
+              "color. If ommited, it will default to a white background white " \
+              "(FFFFFF)."
+    png_group.add_argument('-hbg', "--hex-bg-color", type=str, help=hbg_help)
 
     cb_help = "Automatically convert to JPEG format any big PNG images that " \
               "have with a large number of colors (presumably a photo or " \
@@ -242,9 +249,34 @@ def get_args():
         msg = "\nPlease specify image dimensions as positive integers.\n\n"
         parser.exit(status=0, message=msg)
 
+    if args.bg_color and args.hex_bg_color:
+        msg = "\nBackground color should be entered only once.\n\n"
+        parser.exit(status=0, message=msg)
+    elif not args.bg_color and not args.hex_bg_color:
+        # By default, apply a white background
+        bg_color = (255, 255, 255)
+    elif args.bg_color:
+        bg_color = tuple(args.bg_color)
+    else:
+        # Check if hexadecimal is in the expected format
+        if not re.search(r'(?:[0-9a-fA-F]{3}){1,2}$', args.hex_bg_color):
+            msg = "\nHexadecimal background color was not entered in the correct " \
+                  "format. Please follow these examples:\n\nWhite: FFFFFF" \
+                  "\nBlack: 000000\nPure Red: FF0000\n\n"
+            parser.exit(status=0, message=msg)
+        # convert hex to a tuple of integers (RGB)
+        bg_color = tuple(int(args.hex_bg_color[i:i+2], 16) for i in (0, 2 ,4))
+
+    if min(bg_color) < 0 or max(bg_color) > 255:
+        msg = "\nBackground color should be entered as a sequence of 3 " \
+              "integer numbers between 0 and 255 (values for Red, Green and " \
+              "Blue components) separated by spaces. For instance, for a " \
+              "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
+        parser.exit(status=0, message=msg)
+
     return src_path, recursive, quality, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete, args.background_color
+           args.force_delete, bg_color
 
 
 def human(number: int, suffix='B') -> str:
@@ -303,16 +335,16 @@ def is_big_png_photo(src_path: str) -> bool:
     Inspired by an idea first presented by Stephen Arthur
     (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
     """
-    #TODO
+    # TODO
     # Check if PNG, else return false
 
-    #TODO
+    # TODO
     # Check if area > XXXX pixels, else return false
 
-    #TODO
+    # TODO
     # Resize to XXXX pixels
 
-    #TODO
+    # TODO
     # Check if resized JPEG size > 300KB -> return True or False
 
     return True
@@ -508,7 +540,6 @@ def do_optimization(t: Task) -> TaskResult:
                 has_exif = False
         else:
             has_exif = False
-
 
     final_size = os.path.getsize(temp_file_path)
 

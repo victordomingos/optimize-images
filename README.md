@@ -190,7 +190,7 @@ images that have color gradients and/or transparency.
 
 Try to optimize a single image file in current working directory,
 applying and adaptive color palette with the default amount of colors
-(256):
+(255):
 
 ```
 optimize-images.py -rc ./imagefile.png
@@ -204,7 +204,7 @@ optimize-images.py --reduce-colors ./imagefile.png
 
 Use this option to specify the maximum number of colors for PNG
 images when using the reduce colors (-rc) option (an integer value,
-between 1 and 256). The default value is 256.
+between 0 and 255). The default value is 255.
 
 Try to optimize a single image file in current working directory,
 reducing the color palette to a specific value:
@@ -262,6 +262,43 @@ optimize-images.py -cc -fd
 optimize-images.py --convert_big --force-delete
 ```
 
+
+#### Changing the default background color
+
+By default, when you choose some operations that remove transparency,
+like reducing colors or converting from PNG to JPEG it will apply a
+white background color. You may choose a different background by using
+the argument `-bg` or `--background-color` folowed by 3 integer numbers,
+separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
+`255 0 0` for a pure red color).
+
+
+To convert a big PNG image with some transparency (like, for instance,
+macOS screenshots) applying a black background:
+```
+optimize-images.py -cc -bg 0 0 0 ./image.png
+```
+
+```
+optimize-images.py --convert_big --bg-color 0 0 0 ./image.png
+```
+
+If you prefer to use hexadecimal values, like those that are usual in
+HTML code, you may alternatively use the argument `-hbg` or
+`--hex-bg-color` folowed by the color code without the hash (#)
+character. E.g.: `00FF00` for a pure
+green color).
+
+To convert a big PNG image with some transparency applying a pure green
+background:
+
+```
+optimize-images.py -cc -hbg 0 255 0 ./image.png
+```
+
+```
+optimize-images.py --convert_big --hex-bg-color 00FF00 ./image.png
+```
 
 
 ## Installation and dependencies:
