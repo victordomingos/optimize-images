@@ -15,23 +15,24 @@ known external binaries.
 
 
 ## Contents
-* [Installation and dependencies](#installation-and-dependencies)
-* [Default behavior](#default-behavior)
-* [Options](#options)
-* [DISCLAIMER](#disclaimer)
-* [Basic Usage](#basic-usage)
-* [Format independent options](#format-independent-options)
-    - [Image resizing](#image-resizing)
-* [Format specific options](#format-specific-options)
-    - [JPEG](#jpeg)
-       - [Quality](#quality)
-       - [Keep EXIF data](#keep-exif-data)
-    - [PNG](#png)
-       - [Reduce the number of colors](#reduce-the-number-of-colors)
-       - [Maximum number of colors](#maximum-number-of-colors)
-       - [Automatic conversion of big PNG images to JPEG](#automatic-conversion—of-big-png-images-to-jpeg)
-       - [Changing the default background color](#changing-the-default-background-color)
- * [Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)
+* **[Installation and dependencies](#installation-and-dependencies)**
+* **[How to use](#how-to-use)**
+   * [Default behavior](#default-behavior)
+   * [Options](#options)
+   * [DISCLAIMER](#disclaimer)
+   * [Basic Usage](#basic-usage)
+   * [Format independent options](#format-independent-options)
+       - [Image resizing](#image-resizing)
+   * [Format specific options](#format-specific-options)
+       - [JPEG](#jpeg)
+          - [Quality](#quality)
+          - [Keep EXIF data](#keep-exif-data)
+       - [PNG](#png)
+          - [Reduce the number of colors](#reduce-the-number-of-colors)
+          - [Maximum number of colors](#maximum-number-of-colors)
+          - [Automatic conversion of big PNG images to JPEG](#automatic-conversion—of-big-png-images-to-jpeg)
+          - [Changing the default background color](#changing-the-default-background-color)
+* **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
 
 ## Installation and dependencies:
