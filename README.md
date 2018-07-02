@@ -1,6 +1,8 @@
+
+
 # Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images)
-A little command-line interface (CLI) utility written in pure Python to help
-you reduce the file size of images.
+A command-line interface (CLI) utility written in pure Python to help you 
+reduce the file size of images.
 
 This application is intended to be pure Python, with no special dependencies
 besides Pillow, therefore ensuring compatibility with a wide range of systems,
@@ -9,23 +11,75 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
+## Contents
+* [Installation and dependencies](#installation-and-dependencies)
+* [Default behavior](#default-behavior)
+* [Options](#options)
+* [DISCLAIMER](#disclaimer)
+* [Basic Usage](#basic-usage)
+* [Format independent options](#format-independent-options)
+    - [Image resizing](#image-resizing)
+* [Format specific options](#format-specific-options)
+    - [JPEG](#jpeg)
+       - [Quality](#quality)
+       - [Keep EXIF data](#keep-exif-data)
+    - [PNG](#png)
+       - [Reduce the number of colors](#reduce-the-number-of-colors)
+       - Maximum number of colors (-mc or --max-colors)
+       - Automatic conversion of big PNG images to JPEG (work in progess)
+       - Changing the default background color
+ * [Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)
+
+
+## Installation and dependencies:
+
+The `optimize-images.py` script should be placed in some folder included in 
+your shell path, and should have executable permissions.
+
+Please make sure that you are running Python 3.6+ and have the following 
+packages installed (we are targeting both Pillow 5.1.0 on desktop and the
+built-in Pillow 2.9.0 in Pythonista for iOS):
+
+* On desktop:
+  - Pillow==5.1.0
+  - piexif==1.0.13
+
+* iOS
+  - piexif==1.0.13
+
+
 
 ## Default behavior 
-By default, this utility applies lossy compression to JPEG files using a quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries to optimize each encoder's settings for maximum space reduction and applies the maximum ZLIB compression on PNG. 
+By default, this utility applies lossy compression to JPEG files using a 
+quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries 
+to optimize each encoder's settings for maximum space reduction and applies 
+the maximum ZLIB compression on PNG. 
 
 You must explicitly pass it a path to the source image file or to the
-directory containing the image files to be processed. By default, it will scan recursively through all subfolders and process any images found using the default or user-provided settings, replacing each original file by its processed version if its file size is smaller than the original.
+directory containing the image files to be processed. By default, it will scan 
+recursively through all subfolders and process any images found using the 
+default or user-provided settings, replacing each original file by its 
+processed version if its file size is smaller than the original.
 
-If no space savings were achieved for a given file, the original version will be kept instead.
+If no space savings were achieved for a given file, the original version will 
+be kept instead.
 
 ## Options
-In addition to the default settings, you may downsize the images to fit a maximum width and/or a maximum height. This image resizing is done as the first step in the image optimization process. 
+In addition to the default settings, you may downsize the images to fit a 
+maximum width and/or a maximum height. This image resizing is done as the 
+first step in the image optimization process. 
 
-You may also choose to keep the original EXIF data (if it exists) in the optimized files. Note, however, that this option is currently available only for JPEG files. 
+You may also choose to keep the original EXIF data (if it exists) in the 
+optimized files. Note, however, that this option is currently available only 
+for JPEG files. 
 
-In PNG files, you will achieve a more drastic file size reduction if you choose to reduce the number of colors using an adaptive palette. Be aware that by using this option all PNG images will loose transparency and image quality may be affected in a very noticeable way.
+In PNG files, you will achieve a more drastic file size reduction if you 
+choose to reduce the number of colors using an adaptive palette. Be aware 
+that by using this option all PNG images will loose transparency and image 
+quality may be affected in a very noticeable way.
 
-There is also an option to process only the specified directory, without recursion.
+There is also an option to process only the specified directory, without 
+recursion.
   
 
 ## DISCLAIMER
@@ -61,7 +115,8 @@ optimize-images.py --version
 ```
   
 
-View a list of the supported image formats by their usual filename extensions (please note that files without the corresponding file extension will be ignored):
+View a list of the supported image formats by their usual filename extensions 
+(please note that files without the corresponding file extension will be ignored):
 
 ```
 optimize-images.py -sf
@@ -108,11 +163,20 @@ the first optimization step. The resizing will not take effect if, after the
 whole optimization process, the resulting file size isn't any smaller than 
 the original. These options are disabled by default.
 
-#### Maximum width (-mw or --max-width)
-#### Maximum height (-mh ou --max-height)
+#### Maximum width and maximum height  
 
+These optional arguments can be used to constrain the final size of the images:
 
-Try to optimize all image files in current working directory, with recursion, downsizing each of them to a maximum width of 1600 pixels:
+* Maximum width: `-mw` or `--max-width` 
+* Maximum height: `-mh` ou `--max-height`
+
+The image will be downsized to a maximum size that fits the specified 
+width and/or height. If the user enters values to both dimensions, it will 
+calculate the image proportions for each case and use the one that results in 
+a smaller size. 
+
+Try to optimize all image files in current working directory, with recursion, 
+downsizing each of them to a maximum width of 1600 pixels:
 
 ```
 optimize-images.py -mw 1600 ./
@@ -123,7 +187,8 @@ optimize-images.py --max-width 1600 ./
 ```
 
 
-Try to optimize all image files in current working directory, without recursion, downsizing each of them to a maximum height of 800 pixels:
+Try to optimize all image files in current working directory, without 
+recursion, downsizing each of them to a maximum height of 800 pixels:
 
 ```
 optimize-images.py -nr -mh 1600 ./
@@ -145,11 +210,12 @@ applied for each image.
 
 ### JPEG:
 
-#### Quality (-q or --quality)
+#### Quality
 
-Set the quality for JPEG files (an integer value, between 1 and 100).
+Set the quality for JPEG files (an integer value, between 1 and 100), using 
+the `-q` or `--quality` argument, folowed by the quality value to apply.
 A lower value will reduce both the image quality and the file size. The
-default value is 75.
+default value is 80.
 
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files:
@@ -168,7 +234,8 @@ optimize-images.py --quality 65 ./
 Keep existing image EXIF data in JPEG images (by default, EXIF data is discarded).
 
 Try to optimize all image files in current working directory and all of its
-subdirectories, applying a quality of 65% to JPEG files and keeping the original EXIF data:
+subdirectories, applying a quality of 65% to JPEG files and keeping the 
+original EXIF data:
 
 ```
 optimize-images.py -q 65 -ke ./
@@ -181,9 +248,10 @@ optimize-images.py --quality 65 --keep-exif ./
 
 ### PNG:
 
-#### Reduce colors (-rc or --reduce-colors)
+#### Reduce the number of colors 
 
-Reduce colors (PNG) using an adaptive color palette with dithering.
+To reduce the number of colors (PNG) using an adaptive color palette with 
+dithering, use the `-rc` or `--reduce-colors` optional argument.
 This option can have a big impact on file size, but please note that
 will also affect image quality in a very noticeable way, especially in
 images that have color gradients and/or transparency.
@@ -200,11 +268,11 @@ optimize-images.py --reduce-colors ./imagefile.png
 ```
 
 
-#### Maximum number of colors (-mc or --max-colors)
+#### Maximum number of colors
 
-Use this option to specify the maximum number of colors for PNG
-images when using the reduce colors (-rc) option (an integer value,
-between 0 and 255). The default value is 255.
+Use the  `-mc` or `--max-colors` optional argument to specify the maximum  
+number of colors for PNG images when using the reduce colors (-rc) option 
+(an integer value, between 0 and 255). The default value is 255.
 
 Try to optimize a single image file in current working directory,
 reducing the color palette to a specific value:
@@ -228,7 +296,9 @@ optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./
 ```
 
 
-#### Automatic convertion of big PNG images to JPEG (work in progess)
+#### Automatic conversion of big PNG images to JPEG
+
+*(work in progess)*
 
 Automatically convert to JPEG format any big PNG images that have with a
 large number of colors (presumably a photo or photo-like image). It uses
@@ -299,21 +369,6 @@ optimize-images.py -cc -hbg 0 255 0 ./image.png
 ```
 optimize-images.py --convert_big --hex-bg-color 00FF00 ./image.png
 ```
-
-
-## Installation and dependencies:
-
-The `optimize-images.py` script should be placed in some folder included in your shell path, and should have executable permissions.
-
-Please make sure that you are running Python 3.6+ and have the following packages installed (we are targeting both Pillow 5.1.0 on desktop and the
-built-in Pillow 2.9.0 in Pythonista for iOS):
-
-* On desktop:
-  - Pillow==5.1.0
-  - piexif==1.0.13
-
-* iOS
-  - piexif==1.0.13
 
   
 ## Did you find a bug or do you have a suggestion?
