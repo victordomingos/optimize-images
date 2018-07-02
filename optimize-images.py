@@ -151,8 +151,8 @@ def get_args():
                "after the whole optimization process, the resulting file " \
                "size isn't any smaller than the original. These options are " \
                "disabled by default."
-    size_group = parser.add_argument_group('Image resizing options',
-                                           description=size_msg)
+    size_group = parser.add_argument_group(
+        'Image resizing options', description=size_msg)
 
     mw_help = "The maximum width (in pixels)."
     size_group.add_argument(
@@ -163,18 +163,20 @@ def get_args():
         '-mh', "--max-height", type=int, default=0, help=mh_help)
 
     jpg_msg = 'The following options apply only to JPEG image files.'
-    jpg_group = parser.add_argument_group('JPEG specific options',
-                                          description=jpg_msg)
+    jpg_group = parser.add_argument_group(
+        'JPEG specific options', description=jpg_msg)
 
     q_help = "The quality for JPEG files (an integer value, between 1 and " \
              "100). A lower value will reduce the image quality and the " \
              "file size. The default value is 70."
-    jpg_group.add_argument('-q', "--quality", type=int,
-                           default=DEFAULT_QUALITY, help=q_help)
+    jpg_group.add_argument(
+        '-q', "--quality", type=int, default=DEFAULT_QUALITY, help=q_help)
 
-    jpg_group.add_argument('-ke', "--keep-exif",
-                           action='store_true',
-                           help="Keep image EXIF data (by default, EXIF data is discarded).")
+    jpg_group.add_argument(
+        '-ke',
+        "--keep-exif",
+        action='store_true',
+        help="Keep image EXIF data (by default, EXIF data is discarded).")
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -265,7 +267,8 @@ def get_args():
                   "\nBlack: 000000\nPure Red: FF0000\n\n"
             parser.exit(status=0, message=msg)
         # convert hex to a tuple of integers (RGB)
-        bg_color = tuple(int(args.hex_bg_color[i:i+2], 16) for i in (0, 2 ,4))
+        bg_color = tuple(
+            int(args.hex_bg_color[i:i + 2], 16) for i in (0, 2, 4))
 
     if min(bg_color) < 0 or max(bg_color) > 255:
         msg = "\nBackground color should be entered as a sequence of 3 " \
@@ -311,7 +314,8 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
                     yield os.path.normpath(f)
 
 
-def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
+def remove_transparency(img: ImageType,
+                        bg_color=DEFAULT_BG_COLOR) -> ImageType:
     """Remove alpha transparency from PNG images
 
     Expects a PIL.Image object and returns an object of the same type with the
@@ -343,22 +347,52 @@ def is_big_png_photo(src_path: str) -> bool:
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
 
     orig_size = os.path.getsize(t.src_path)
-    # TODO
-    # Check if PNG, else return false
 
-    # TODO
-    # Check if area > XXXX pixels, else return false
+    w, h = img.size
 
-    # TODO
-    # Resize to XXXX pixels
+    if orig_format != 'PNG' or orig_mode == 'P':
+        return False
 
-    # TODO
-    # Check if resized JPEG size > 300KB -> return True or False
+    # Stop here if its not a big enough image
+    if (w * h) < (1024 * 768):
+        return False
 
-    return True
+    if w > h:
+        img, status = downsize_img(img, 1024, 0)
+    else:
+        img, status = downsize_img(img, 0, 1024)
+
+    img = remove_transparency(img, DEFAULT_BG_COLOR)
+    img = img.convert("RGB")
+
+    try:
+        img.save(
+            temp_file_path,
+            quality=t.quality,
+            optimize=True,
+            progressive=True,
+            format="JPEG")
+    except IOError:
+        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+        img.save(
+            temp_file_path,
+            quality=t.quality,
+            optimize=True,
+            progressive=True,
+            format="JPEG")
+
+    final_size = os.path.getsize(temp_file_path)
+
+    try:
+        os.remove(temp_file_path)
+    except OSError as e:
+        print("\nError while removing temporary file.\n{e}\n")
+
+    return (final_size > 300000)
 
 
-def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, bool]:
+def downsize_img(img: ImageType, max_w: int,
+                 max_h: int) -> Tuple[ImageType, bool]:
     """ Reduce the size of an image to the indicated maximum dimensions
     
     This function takes a PIL.Image object and integer values for the maximum
@@ -391,7 +425,8 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
         return img, True
 
 
-def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
+def do_reduce_colors(img: ImageType,
+                     max_colors: int) -> Tuple[ImageType, int, int]:
     #TODO - Try to reduce the number of colors without loosing transparency
 
     mode = "P"
@@ -464,18 +499,20 @@ def do_optimization(t: Task) -> TaskResult:
             img = img.convert("RGB")
 
             try:
-                img.save(conv_file_path,
-                         quality=t.quality,
-                         optimize=True,
-                         progressive=True,
-                         format="JPEG")
+                img.save(
+                    conv_file_path,
+                    quality=t.quality,
+                    optimize=True,
+                    progressive=True,
+                    format="JPEG")
             except IOError:
                 ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-                img.save(conv_file_path,
-                         quality=t.quality,
-                         optimize=True,
-                         progressive=True,
-                         format="JPEG")
+                img.save(
+                    conv_file_path,
+                    quality=t.quality,
+                    optimize=True,
+                    progressive=True,
+                    format="JPEG")
 
             # Only save the converted file if conversion did save any space
             final_size = os.path.getsize(conv_file_path)
@@ -485,18 +522,23 @@ def do_optimization(t: Task) -> TaskResult:
                     try:
                         os.remove(t.src_path)
                     except OSError as e:
-                        print("\nError while replacing original PNG with the new JPEG version.\n{e}\n")
+                        print(
+                            "\nError while replacing original PNG with the new JPEG version.\n{e}\n"
+                        )
             else:
                 final_size = orig_size
                 was_optimized = False
                 try:
                     os.remove(conv_file_path)
                 except OSError as e:
-                    print("\nError while removing temporary JPEG converted file.\n{e}\n")
+                    print(
+                        "\nError while removing temporary JPEG converted file.\n{e}\n"
+                    )
 
             result_format = "JPEG"
-            return TaskResult(t.src_path, orig_format, result_format, orig_mode, img.mode, orig_colors,
-                              final_colors, orig_size, final_size, was_optimized,
+            return TaskResult(t.src_path, orig_format, result_format,
+                              orig_mode, img.mode, orig_colors, final_colors,
+                              orig_size, final_size, was_optimized,
                               was_downsized, had_exif, has_exif)
 
         # if PNG and user didn't ask for PNG to JPEG conversion, do this instead.
@@ -509,7 +551,8 @@ def do_optimization(t: Task) -> TaskResult:
                 was_downsized = False
 
             if t.reduce_colors:
-                img, orig_colors, final_colors = do_reduce_colors(img, t.max_colors)
+                img, orig_colors, final_colors = do_reduce_colors(
+                    img, t.max_colors)
 
             try:
                 img.save(temp_file_path, optimize=True, format=result_format)
@@ -533,18 +576,23 @@ def do_optimization(t: Task) -> TaskResult:
         # only use progressive if file size is bigger
         use_progressive_jpg = orig_size > 10000
         try:
-            img.save(temp_file_path, optimize=True,
-                     progressive=use_progressive_jpg,
-                     format=result_format)
+            img.save(
+                temp_file_path,
+                optimize=True,
+                progressive=use_progressive_jpg,
+                format=result_format)
         except IOError:
             ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-            img.save(temp_file_path, optimize=True,
-                     progressive=use_progressive_jpg,
-                     format=result_format)
+            img.save(
+                temp_file_path,
+                optimize=True,
+                progressive=use_progressive_jpg,
+                format=result_format)
 
         if t.keep_exif and had_exif:
             try:
-                piexif.transplant(os.path.expanduser(t.src_path), temp_file_path)
+                piexif.transplant(
+                    os.path.expanduser(t.src_path), temp_file_path)
                 has_exif = True
             except:
                 has_exif = False
@@ -565,9 +613,10 @@ def do_optimization(t: Task) -> TaskResult:
         except OSError as e:
             print("\nError while removing temporary file.\n{e}\n")
 
-    return TaskResult(t.src_path, orig_format, result_format, orig_mode, img.mode, orig_colors,
-                      final_colors, orig_size, final_size, was_optimized,
-                      was_downsized, had_exif, has_exif)
+    return TaskResult(t.src_path, orig_format, result_format, orig_mode,
+                      img.mode, orig_colors, final_colors, orig_size,
+                      final_size, was_optimized, was_downsized, had_exif,
+                      has_exif)
 
 
 def show_file_status(r: TaskResult, line_width: int):
@@ -617,7 +666,9 @@ def show_final_report(found_files: int,
         percent = 0
 
     print(f"\n{40*'-'}\n")
-    print(f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s).")
+    print(
+        f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s)."
+    )
     print(f"   Optimized {optimized_files} files.")
     print(f"   Average savings: {human(average)} per optimized file")
     print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")
@@ -626,7 +677,8 @@ def show_final_report(found_files: int,
 def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args()
+    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args(
+    )
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -640,10 +692,12 @@ def main():
             recursion_txt = "Searching"
         exif_txt = '(keeping exif data) ' if keep_exif else ''
 
-        print(f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n")
+        print(
+            f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n"
+        )
 
-        tasks = (Task(img_path, quality, reduce_colors, max_colors, max_w, max_h,
-                      keep_exif, conv_big, force_del, bg_color)
+        tasks = (Task(img_path, quality, reduce_colors, max_colors, max_w,
+                      max_h, keep_exif, conv_big, force_del, bg_color)
                  for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
@@ -652,7 +706,8 @@ def main():
                 total_src_size += r.orig_size
                 if r.was_optimized:
                     optimized_files += 1
-                    total_bytes_saved = total_bytes_saved + (r.orig_size - r.final_size)
+                    total_bytes_saved = total_bytes_saved + (
+                        r.orig_size - r.final_size)
                 show_file_status(r, line_width)
 
     # Optimize a single image
@@ -667,11 +722,12 @@ def main():
         if r.was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (
-                    r.orig_size - r.final_size)
+                r.orig_size - r.final_size)
         show_file_status(r, line_width)
     else:
-        print("No image files were found. Please enter a valid path to the "
-              "image file or the folder containing any images to be processed.")
+        print(
+            "No image files were found. Please enter a valid path to the "
+            "image file or the folder containing any images to be processed.")
         exit()
 
     if found_files:
@@ -679,8 +735,11 @@ def main():
         show_final_report(found_files, optimized_files, total_src_size,
                           total_bytes_saved, time_passed)
     else:
-        print("No supported image files were found in the specified directory.\n")
+        print(
+            "No supported image files were found in the specified directory.\n")
 
 
 if __name__ == "__main__":
     main()
+()
+()
