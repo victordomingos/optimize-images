@@ -343,52 +343,39 @@ def is_big_png_photo(src_path: str) -> bool:
     orig_format = img.format
     orig_mode = img.mode
 
-    folder, filename = os.path.split(t.src_path)
-    temp_file_path = os.path.join(folder + "/~temp~" + filename)
-
-    orig_size = os.path.getsize(t.src_path)
+    folder = os.path.split(src_path)[0]
+    filename = os.path.splitext(os.path.basename(src_path))[0]
+    temp_file_path = os.path.join(folder + "/~temp~" + filename + ".jpg")
 
     w, h = img.size
 
     if orig_format != 'PNG' or orig_mode == 'P':
         return False
-
-    # Stop here if its not a big enough image
-    if (w * h) < (1024 * 768):
+    elif (w * h) < (1024 * 768):
         return False
-
-    if w > h:
-        img, status = downsize_img(img, 1024, 0)
     else:
-        img, status = downsize_img(img, 0, 1024)
+        img = img.convert("RGB")
+        if w > h:
+            img, status = downsize_img(img, 1600, 0)
+        else:
+            img, status = downsize_img(img, 0, 1600)
 
-    img = remove_transparency(img, DEFAULT_BG_COLOR)
-    img = img.convert("RGB")
+        try:
+            img.save(temp_file_path, quality=85, optimize=True,
+                     progressive=True, format="JPEG")
+        except IOError:
+            ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+            img.save(temp_file_path, quality=85, optimize=True,
+                     progressive=True, format="JPEG")
 
-    try:
-        img.save(
-            temp_file_path,
-            quality=t.quality,
-            optimize=True,
-            progressive=True,
-            format="JPEG")
-    except IOError:
-        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(
-            temp_file_path,
-            quality=t.quality,
-            optimize=True,
-            progressive=True,
-            format="JPEG")
+        final_size = os.path.getsize(temp_file_path)
 
-    final_size = os.path.getsize(temp_file_path)
+        try:
+            os.remove(temp_file_path)
+        except OSError as e:
+            print("\nError while removing temporary file.\n{e}\n")
 
-    try:
-        os.remove(temp_file_path)
-    except OSError as e:
-        print("\nError while removing temporary file.\n{e}\n")
-
-    return (final_size > 300000)
+        return (final_size > 300000)
 
 
 def downsize_img(img: ImageType, max_w: int,
