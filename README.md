@@ -56,7 +56,8 @@ earlier, you should use Pillow 5.0.0 instead. In case you have already
 migrated to a Python 3.7, you should be file with Pillow 5.1.0.
 
 
-## Default behavior 
+## How to use
+### Default behavior 
 By default, this utility applies lossy compression to JPEG files using a 
 quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries 
 to optimize each encoder's settings for maximum space reduction and applies 
@@ -71,7 +72,7 @@ processed version if its file size is smaller than the original.
 If no space savings were achieved for a given file, the original version will 
 be kept instead.
 
-## Options
+### Options
 In addition to the default settings, you may downsize the images to fit a 
 maximum width and/or a maximum height. This image resizing is done as the 
 first step in the image optimization process. 
@@ -89,7 +90,7 @@ There is also an option to process only the specified directory, without
 recursion.
   
 
-## DISCLAIMER
+### DISCLAIMER
 **Please note that the operation is done DESTRUCTIVELY, by replacing the
 original files with the processed ones. You definitely should duplicate the
 source file or folder before using this utility, in order to be able to
@@ -97,7 +98,7 @@ recover any eventual damaged files or any resulting images that don't have the
 desired quality.**
   
   
-## Basic usage:
+### Basic usage:
 
 Get a little help about how to use this application:
 
@@ -160,9 +161,9 @@ optimize-images.py --no-recursion ./
 ```
 
 
-## Format independent options:
+### Format independent options:
 
-### Image resizing:
+#### Image resizing:
 
 These options will be applied individually to each image being processed. Any 
 image that has a dimension exceeding a specified value will be downsized as 
@@ -170,7 +171,7 @@ the first optimization step. The resizing will not take effect if, after the
 whole optimization process, the resulting file size isn't any smaller than 
 the original. These options are disabled by default.
 
-#### Maximum width and maximum height  
+##### Maximum width and maximum height  
 
 These optional arguments can be used to constrain the final size of the images:
 
@@ -207,7 +208,7 @@ optimize-images.py --no-recursion --max-height 800 ./
 
 
 
-## Format specific options:
+### Format specific options:
 
 The following format specific settings are optional and may be used
 simultaneously, for instance when processing a directory that may
@@ -215,9 +216,9 @@ contain images in more than one format. The appropriate format-specific
 options entered by the user will then be automatically selected and
 applied for each image.
 
-### JPEG:
+#### JPEG:
 
-#### Quality
+##### Quality
 
 Set the quality for JPEG files (an integer value, between 1 and 100), using 
 the `-q` or `--quality` argument, folowed by the quality value to apply.
@@ -236,7 +237,7 @@ optimize-images.py --quality 65 ./
 ```
   
 
-#### Keep EXIF data
+##### Keep EXIF data
 
 Use the `-ke` or `--keep-exif`) to keep existing image EXIF data in JPEG 
 images (by default, if you don't add this argument, EXIF data is discarded).
@@ -254,9 +255,9 @@ optimize-images.py --quality 65 --keep-exif ./
 ```
 
 
-### PNG:
+#### PNG:
 
-#### Reduce the number of colors 
+##### Reduce the number of colors 
 
 To reduce the number of colors (PNG) using an adaptive color palette with 
 dithering, use the `-rc` or `--reduce-colors` optional argument.
@@ -276,7 +277,7 @@ optimize-images.py --reduce-colors ./imagefile.png
 ```
 
 
-#### Maximum number of colors
+##### Maximum number of colors
 
 Use the  `-mc` or `--max-colors` optional argument to specify the maximum  
 number of colors for PNG images when using the reduce colors (-rc) option 
@@ -304,7 +305,7 @@ optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./
 ```
 
 
-#### Automatic conversion of big PNG images to JPEG
+##### Automatic conversion of big PNG images to JPEG
 
 *(work in progess)*
 
@@ -341,7 +342,7 @@ optimize-images.py --convert_big --force-delete
 ```
 
 
-#### Changing the default background color
+##### Changing the default background color
 
 By default, when you choose some operations that remove transparency,
 like reducing colors or converting from PNG to JPEG it will apply a
