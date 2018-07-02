@@ -335,6 +335,14 @@ def is_big_png_photo(src_path: str) -> bool:
     Inspired by an idea first presented by Stephen Arthur
     (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
     """
+    img = Image.open(src_path)
+    orig_format = img.format
+    orig_mode = img.mode
+
+    folder, filename = os.path.split(t.src_path)
+    temp_file_path = os.path.join(folder + "/~temp~" + filename)
+
+    orig_size = os.path.getsize(t.src_path)
     # TODO
     # Check if PNG, else return false
 
@@ -384,6 +392,8 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
 
 
 def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
+    #TODO - Try to reduce the number of colors without loosing transparency
+
     mode = "P"
     orig_mode = img.mode
     colors = img.getpalette()
