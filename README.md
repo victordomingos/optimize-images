@@ -152,8 +152,6 @@ the first optimization step. The resizing will not take effect if, after the
 whole optimization process, the resulting file size isn't any smaller than 
 the original. These options are disabled by default.
 
-##### Maximum width and maximum height  
-
 These optional arguments can be used to constrain the final size of the images:
 
 * Maximum width: `-mw` or `--max-width` 
