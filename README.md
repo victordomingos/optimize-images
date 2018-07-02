@@ -25,9 +25,9 @@ known external binaries.
        - [Keep EXIF data](#keep-exif-data)
     - [PNG](#png)
        - [Reduce the number of colors](#reduce-the-number-of-colors)
-       - Maximum number of colors (-mc or --max-colors)
-       - Automatic conversion of big PNG images to JPEG (work in progess)
-       - Changing the default background color
+       - [Maximum number of colors](#maximum-number-of-colors)
+       - [Automatic conversion of big PNG images to JPEG](#automatic-conversion—of-big-PNG-images-to-JPEG)
+       - [Changing the default background color](#changing-the-default-background-color)
  * [Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)
 
 
@@ -229,9 +229,10 @@ optimize-images.py --quality 65 ./
 ```
   
 
-#### Keep EXIF data (-ke or --keep-exif)
+#### Keep EXIF data
 
-Keep existing image EXIF data in JPEG images (by default, EXIF data is discarded).
+Use the `-ke` or `--keep-exif`) to keep existing image EXIF data in JPEG 
+images (by default, if you don't add this argument, EXIF data is discarded).
 
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files and keeping the 
