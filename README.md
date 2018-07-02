@@ -20,7 +20,6 @@ known external binaries.
    * [DISCLAIMER](#disclaimer)
    * [Examples of basic usage](#examples-of-basic-usage)
    * [Getting help on how to use this application](#getting-help-on-how-to-use-this-application)
-   * [Options](#options)
    * [Format independent options](#format-independent-options)
        - [Image resizing](#image-resizing)
    * [Format specific options](#format-specific-options)
@@ -65,7 +64,7 @@ The optional -nr or --no-recursion switch argument tells the application not
 to scan recursively through the subdirectories.
 
 By default, this utility applies lossy compression to JPEG files using a 
-quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries 
+quality setting of 80% (by Pillow's scale), removes any EXIF metadata, tries 
 to optimize each encoder's settings for maximum space reduction and applies 
 the maximum ZLIB compression on PNG. 
 
@@ -91,9 +90,6 @@ choose to reduce the number of colors using an adaptive palette. Be aware
 that by using this option all PNG images will loose transparency and image 
 quality may be affected in a very noticeable way.
 
-There is also an option to process only the specified directory, without 
-recursion.
-  
 
 ### DISCLAIMER
 **Please note that the operation is done DESTRUCTIVELY, by replacing the
