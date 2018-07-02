@@ -17,10 +17,10 @@ known external binaries.
 ## Contents
 * **[Installation and dependencies](#installation-and-dependencies)**
 * **[How to use](#how-to-use)**
-   * [Default behavior](#default-behavior)
-   * [Options](#options)
    * [DISCLAIMER](#disclaimer)
-   * [Basic Usage](#basic-usage)
+   * [Examples of basic usage](#examples-of-basic-usage)
+   * [Getting help on how to use this application](#getting-help-on-how-to-use-this-application)
+   * [Options](#options)
    * [Format independent options](#format-independent-options)
        - [Image resizing](#image-resizing)
    * [Format specific options](#format-specific-options)
@@ -32,6 +32,7 @@ known external binaries.
           - [Maximum number of colors](#maximum-number-of-colors)
           - [Automatic conversion of big PNG images to JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
           - [Changing the default background color](#changing-the-default-background-color)
+   * [Other features](#other-features)
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
 
@@ -57,7 +58,12 @@ migrated to a Python 3.7, you should be file with Pillow 5.1.0.
 
 
 ## How to use
-### Default behavior 
+
+The most simple form of usage is to type a simple command in the shell, 
+passing the path to an image or a folder containing images as an argument.
+The optional -nr or --no-recursion switch argument tells the application not 
+to scan recursively through the subdirectories.
+
 By default, this utility applies lossy compression to JPEG files using a 
 quality setting of 75% (by Pillow's scale), removes any EXIF metadata, tries 
 to optimize each encoder's settings for maximum space reduction and applies 
@@ -72,7 +78,6 @@ processed version if its file size is smaller than the original.
 If no space savings were achieved for a given file, the original version will 
 be kept instead.
 
-### Options
 In addition to the default settings, you may downsize the images to fit a 
 maximum width and/or a maximum height. This image resizing is done as the 
 first step in the image optimization process. 
@@ -97,44 +102,9 @@ source file or folder before using this utility, in order to be able to
 recover any eventual damaged files or any resulting images that don't have the
 desired quality.**
   
-  
-### Basic usage:
 
-Get a little help about how to use this application:
+### Examples of basic usage
 
-```
-optimize-images.py -h
-```
-
-```
-optimize-images.py --help
-```
-
-
-
-Check the installed version of this application:
-
-```
-optimize-images.py -v
-```
-
-```
-optimize-images.py --version
-```
-  
-
-View a list of the supported image formats by their usual filename extensions 
-(please note that files without the corresponding file extension will be ignored):
-
-```
-optimize-images.py -sf
-```
-
-```
-optimize-images.py --supported-formats
-```
-  
-  
 Try to optimize a single image file:
 
 ```
@@ -160,6 +130,21 @@ optimize-images.py -nr ./
 optimize-images.py --no-recursion ./
 ```
 
+
+### Getting help on how to use this application
+
+To check the list of available options and their usage, you just need to use one of the 
+following commands:
+
+
+```
+optimize-images.py -h
+```
+
+```
+optimize-images.py --help
+```
+  
 
 ### Format independent options:
 
@@ -379,6 +364,31 @@ optimize-images.py -cc -hbg 0 255 0 ./image.png
 optimize-images.py --convert_big --hex-bg-color 00FF00 ./image.png
 ```
 
+### Other features
+
+
+Check the installed version of this application:
+
+```
+optimize-images.py -v
+```
+
+```
+optimize-images.py --version
+```
+  
+
+View a list of the supported image formats by their usual filename extensions 
+(please note that files without the corresponding file extension will be ignored):
+
+```
+optimize-images.py -sf
+```
+
+```
+optimize-images.py --supported-formats
+```
+  
   
 ## Did you find a bug or do you have a suggestion?
 
