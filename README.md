@@ -11,6 +11,9 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
+![optimize-images_screenshot](https://user-images.githubusercontent.com/18650184/42172232-5788c43a-7e13-11e8-8094-5811e7fd55c1.png)
+
+
 ## Contents
 * [Installation and dependencies](#installation-and-dependencies)
 * [Default behavior](#default-behavior)
