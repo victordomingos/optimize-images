@@ -30,7 +30,7 @@ known external binaries.
        - [PNG](#png)
           - [Reduce the number of colors](#reduce-the-number-of-colors)
           - [Maximum number of colors](#maximum-number-of-colors)
-          - [Automatic conversion of big PNG images to JPEG](#automatic-conversion—of-big-png-images-to-jpeg)
+          - [Automatic conversion of big PNG images to JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
           - [Changing the default background color](#changing-the-default-background-color)
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
