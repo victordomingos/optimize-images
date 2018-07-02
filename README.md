@@ -51,6 +51,9 @@ built-in Pillow 2.9.0 in Pythonista for iOS):
 * iOS
   - piexif==1.0.13
 
+Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or 
+earlier, you should use Pillow 5.0.0 instead. In case you have already 
+migrated to a Python 3.7, you should be file with Pillow 5.1.0.
 
 
 ## Default behavior 
