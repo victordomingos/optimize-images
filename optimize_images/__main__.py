@@ -37,15 +37,8 @@ from PIL import Image, ImageFile
 from timeit import default_timer as timer
 from typing import Iterable, NamedTuple, Tuple, NewType, Union
 
-__version__ = '1.2'
+from optimize_images.constants import *
 
-SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg']
-IPAD_FONT_SIZE = 15
-IPHONE_FONT_SIZE = 10
-IOS_WORKERS = 2
-IOS_FONT = "Menlo"
-DEFAULT_QUALITY = 80
-DEFAULT_BG_COLOR = (255, 255, 255)
 
 ImageType = NewType('ImageType', Image)
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
@@ -131,18 +124,15 @@ def get_args():
                 "any images found in all of its subdirectories."
     parser.add_argument('path', nargs="?", type=str, help=path_help)
 
-    parser.add_argument(
-        '-v', '--version', action='version', version=__version__)
+    parser.add_argument('-v', '--version', action='version',
+                        version=__import__('optimize_images').__version__)
 
     sf_help = "Display the list of image formats currently supported by this application."
-    parser.add_argument(
-        '-sf', '--supported-formats', action='store_true', help=sf_help)
+    parser.add_argument('-sf', '--supported-formats',
+                        action='store_true', help=sf_help)
 
-    parser.add_argument(
-        '-nr',
-        "--no-recursion",
-        action='store_true',
-        help="Don't recurse through subdirectories.")
+    parser.add_argument('-nr', '--no-recursion', action='store_true',
+                        help="Don't recurse through subdirectories.")
 
     size_msg = "These options will be applied individually to each " \
                "image being processed. Any image that has a dimension " \
