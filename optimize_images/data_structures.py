@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 import concurrent.futures
 
 from typing import NamedTuple, Tuple, NewType
