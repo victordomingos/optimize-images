@@ -5,7 +5,7 @@ Version history:
 
 
 ---
-v.1.2 - /06/2018
+v.1.2 - /07/2018
  * Adding a new big feature: "convert big PNG files to JPG format" (WIP)
  * Adding a new option to set background color while doing any PNG operations
    that remove transparency (convert big and reduce colors).
@@ -14,6 +14,7 @@ v.1.2 - /06/2018
  * Created some global constants for iOS console and thread settings.
  * Created a global constant for JPEG quality and raised the default to 80.
  * Adjustments in the downsizing code to better produce the expected behavior.
+ * Converted module to package.
  * Other minor changes.
 
 ---

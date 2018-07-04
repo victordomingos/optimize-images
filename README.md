@@ -104,7 +104,7 @@ desired quality.**
 Try to optimize a single image file:
 
 ```
-optimize-images.py filename.jpg
+optimize-images filename.jpg
 ```
 
   
@@ -112,18 +112,18 @@ Try to optimize all image files in current working directory and all of its
 subdirectories:
 
 ```
-optimize-images.py ./
+optimize-images ./
 ```
 
 
 Try to optimize all image files in current working directory, without recursion:
 
 ```
-optimize-images.py -nr ./
+optimize-images -nr ./
 ```
 
 ```
-optimize-images.py --no-recursion ./
+optimize-images --no-recursion ./
 ```
 
 
@@ -134,11 +134,11 @@ following commands:
 
 
 ```
-optimize-images.py -h
+optimize-images -h
 ```
 
 ```
-optimize-images.py --help
+optimize-images --help
 ```
   
 
@@ -166,11 +166,11 @@ Try to optimize all image files in current working directory, with recursion,
 downsizing each of them to a maximum width of 1600 pixels:
 
 ```
-optimize-images.py -mw 1600 ./
+optimize-images -mw 1600 ./
 ```
 
 ```
-optimize-images.py --max-width 1600 ./
+optimize-images --max-width 1600 ./
 ```
 
 
@@ -178,11 +178,11 @@ Try to optimize all image files in current working directory, without
 recursion, downsizing each of them to a maximum height of 800 pixels:
 
 ```
-optimize-images.py -nr -mh 1600 ./
+optimize-images -nr -mh 1600 ./
 ```
 
 ```
-optimize-images.py --no-recursion --max-height 800 ./
+optimize-images --no-recursion --max-height 800 ./
 ```
 
 
@@ -208,11 +208,11 @@ Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files:
 
 ```
-optimize-images.py -q 65 ./
+optimize-images -q 65 ./
 ```
 
 ```
-optimize-images.py --quality 65 ./
+optimize-images --quality 65 ./
 ```
   
 
@@ -226,11 +226,11 @@ subdirectories, applying a quality of 65% to JPEG files and keeping the
 original EXIF data:
 
 ```
-optimize-images.py -q 65 -ke ./
+optimize-images -q 65 -ke ./
 ```
 
 ```
-optimize-images.py --quality 65 --keep-exif ./
+optimize-images --quality 65 --keep-exif ./
 ```
 
 
@@ -249,10 +249,10 @@ applying and adaptive color palette with the default amount of colors
 (255):
 
 ```
-optimize-images.py -rc ./imagefile.png
+optimize-images -rc ./imagefile.png
 ```
 ```
-optimize-images.py --reduce-colors ./imagefile.png
+optimize-images --reduce-colors ./imagefile.png
 ```
 
 
@@ -266,10 +266,10 @@ Try to optimize a single image file in current working directory,
 reducing the color palette to a specific value:
 
 ```
-optimize-images.py -rc -mc 128 ./imagefile.png
+optimize-images -rc -mc 128 ./imagefile.png
 ```
 ```
-optimize-images.py --reduce-colors --max-colors 128 ./imagefile.png
+optimize-images --reduce-colors --max-colors 128 ./imagefile.png
 ```
 
 Try to optimize all image files in current working directory and all of
@@ -277,10 +277,10 @@ its subdirectories, applying a quality of 65% to JPEG files and
 reducing the color palette of PNG files to just 64 colors:
 
 ```
-optimize-images.py -q 60 -rc -mc 64 ./
+optimize-images -q 60 -rc -mc 64 ./
 ```
 ```
-optimize-images.py --quality 60 --reduce-colors --max-colors 64 ./
+optimize-images --quality 60 --reduce-colors --max-colors 64 ./
 ```
 
 
@@ -300,11 +300,11 @@ REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION.**
 
 
 ```
-optimize-images.py -cc
+optimize-images -cc
 ```
 
 ```
-optimize-images.py --convert_big
+optimize-images --convert_big
 ```
 
 
@@ -313,11 +313,11 @@ automatic convertion to JPEG, by adding the `-fd` or `--force-delete`
 argument:
 
 ```
-optimize-images.py -cc -fd
+optimize-images -cc -fd
 ```
 
 ```
-optimize-images.py --convert_big --force-delete
+optimize-images --convert_big --force-delete
 ```
 
 
@@ -334,11 +334,11 @@ separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
 To convert a big PNG image with some transparency (like, for instance,
 macOS screenshots) applying a black background:
 ```
-optimize-images.py -cc -bg 0 0 0 ./image.png
+optimize-images -cc -bg 0 0 0 ./image.png
 ```
 
 ```
-optimize-images.py --convert_big --bg-color 0 0 0 ./image.png
+optimize-images --convert_big --bg-color 0 0 0 ./image.png
 ```
 
 If you prefer to use hexadecimal values, like those that are usual in
@@ -351,11 +351,11 @@ To convert a big PNG image with some transparency applying a pure green
 background:
 
 ```
-optimize-images.py -cc -hbg 0 255 0 ./image.png
+optimize-images -cc -hbg 0 255 0 ./image.png
 ```
 
 ```
-optimize-images.py --convert_big --hex-bg-color 00FF00 ./image.png
+optimize-images --convert_big --hex-bg-color 00FF00 ./image.png
 ```
 
 ### Other features
@@ -364,11 +364,11 @@ optimize-images.py --convert_big --hex-bg-color 00FF00 ./image.png
 Check the installed version of this application:
 
 ```
-optimize-images.py -v
+optimize-images -v
 ```
 
 ```
-optimize-images.py --version
+optimize-images --version
 ```
   
 
@@ -376,11 +376,11 @@ View a list of the supported image formats by their usual filename extensions
 (please note that files without the corresponding file extension will be ignored):
 
 ```
-optimize-images.py -sf
+optimize-images -sf
 ```
 
 ```
-optimize-images.py --supported-formats
+optimize-images --supported-formats
 ```
   
   

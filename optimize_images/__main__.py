@@ -202,10 +202,10 @@ def get_args():
         '-bg', "--bg-color", type=int, nargs=3, help=bg_help)
 
     hbg_help = "The background color (in hexadecimal, HTML style) to use when " \
-              "doing operations that remove transparency, like reducing colors " \
-              "or converting from PNG to JPEG E.g.: '00FF00' for a pure green " \
-              "color. If ommited, it will default to a white background white " \
-              "(FFFFFF)."
+               "doing operations that remove transparency, like reducing colors " \
+               "or converting from PNG to JPEG E.g.: '00FF00' for a pure green " \
+               "color. If ommited, it will default to a white background white " \
+               "(FFFFFF)."
     png_group.add_argument('-hbg', "--hex-bg-color", type=str, help=hbg_help)
 
     cb_help = "Automatically convert to JPEG format any big PNG images that " \
@@ -381,12 +381,12 @@ def is_big_png_photo(src_path: str) -> bool:
 def downsize_img(img: ImageType, max_w: int,
                  max_h: int) -> Tuple[ImageType, bool]:
     """ Reduce the size of an image to the indicated maximum dimensions
-    
+
     This function takes a PIL.Image object and integer values for the maximum
     allowed width and height (a zero value means no maximum constraint),
     calculates the size that meets those constraints and resizes the image. The
     resize is done in place, changing the original object. Returns a boolean
-    indicating if the image was changed. 
+    indicating if the image was changed.
     """
     w, h = img.size
 
@@ -414,7 +414,7 @@ def downsize_img(img: ImageType, max_w: int,
 
 def do_reduce_colors(img: ImageType,
                      max_colors: int) -> Tuple[ImageType, int, int]:
-    #TODO - Try to reduce the number of colors without loosing transparency
+    # TODO - Try to reduce the number of colors without loosing transparency
 
     mode = "P"
     orig_mode = img.mode
@@ -694,7 +694,7 @@ def main():
                 if r.was_optimized:
                     optimized_files += 1
                     total_bytes_saved = total_bytes_saved + (
-                        r.orig_size - r.final_size)
+                            r.orig_size - r.final_size)
                 show_file_status(r, line_width)
 
     # Optimize a single image
@@ -709,7 +709,7 @@ def main():
         if r.was_optimized:
             optimized_files = 1
             total_bytes_saved = total_bytes_saved + (
-                r.orig_size - r.final_size)
+                    r.orig_size - r.final_size)
         show_file_status(r, line_width)
     else:
         print(
