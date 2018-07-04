@@ -65,7 +65,7 @@ setup(name='optimize-images',
       ],
 
       entry_points={
-          'console_scripts': ['optimzie-images = optimize_images.__main__:main']
+          'console_scripts': ['optimize-images = optimize_images.__main__:main']
       },
       project_urls={
           'Documentation': 'https://github.com/victordomingos/optimize-images/docs',
