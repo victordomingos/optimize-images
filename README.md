@@ -37,23 +37,72 @@ known external binaries.
 
 ## Installation and dependencies:
 
-The `optimize-images.py` script should be placed in some folder included in 
-your shell path, and should have executable permissions.
+### On regular desktop operating systems
 
-Please make sure that you are running Python 3.6+ and have the following 
-packages installed (we are targeting both Pillow 5.1.0 on desktop and the
-built-in Pillow 2.9.0 in Pythonista for iOS):
+The current development version can be installed with `pip install -e`,
+followed by the path to the main project directory (the same directory that
+has the `setup.py` file). To run this application, you need to have a working
+Python 3.6+ instalation. We try to keep the external dependencies at a minimum,
+in order to keep compatibility with different plataforms, including Pythonista
+on iOS. At this moment, we require:
 
-* On desktop:
   - Pillow==5.1.0
   - piexif==1.0.13
 
-* iOS
+Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
+earlier, you should use Pillow 5.0.0 instead. In case you have already
+migrated to a Python 3.7, you should be file with Pillow 5.1.0.
+
+We plan to submit this to PyPI as soon as possible, in order to provide a more
+straight-forward instalation and upgrade process. While that doesn't happen,
+please feel free to take a look at the next section and maybe consider
+contributing to this project.
+
+
+### On iPhone or iPad (in Pythonista 3 for iOS)
+
+First you will need a Python environment and a command-line shell compatible
+with Python 3. Presently, it means you need to have an app called
+[Pythonista 3](http://omz-software.com/pythonista/) (which is, among other
+things, a very nice environment for developing and/or running pure Python
+applications on iOS).
+
+Then you need to install
+[StaSh](https://github.com/ywangd/stash), which is a Python-based shell
+application for Pythonista. It will enable you to use useful commands like
+`wget`, `git clone`, `pip install` and many others. It really deserves an home
+screen shortcut on your iPhone or iPad.
+
+After following the instructions for
+StaSh installation, you may need to update it to a more recent version. Try
+this command:
+
+```
+selfupdate.py -f bennr01:command_testing
+```
+
+Then force-quit and restart Pythonista and launch StaSh again. It should now
+be running in Python 3. You may now try to install this application, directly
+from this git repository:
+
+```
+pip install victordomingos/optimize-images
+```
+
+If all goes well, it should install any dependencies, place a new `optimize_images`
+package inside the `~/Documents/site-packages-3/` folder and create an
+entrypoint script named `optimize-images.py` in `stash_extensions/bin`.
+
+Currently, on Pythonista/iOS we require:
+
   - piexif==1.0.13
 
-Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or 
-earlier, you should use Pillow 5.0.0 instead. In case you have already 
-migrated to a Python 3.7, you should be file with Pillow 5.1.0.
+Then force-quit and launch StaSh again. You should now be able to run this
+application directly from the shell or by creating a home screen shortcut
+with the required arguments to the entrypoint script
+`~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
+image files that you may have inside your Pythonista environment.
+
 
 
 ## How to use
