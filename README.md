@@ -272,7 +272,7 @@ optimize-images --quality 65 ./
 
 ##### Keep EXIF data
 
-Use the `-ke` or `--keep-exif`) to keep existing image EXIF data in JPEG 
+Use the `-ke` or `--keep-exif` option to keep existing EXIF data in JPEG 
 images (by default, if you don't add this argument, EXIF data is discarded).
 
 Try to optimize all image files in current working directory and all of its
