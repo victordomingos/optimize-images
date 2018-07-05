@@ -16,6 +16,9 @@ known external binaries.
 
 ## Contents
 * **[Installation and dependencies](#installation-and-dependencies)**
+   - [On regular desktop operating systems](#on-regular-desktop-operating-systems)
+   - [On iPhone or iPad (in Pythonista 3 for iOS)](#on-iphone-or-ipad-in-pythonista-3-for-ios)
+   
 * **[How to use](#how-to-use)**
    * [DISCLAIMER](#disclaimer)
    * [Examples of basic usage](#examples-of-basic-usage)
@@ -32,6 +35,7 @@ known external binaries.
           - [Automatic conversion of big PNG images to JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
           - [Changing the default background color](#changing-the-default-background-color)
    * [Other features](#other-features)
+   
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
 
