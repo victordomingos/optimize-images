@@ -209,7 +209,7 @@ the original. These options are disabled by default.
 These optional arguments can be used to constrain the final size of the images:
 
 * Maximum width: `-mw` or `--max-width` 
-* Maximum height: `-mh` ou `--max-height`
+* Maximum height: `-mh` or `--max-height`
 
 The image will be downsized to a maximum size that fits the specified 
 width and/or height. If the user enters values to both dimensions, it will 
