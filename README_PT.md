@@ -213,24 +213,27 @@ optimize-images --help
 
 #### Redimensionamento de imagens:
 
-These options will be applied individually to each image being processed. Any 
-image that has a dimension exceeding a specified value will be downsized as 
-the first optimization step. The resizing will not take effect if, after the 
-whole optimization process, the resulting file size isn't any smaller than 
-the original. These options are disabled by default.
+Estas opções serão aplicadas individualmente a cada imagem a ser processada.
+O tamanho de qualquer imagem que tenha uma dimensão superior ao valor 
+correspondente especificado será reduzido, sendo esse o primeiro passo de 
+otimização. O redimensionamento não terá efeito se, após todo o processo de 
+otimização, o tamanho do ficheiro resultante não for inferior ao original.
+Estas opções encontram-se desativadas por defeito.
 
-These optional arguments can be used to constrain the final size of the images:
+Os seguintes argumentos opcionais podem ser utilizados para limitar o tamanho
+final das imagens:
 
-* Maximum width: `-mw` or `--max-width` 
-* Maximum height: `-mh` ou `--max-height`
+* Largura máxima: `-mw` ou `--max-width` 
+* Altura máxima: `-mh` ou `--max-height`
 
-The image will be downsized to a maximum size that fits the specified 
-width and/or height. If the user enters values to both dimensions, it will 
-calculate the image proportions for each case and use the one that results in 
-a smaller size. 
+O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da
+Largura e/ou altura especificada(s). Se o utilizador introduzir valores para 
+ambas as dimensões, serão calculadas as proporções da imagem para cada caso e 
+será aplicada a que resulte num tamanho menor.
 
-Try to optimize all image files in current working directory, with recursion, 
-downsizing each of them to a maximum width of 1600 pixels:
+Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual, de 
+forma recursiva, reduzindo o tamanho de cada imagem para uma larga máxima de 
+1600 pixels:
 
 ```
 optimize-images -mw 1600 ./
@@ -240,9 +243,9 @@ optimize-images -mw 1600 ./
 optimize-images --max-width 1600 ./
 ```
 
-
-Try to optimize all image files in current working directory, without 
-recursion, downsizing each of them to a maximum height of 800 pixels:
+Tentar otimizar todos os ficheiros de imagem apenas na raiz da pasta de 
+trabalho atual, de forma não recursiva, reduzindo o tamanho de cada imagem 
+para uma altura máxima de 800 pixels:
 
 ```
 optimize-images -nr -mh 1600 ./
@@ -256,23 +259,24 @@ optimize-images --no-recursion --max-height 800 ./
 
 ### Opções específicas para cada formato:
 
-The following format specific settings are optional and may be used
-simultaneously, for instance when processing a directory that may
-contain images in more than one format. The appropriate format-specific
-options entered by the user will then be automatically selected and
-applied for each image.
+As seguintes definições específicas para cada formato são opcionais e 
+podem ser utilizadas simultaneamente- por exemplo ao processar uma 
+pasta que poderá conter imagens em mais do que um formato. As 
+definições específicas introduzidas pelo utilizador serão então 
+selecionadas e aplicadas automaticamente para cada imagem.
 
 #### JPEG:
 
 ##### Qualidade
 
-Set the quality for JPEG files (an integer value, between 1 and 100), using 
-the `-q` or `--quality` argument, folowed by the quality value to apply.
-A lower value will reduce both the image quality and the file size. The
-default value is 80.
+Defina a qualidade para ficheiros JPEG (um número inteiro, entre 1 e 100), 
+usando o argumento `-q` ou `--quality`, seguido do valor de qualidade a 
+aplicar. Um valor mais baixo reduzirá tanto a qualidade de imagem como o
+tamanho do ficheiro. O valor predefinido é 80.
 
-Try to optimize all image files in current working directory and all of its
-subdirectories, applying a quality of 65% to JPEG files:
+
+Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e 
+em todas as subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG:
 
 ```
 optimize-images -q 65 ./
