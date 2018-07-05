@@ -289,12 +289,13 @@ optimize-images --quality 65 ./
 
 ##### Manter dados EXIF
 
-Use the `-ke` or `--keep-exif`) to keep existing image EXIF data in JPEG 
-images (by default, if you don't add this argument, EXIF data is discarded).
-
-Try to optimize all image files in current working directory and all of its
-subdirectories, applying a quality of 65% to JPEG files and keeping the 
-original EXIF data:
+Utilize a opção `-ke` ou `--keep-exif` para manter os dados EXIF existentes
+em imagens JPEG (por defeito, se não acrescentar este argumento, os dados 
+EXIF são apagados.
+ 
+Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e
+em todas as suas subpastas, aplicando uma qualidade de 65% a ficheiros JPEG
+e mantendo os dados EXIF originais:
 
 ```
 optimize-images -q 65 -ke ./
@@ -309,15 +310,15 @@ optimize-images --quality 65 --keep-exif ./
 
 ##### Reduzir o número de cores 
 
-To reduce the number of colors (PNG) using an adaptive color palette with 
-dithering, use the `-rc` or `--reduce-colors` optional argument.
-This option can have a big impact on file size, but please note that
-will also affect image quality in a very noticeable way, especially in
-images that have color gradients and/or transparency.
+Para reduzir o número de cores (PNG) usando uma paleta de cores adaptativa 
+Com difusão, utilize o argumento opcional `-rc` ou `--reduce-colors`. Esta 
+opção pode ter um grande impacto no tamanho dos ficheiros, mas por favor
+tenha em consideração que também irá afetar de uma forma muito notória a 
+qualidade de imagem, especialmente em imagens que tenham gradientes de 
+cores e/ou transparência.
 
-Try to optimize a single image file in current working directory,
-applying and adaptive color palette with the default amount of colors
-(255):
+Tentar otimizar um único ficheiro de imagem na pasta atual, aplicando uma
+paleta de cores adaptativa, com o número de cores predefinido (255):
 
 ```
 optimize-images -rc ./imagefile.png
@@ -329,12 +330,12 @@ optimize-images --reduce-colors ./imagefile.png
 
 ##### Número máximo de cores
 
-Use the  `-mc` or `--max-colors` optional argument to specify the maximum  
-number of colors for PNG images when using the reduce colors (-rc) option 
-(an integer value, between 0 and 255). The default value is 255.
+Utilize o argumento opcional `-mc` ou `--max-colors` para especificar o
+Número máximo de cores para imagens PNG, ao utilizar a opção de redução de 
+cores (um número inteiro entre 0 e 255). O valor predefinido é 255.
 
-Try to optimize a single image file in current working directory,
-reducing the color palette to a specific value:
+Tentar otimizar um único ficheiro de imagem na pasta atual, reduzindo a 
+paleta de cores para um valor específico:
 
 ```
 optimize-images -rc -mc 128 ./imagefile.png
@@ -343,9 +344,9 @@ optimize-images -rc -mc 128 ./imagefile.png
 optimize-images --reduce-colors --max-colors 128 ./imagefile.png
 ```
 
-Try to optimize all image files in current working directory and all of
-its subdirectories, applying a quality of 65% to JPEG files and
-reducing the color palette of PNG files to just 64 colors:
+Tentar otimizar todos os ficheiros de imagem na pasta atual e em todas as 
+suas subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG e 
+reduzindo a paleta de cores dos ficheiros PNG para apenas 64 cores:
 
 ```
 optimize-images -q 60 -rc -mc 64 ./
@@ -357,17 +358,19 @@ optimize-images --quality 60 --reduce-colors --max-colors 64 ./
 
 ##### Conversão automática de imagens PNG grandes para JPEG
 
-*(work in progess)*
+*(trabalho em curso)*
 
-Automatically convert to JPEG format any big PNG images that have with a
-large number of colors (presumably a photo or photo-like image). It uses
-an algorithm to determine whether it is a good idea to convert to JPG
-and automatically decide about it. By default, when using this option,
-the original PNG files will remain untouched and will be kept alongside
-the optimized JPG images in their original folders.
+Converter automaticamente para o formato JPEG quaisquer imagens PNG 
+grandes que tenham um grande número de cores (presumivelmente uma 
+fotografia ou uma imagem semelhante a uma fotografia. Utiliza um 
+algoritmo para determinar se será uma boa ideia converter para JPG e 
+decide automaticamente sobre isso. Por defeito, ao usar esta opção,
+os ficheiros PNG originais permanecerão intactos e serão mantidos 
+juntamente com as imagens JPG otimizadas.
 
-IMPORTANT: IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE
-REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION.**
+**IMPORTANTE: SE JÁ EXISTIR NA MESMA PASTA UM FICHEIRO JPEG COM O 
+MESMO NOME, SERÁ SUBSTITUÍDO PELO FICHEIRO JPEG RESULTANTE DESTA
+CONVERSÃO.**
 
 
 ```
