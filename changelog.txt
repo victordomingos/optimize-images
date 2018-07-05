@@ -15,6 +15,7 @@ v.1.2 - 06/07/2018
  * Created a global constant for JPEG quality and raised the default to 80.
  * Adjustments in the downsizing code to better produce the expected behavior.
  * Refactored module into a full package and created the `setup.py` file.
+ * Added Portuguese version of the documentation.
  * Other minor changes.
 
 ---

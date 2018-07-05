@@ -33,145 +33,158 @@ externos bem conhecidos.
           - [Qualidade](#qualidade)
           - [Manter dados EXIF](#manter-dados-exif)
        - [PNG](#png)
-          - [Reduzir o número de cores](#reduce-the-number-of-colors)
-          - [Número máximo de cores](#maximum-number-of-colors)
-          - [Conversão automática de imagens PNG grandes para JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
-          - [Mudar a cor de fundo predefinida](#changing-the-default-background-color)
-   * [Outras funcionalidades](#other-features)
+          - [Reduzir o número de cores](#reduzir-o-número-de-cores)
+          - [Número máximo de cores](#número-máximo-de-cores)
+          - [Conversão automática de imagens PNG grandes para JPEG](#conversão-automática-de-imagens-png-grandes-para-jpeg)
+          - [Mudar a cor de fundo predefinida](#mudar-a-cor-de-fundo-predefinida)
+   * [Outras funcionalidades](#outras-funcionalidades)
    
 - **[Encontrou um bug ou tem uma sugestão?](#encontrou-um-bug-ou-tem-uma-sugestão)**
 
-## Installation and dependencies:
 
-### On regular desktop operating systems
+## Instalação e dependências:
 
-The current development version can be installed with `pip install -e`,
-followed by the path to the main project directory (the same directory that
-has the `setup.py` file). To run this application, you need to have a working
-Python 3.6+ instalation. We try to keep the external dependencies at a minimum,
-in order to keep compatibility with different plataforms, including Pythonista
-on iOS. At this moment, we require:
+### Em sistemas operativos de secretária
+
+A atual versão de desenvolvimento pode ser instalada com o comando
+`pip install -e`, seguido do caminho para a pasta principal do projeto (a
+mesma pasta que contém o ficheiro `setup.py`). Para executar esta aplicação é
+necessária uma instalação do Python 3.6 ou superior. Procuramos manter no
+mínimo as dependências externas, de modo a manter a compatibilidade com
+diferentes plataformas, incluindo Pythonista em iOS. Neste momento, requer:
 
   - Pillow==5.1.0
   - piexif==1.0.13
 
-Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
-earlier, you should use Pillow 5.0.0 instead. In case you have already
-migrated to a Python 3.7, you should be file with Pillow 5.1.0.
+Nota: Se está a utilizar um Mac com Python 3.6 e macOS X 10.11 El Capitan ou
+anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado 
+para Python3.7, não deverá ter problemas com o Pillow 5.1.0.
 
-We plan to submit this to PyPI as soon as possible, in order to provide a more
-straight-forward instalation and upgrade process. While that doesn't happen,
-please feel free to take a look at the next section and maybe consider
-contributing to this project.
+Planeamos submeter esta aplicação ao PyPI tão brevemente quanto possível, para
+permitir oferecer uma forma de instalação e atualização mais simples.
+Enquanto isso não acontece, estejam à vontade para dar uma olhada na última
+secção e talvez considerar contribuir também para este projeto.
 
 
-### On iPhone or iPad (in Pythonista 3 for iOS)
 
-First you will need a Python environment and a command-line shell compatible
-with Python 3. Presently, it means you need to have an app called
-[Pythonista 3](http://omz-software.com/pythonista/) (which is, among other
-things, a very nice environment for developing and/or running pure Python
-applications on iOS).
+### Em iPhone ou iPad (na app Pythonista 3 para iOS)
 
-Then you need to install
-[StaSh](https://github.com/ywangd/stash), which is a Python-based shell
-application for Pythonista. It will enable you to use useful commands like
-`wget`, `git clone`, `pip install` and many others. It really deserves an home
-screen shortcut on your iPhone or iPad.
+Primeiro, irá precisar de um ambiente Python e uma consola de linha de comandos
+compatível com Python 3. No momento presente, isto significa que precisa de ter
+instalada uma app chamada [Pythonista 3](http://omz-software.com/pythonista/)
+(que é, entre outras coisas, um excelente ambiente para desenvolvimento e
+execução de aplicações de Python puro em iOS). 
 
-After following the instructions for
-StaSh installation, you may need to update it to a more recent version. Try
-this command:
+Depois, precisará de instalar a
+[StaSh](https://github.com/ywangd/stash), que é uma consola de linha de
+comandos baseada em Python, concebida especificamente para correr no
+Pythonista. Irá permitir executar comandos bem úteis como `wget`, `git clone`,
+`pip install` e muitos outros. Merece realmente um atalho no ecrã principal do
+seu iPhone ou iPad. 
+
+Depois de seguir as instruções para a instalação da StaSh,
+poderá precisar de a atualizar para uma versão mais recente. Experimente este
+comando:
 
 ```
 selfupdate.py -f bennr01:command_testing
 ```
 
-Then force-quit and restart Pythonista and launch StaSh again. It should now
-be running in Python 3. You may now try to install this application, directly
-from this git repository:
+De seguida, force o encerramento do Pythonista, reiniciando-o de seguida, e
+inicie novamente a StaSh. Deverá estar agora a correr em Python 3. Neste
+momento, pode tentar instalar esta aplicação, diretamente a partir deste
+repositório:
 
 ```
 pip install victordomingos/optimize-images
 ```
 
-If all goes well, it should install any dependencies, place a new `optimize_images`
-package inside the `~/Documents/site-packages-3/` folder and create an
-entrypoint script named `optimize-images.py` in `stash_extensions/bin`.
+Se tudo correr bem, o comando acima deverá instalar quais quer dependências,
+colocar um pacote chamado `optimize_images` dentro da pasta
+`~/Documents/site-packages-3` e criar um *script* de execução chamado
+`optimize-images.py` em `stash_extensions/bin`.
 
-Currently, on Pythonista/iOS we require:
+Neste momento, em Pythonista/iOS esta aplicação requer:
 
   - piexif==1.0.13
 
-Then force-quit and launch StaSh again. You should now be able to run this
-application directly from the shell or by creating a home screen shortcut
-with the required arguments to the entrypoint script
-`~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
-image files that you may have inside your Pythonista environment.
+
+No final dos passos anteriores, force o encerramento do Pythonista, reinicie 
+a app e inicie novamente a StaSh. Já deverá conseguir executar esta aplicação 
+diretamente a partir da consola ou criando um atalho no ecrã inicial do iOS, 
+com os argumentos necessários, para o script de entrada, localizado em 
+`~/Documents/stash_extensions/bin/optimize-images.py`, para otimizar quaisquer 
+ficheiros de imagem que tenha no Pythonista.
 
 
+## Como utilizar
 
-## How to use
+A forma mais simples de utilização consiste na introdução de um comando simples 
+na linha de comandos, passando o caminho para uma imagem ou uma pasta contendo 
+imagens como argumento.
 
-The most simple form of usage is to type a simple command in the shell, 
-passing the path to an image or a folder containing images as an argument.
-The optional -nr or --no-recursion switch argument tells the application not 
-to scan recursively through the subdirectories.
+Os argumentos opcionais `-nr` ou `--no-recursion` dizem à aplicação para não
+percorrer de forma recursiva todas as subpastas (ou seja, processar imagens 
+apenas na raiz da pasta indicada).
 
-By default, this utility applies lossy compression to JPEG files using a 
-quality setting of 80% (by Pillow's scale), removes any EXIF metadata, tries 
-to optimize each encoder's settings for maximum space reduction and applies 
-the maximum ZLIB compression on PNG. 
+Por defeito, esta ferramenta aplica compressão com perdas a ficheiros JPEG 
+utilizando um valor de qualidade de 80% (pela escala do Pillow), remove 
+quaisquer metadados EXIF existentes, tenta otimizar as definições de cada 
+encodificador para a máxima redução de espaço e aplica a compressão ZLIB 
+máxima em ficheiros PNG.
 
-You must explicitly pass it a path to the source image file or to the
-directory containing the image files to be processed. By default, it will scan 
-recursively through all subfolders and process any images found using the 
-default or user-provided settings, replacing each original file by its 
-processed version if its file size is smaller than the original.
+É necessário indicar explicitamente o caminho para o ficheiro de imagem 
+original ou para a pasta que contém as imagens a processar. Por defeito, 
+a aplicação irá percorrer recursivamente todas as subpastas e processar 
+quaiquer imagens encontradas utilizando as configurações predefinidas ou as
+indicadas pelo utilizador, substituindo cada ficheiro original pela sua 
+versão processada se o seu tamanho de ficheiro for menor que o original.
 
-If no space savings were achieved for a given file, the original version will 
-be kept instead.
+Se para um determinado ficheiro não tiver sido obtida qualquer poupança de 
+espaço, será antes mantida a versão original.
 
-In addition to the default settings, you may downsize the images to fit a 
-maximum width and/or a maximum height. This image resizing is done as the 
-first step in the image optimization process. 
+Para além das configurações predefinidas, poderá reduzir o tamanho das imagens,
+fazendo-as ajustarem-se à largura e/ou à altura máxima(s) pretendida(s). Este 
+redimensionamento de imagens é realizado como o primeiro passo no processo de 
+otimização de imagem.
 
-You may also choose to keep the original EXIF data (if it exists) in the 
-optimized files. Note, however, that this option is currently available only 
-for JPEG files. 
+Também poderá optar por manter os dados EXIF originais (se existirem) nos 
+ficheiros otimizados. De notar, contudo, que esta opção apenas se encontra 
+disponível para ficheiros JPEG.
 
-In PNG files, you will achieve a more drastic file size reduction if you 
-choose to reduce the number of colors using an adaptive palette. Be aware 
-that by using this option all PNG images will loose transparency and image 
-quality may be affected in a very noticeable way.
+Nos ficheiros PNG, conseguirá alcançar uma redução mais acentuada no tamanho 
+dos ficheiros se optar por reduzir o número de cores utilizando uma paleta 
+adaptativa. Tenha em consideração que ao usar esta opção todas as imagens PNG 
+irão perder a transparência e a qualidade de imagem poderá ser afetada de 
+forma bastante notória.
+
+### ADVERTÊNCIA
+**Por favor, tenha em consideração que a operação deste programa é feita DE 
+MODO DESTRUTIVO, substituindo os ficheiros originais pelos ficheiros 
+processados. Deverá por isso começar sempre por duplicar o ficheiro ou a pasta 
+original antes de usar este utilitário, de forma a poder recuperar algum 
+ficheiro eventualmente danificado ou quaisquer imagens resultantes que não
+tenham a qualidade desejada.**
 
 
-### DISCLAIMER
-**Please note that the operation is done DESTRUCTIVELY, by replacing the
-original files with the processed ones. You definitely should duplicate the
-source file or folder before using this utility, in order to be able to
-recover any eventual damaged files or any resulting images that don't have the
-desired quality.**
-  
+### Exemplos de utilização básica
 
-### Examples of basic usage
-
-Try to optimize a single image file:
+Tentar otimizar um único ficheiro:
 
 ```
 optimize-images filename.jpg
 ```
 
   
-Try to optimize all image files in current working directory and all of its
-subdirectories:
+Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e em 
+todas as suas subpastas:
 
 ```
 optimize-images ./
 ```
 
 
-Try to optimize all image files in current working directory, without recursion:
+Tentar otimizar todos os ficheiros de imagem na pasta atual, sem recursão:
 
 ```
 optimize-images -nr ./
@@ -182,11 +195,10 @@ optimize-images --no-recursion ./
 ```
 
 
-### Getting help on how to use this application
+### Obter ajuda sobre como usar esta aplicação
 
-To check the list of available options and their usage, you just need to use one of the 
-following commands:
-
+Para consultar a lista de opções disponíveis e o seu modo de funcionamento, 
+basta utilizar um dos seguintes comando:
 
 ```
 optimize-images -h
@@ -197,9 +209,9 @@ optimize-images --help
 ```
   
 
-### Format independent options:
+### Opções independentes do formato:
 
-#### Image resizing:
+#### Redimensionamento de imagens:
 
 These options will be applied individually to each image being processed. Any 
 image that has a dimension exceeding a specified value will be downsized as 
@@ -242,7 +254,7 @@ optimize-images --no-recursion --max-height 800 ./
 
 
 
-### Format specific options:
+### Opções específicas para cada formato:
 
 The following format specific settings are optional and may be used
 simultaneously, for instance when processing a directory that may
@@ -252,7 +264,7 @@ applied for each image.
 
 #### JPEG:
 
-##### Quality
+##### Qualidade
 
 Set the quality for JPEG files (an integer value, between 1 and 100), using 
 the `-q` or `--quality` argument, folowed by the quality value to apply.
@@ -271,7 +283,7 @@ optimize-images --quality 65 ./
 ```
   
 
-##### Keep EXIF data
+##### Manter dados EXIF
 
 Use the `-ke` or `--keep-exif`) to keep existing image EXIF data in JPEG 
 images (by default, if you don't add this argument, EXIF data is discarded).
@@ -291,7 +303,7 @@ optimize-images --quality 65 --keep-exif ./
 
 #### PNG:
 
-##### Reduce the number of colors 
+##### Reduzir o número de cores 
 
 To reduce the number of colors (PNG) using an adaptive color palette with 
 dithering, use the `-rc` or `--reduce-colors` optional argument.
@@ -439,6 +451,6 @@ optimize-images --supported-formats
 ```
   
   
-## Did you find a bug or do you have a suggestion?
+## Encontrou um *bug* ou tem uma sugestão?
 
-Please let me know, by opening a new issue or a pull request.
+Por favor avise-nos, abrindo um novo *issue* ou *pull request*.

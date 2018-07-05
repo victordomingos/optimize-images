@@ -1,3 +1,4 @@
+**[English](https://github.com/victordomingos/optimize-images/blob/master/README.md)** | [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/README_PT.md)
 
 
 # Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images)
@@ -55,11 +56,11 @@ on iOS. At this moment, we require:
 
 Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
 earlier, you should use Pillow 5.0.0 instead. In case you have already
-migrated to a Python 3.7, you should be file with Pillow 5.1.0.
+migrated to Python 3.7, you should be fine with Pillow 5.1.0.
 
 We plan to submit this to PyPI as soon as possible, in order to provide a more
 straight-forward instalation and upgrade process. While that doesn't happen,
-please feel free to take a look at the next section and maybe consider
+please feel free to take a look at the last section and maybe consider
 contributing to this project.
 
 
