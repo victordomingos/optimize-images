@@ -2,7 +2,7 @@
 
 
 # Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images)
-Um utilitário de linha de comandos escrito um Python para ajudar a reduzir o
+Um utilitário de linha de comandos escrito em Python para ajudar a reduzir o
 tamanho de ficheiros de imagens.
 
 Esta aplicação é escrita tanto quanto possível em Python puro, sem requisitos
