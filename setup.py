@@ -29,6 +29,7 @@ setup(name='optimize-images',
       version=__import__('optimize_images').__version__,
       description=short_desc,
       packages=['optimize_images'],
+      include_package_data=False,
       long_description=read_readme('README.md'),  # for PyPI
       long_description_content_type="text/markdown",
       license='MIT',
