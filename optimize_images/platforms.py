@@ -6,7 +6,7 @@ import concurrent.futures
 from typing import Tuple, Union
 
 from optimize_images.data_structures import PPoolExType, TPoolExType
-
+from optimize_images.constants import *
 
 def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':
