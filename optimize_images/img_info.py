@@ -3,6 +3,8 @@ import os
 
 from PIL import Image, ImageFile
 
+from optimize_images.img_aux_processing import downsize_img
+
 
 def is_big_png_photo(src_path: str) -> bool:
     """Try to determine if a given image if a big photo in PNG format

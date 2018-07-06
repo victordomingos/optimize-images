@@ -6,7 +6,9 @@ import concurrent.futures
 from typing import Tuple, Union
 
 from optimize_images.data_structures import PPoolExType, TPoolExType
-from optimize_images.constants import *
+from optimize_images.constants import IOS_FONT, IPHONE_FONT_SIZE, IPAD_FONT_SIZE
+from optimize_images.constants import IOS_WORKERS
+
 
 def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':

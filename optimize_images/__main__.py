@@ -29,12 +29,12 @@ import os
 from timeit import default_timer as timer
 from typing import Iterable
 
-from optimize_images.constants import *
+from optimize_images.constants import SUPPORTED_FORMATS
 from optimize_images.data_structures import Task
 from optimize_images.platforms import adjust_for_platform
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
-from optimize_images.img_processing import do_optimization
+from optimize_images.img_do_optimization import do_optimization
 
 
 def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
