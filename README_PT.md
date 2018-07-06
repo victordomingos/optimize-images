@@ -1,4 +1,4 @@
-[English](https://github.com/victordomingos/optimize-images/blob/master/README.md) | **[Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/README_PT.md)**
+[English](https://github.com/victordomingos/optimize-images/blob/master/README.md) | **[Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/README_PT.md)**
 
 
 # Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images)
