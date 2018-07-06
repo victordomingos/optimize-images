@@ -381,10 +381,8 @@ optimize-images -cc
 optimize-images --convert_big
 ```
 
-
-You may force the deletion of the original PNG files when using
-automatic convertion to JPEG, by adding the `-fd` or `--force-delete`
-argument:
+Para forçar o apagamento desses ficheiros PNG originais ao usar a conversão 
+automática para JPEG, adicione o argumento `-fd` ou `--force-delete`:
 
 ```
 optimize-images -cc -fd
@@ -397,16 +395,16 @@ optimize-images --convert_big --force-delete
 
 ##### Mudar a cor de fundo predefinida
 
-By default, when you choose some operations that remove transparency,
-like reducing colors or converting from PNG to JPEG it will apply a
-white background color. You may choose a different background by using
-the argument `-bg` or `--background-color` folowed by 3 integer numbers,
-separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
-`255 0 0` for a pure red color).
+Por defeito, ao escolher opções que removem a transparência, como a redução de 
+cores ou a conversão de PNG para JPEG, será aplicado um fundo branco. É 
+possível escolher uma cor de fundo diferente usando o argumento `-bg` ou 
+`--background-color` seguido de 3 números inteiros, separados por espaços, 
+entre 0 e 255, para Vermelho, Verde e Azul (RGB). Por exemplo: `255 0 0` (para 
+aplicar um vermelho vivo).
 
+Para converter uma imagem PNG grande com alguma transparência (como, por 
+exemplo, capturas de ecrã do macOS) aplicando um fundo preto:
 
-To convert a big PNG image with some transparency (like, for instance,
-macOS screenshots) applying a black background:
 ```
 optimize-images -cc -bg 0 0 0 ./image.png
 ```
@@ -415,14 +413,13 @@ optimize-images -cc -bg 0 0 0 ./image.png
 optimize-images --convert_big --bg-color 0 0 0 ./image.png
 ```
 
-If you prefer to use hexadecimal values, like those that are usual in
-HTML code, you may alternatively use the argument `-hbg` or
-`--hex-bg-color` folowed by the color code without the hash (#)
-character. E.g.: `00FF00` for a pure
-green color).
+Se preferir utilizar valores hezadecinais, como os que são usados normalmente 
+no código HTML, poderá utilizar em alternativa o argumento `-hbg` ou 
+`--hex-bg-color` seguido do código da cor sem o cardinal (#). Por exemplo: 
+`00FF00` para uma cor verde pura e viva.
 
-To convert a big PNG image with some transparency applying a pure green
-background:
+Para converter uma imagem PNG grande com alguma transparência aplicando um 
+fundo verde puro:
 
 ```
 optimize-images -cc -hbg 0 255 0 ./image.png
@@ -432,10 +429,10 @@ optimize-images -cc -hbg 0 255 0 ./image.png
 optimize-images --convert_big --hex-bg-color 00FF00 ./image.png
 ```
 
-### Other features
+### Outras funcionalidades
 
 
-Check the installed version of this application:
+Consultar o número da versão instalada deste programa:
 
 ```
 optimize-images -v
@@ -445,9 +442,9 @@ optimize-images -v
 optimize-images --version
 ```
   
-
-View a list of the supported image formats by their usual filename extensions 
-(please note that files without the corresponding file extension will be ignored):
+Consultar a lista das extensões usuais dos vários formatos de imagem atualmente 
+suportados (note, por favor, que as imagens que não tenham no nome de ficheiro 
+a extensão correta correspondente ao seu formato serão ignoradas):
 
 ```
 optimize-images -sf
