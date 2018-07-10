@@ -16,6 +16,7 @@ def is_big_png_photo(src_path: str) -> bool:
     Inspired by an idea first presented by Stephen Arthur
     (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
     """
+    return True
     img = Image.open(src_path)
     orig_format = img.format
     orig_mode = img.mode

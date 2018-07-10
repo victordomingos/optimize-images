@@ -81,6 +81,11 @@ def get_args():
     png_group.add_argument(
         '-mc', "--max-colors", type=int, default=256, help=mc_help)
 
+    rt_help = "Remove transparency of PNG images. By default, it will apply" \
+              "a white background color."
+    png_group.add_argument(
+        '-rt', "--remove-transparency", action='store_true', help=rt_help)
+
     bg_help = "The background color to use when doing operations that remove " \
               "transparency, like reducing colors or converting from PNG to " \
               "JPEG (3 integer values, separated by spaces, between 0 and 255 for " \
@@ -165,6 +170,6 @@ def get_args():
               "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
         parser.exit(status=0, message=msg)
 
-    return src_path, recursive, quality, args.reduce_colors, args.max_colors, \
+    return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
            args.force_delete, bg_color

@@ -1,4 +1,5 @@
 # encoding: utf-8
+
 from typing import Tuple
 
 from PIL import Image
@@ -17,9 +18,13 @@ def remove_transparency(img: ImageType,
     Special thanks to Yuji Tomita and Takahashi Shuuji
     (https://stackoverflow.com/a/33507138)
     """
-    orig_image = img.convert('RGBA')
-    background = Image.new('RGBA', orig_image.size, bg_color)
-    return Image.alpha_composite(background, orig_image)
+    if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+        orig_image = img.convert('RGBA')
+        background = Image.new('RGBA', orig_image.size, bg_color)
+        img = Image.alpha_composite(background, orig_image)
+        return img.convert("RGB")
+    else:
+        return img
 
 
 def downsize_img(img: ImageType, max_w: int,
@@ -33,6 +38,11 @@ def downsize_img(img: ImageType, max_w: int,
     indicating if the image was changed.
     """
     w, h = img.size
+    if img.mode == "P":
+        p_mode = True
+        img = img.convert("RBGA")
+    else:
+        p_mode = False
 
     # Don't upsize images, assume 0 as current size
     if max_w > w or max_w == 0:
@@ -52,7 +62,8 @@ def downsize_img(img: ImageType, max_w: int,
             max_w, max_h = width_b, height_b
 
         img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
-
+        if p_mode:
+            img = img.convert("P",)
         return img, True
 
 
@@ -74,7 +85,14 @@ def do_reduce_colors(img: ImageType,
     elif orig_mode == "RGBA":
         palette = Image.ADAPTIVE
         final_colors = max_colors
-        img = remove_transparency(img, DEFAULT_BG_COLOR)
+
+        #img = remove_transparency(img, DEFAULT_BG_COLOR)
+
+        transparent = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        # blend with transparent image using own alpha
+        img = Image.composite(img, transparent, img)
+
+
     elif orig_mode == "P":
         colors = img.getpalette()
         orig_colors = len(colors) // 3
@@ -84,5 +102,6 @@ def do_reduce_colors(img: ImageType,
         else:
             palette = colors
             final_colors = orig_colors
+
     img = img.convert(mode, palette=palette, colors=final_colors)
     return img, orig_colors, final_colors

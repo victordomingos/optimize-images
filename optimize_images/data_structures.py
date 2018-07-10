@@ -15,6 +15,7 @@ TPoolExType = NewType('PPoolExType', concurrent.futures.ThreadPoolExecutor)
 class Task(NamedTuple):
     src_path: str
     quality: int
+    remove_transparency: bool
     reduce_colors: bool
     max_colors: int
     max_w: int

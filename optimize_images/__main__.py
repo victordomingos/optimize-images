@@ -59,7 +59,7 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
 def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    src_path, recursive, quality, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args(
+    src_path, recursive, quality, remove_transparency, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args(
     )
     found_files = 0
     optimized_files = 0
@@ -78,7 +78,7 @@ def main():
             f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n"
         )
 
-        tasks = (Task(img_path, quality, reduce_colors, max_colors, max_w,
+        tasks = (Task(img_path, quality, remove_transparency, reduce_colors, max_colors, max_w,
                       max_h, keep_exif, conv_big, force_del, bg_color)
                  for img_path in search_images(src_path, recursive=recursive))
 
@@ -96,7 +96,7 @@ def main():
     elif os.path.isfile(src_path):
         found_files += 1
 
-        img_task = Task(src_path, quality, reduce_colors, max_colors, max_w,
+        img_task = Task(src_path, quality, remove_transparency, reduce_colors, max_colors, max_w,
                         max_h, keep_exif, conv_big, force_del, bg_color)
 
         r = do_optimization(img_task)
