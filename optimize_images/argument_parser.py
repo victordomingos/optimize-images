@@ -112,6 +112,9 @@ def get_args():
     png_group.add_argument(
         '-fd', "--force-delete", action='store_true', help=fd_help)
 
+    parser._positionals.title = parser._positionals.title.upper()
+    parser._optionals.title = parser._optionals.title.upper()
+
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
