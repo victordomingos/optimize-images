@@ -8,8 +8,7 @@ from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.data_structures import ImageType
 
 
-def remove_transparency(img: ImageType,
-                        bg_color=DEFAULT_BG_COLOR) -> ImageType:
+def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
     """Remove alpha transparency from PNG images
 
     Expects a PIL.Image object and returns an object of the same type with the
@@ -40,7 +39,7 @@ def downsize_img(img: ImageType, max_w: int,
     w, h = img.size
     if img.mode == "P":
         p_mode = True
-        img = img.convert("RBGA")
+        img = img.convert("RBGA", dither=None)
     else:
         p_mode = False
 
@@ -67,10 +66,7 @@ def downsize_img(img: ImageType, max_w: int,
         return img, True
 
 
-def do_reduce_colors(img: ImageType,
-                     max_colors: int) -> Tuple[ImageType, int, int]:
-    # TODO - Try to reduce the number of colors without loosing transparency
-
+def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
     mode = "P"
     orig_mode = img.mode
     colors = img.getpalette()
@@ -85,13 +81,9 @@ def do_reduce_colors(img: ImageType,
     elif orig_mode == "RGBA":
         palette = Image.ADAPTIVE
         final_colors = max_colors
-
-        #img = remove_transparency(img, DEFAULT_BG_COLOR)
-
         transparent = Image.new("RGBA", img.size, (0, 0, 0, 0))
         # blend with transparent image using own alpha
         img = Image.composite(img, transparent, img)
-
 
     elif orig_mode == "P":
         colors = img.getpalette()

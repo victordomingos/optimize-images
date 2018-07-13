@@ -208,8 +208,8 @@ the original. These options are disabled by default.
 
 These optional arguments can be used to constrain the final size of the images:
 
-* Maximum width: `-mw` or `--max-width` 
-* Maximum height: `-mh` or `--max-height`
+* Maximum width: `-mw`
+* Maximum height: `-mh`
 
 The image will be downsized to a maximum size that fits the specified 
 width and/or height. If the user enters values to both dimensions, it will 
@@ -223,20 +223,11 @@ downsizing each of them to a maximum width of 1600 pixels:
 optimize-images -mw 1600 ./
 ```
 
-```
-optimize-images --max-width 1600 ./
-```
-
-
 Try to optimize all image files in current working directory, without 
 recursion, downsizing each of them to a maximum height of 800 pixels:
 
 ```
-optimize-images -nr -mh 1600 ./
-```
-
-```
-optimize-images --no-recursion --max-height 800 ./
+optimize-images -nr -mh 800 ./
 ```
 
 
@@ -254,7 +245,7 @@ applied for each image.
 ##### Quality
 
 Set the quality for JPEG files (an integer value, between 1 and 100), using 
-the `-q` or `--quality` argument, folowed by the quality value to apply.
+the `-q` argument, folowed by the quality value to apply.
 A lower value will reduce both the image quality and the file size. The
 default value is 80.
 
@@ -265,10 +256,6 @@ subdirectories, applying a quality of 65% to JPEG files:
 optimize-images -q 65 ./
 ```
 
-```
-optimize-images --quality 65 ./
-```
-  
 
 ##### Keep EXIF data
 
@@ -293,7 +280,7 @@ optimize-images --quality 65 --keep-exif ./
 ##### Reduce the number of colors 
 
 To reduce the number of colors (PNG) using an adaptive color palette with 
-dithering, use the `-rc` or `--reduce-colors` optional argument.
+dithering, use the `-rc` optional argument.
 This option can have a big impact on file size, but please note that
 will also affect image quality in a very noticeable way, especially in
 images that have color gradients and/or transparency.
@@ -305,14 +292,10 @@ applying and adaptive color palette with the default amount of colors
 ```
 optimize-images -rc ./imagefile.png
 ```
-```
-optimize-images --reduce-colors ./imagefile.png
-```
-
 
 ##### Maximum number of colors
 
-Use the  `-mc` or `--max-colors` optional argument to specify the maximum  
+Use the  `-mc` optional argument to specify the maximum
 number of colors for PNG images when using the reduce colors (-rc) option 
 (an integer value, between 0 and 255). The default value is 255.
 
@@ -322,9 +305,6 @@ reducing the color palette to a specific value:
 ```
 optimize-images -rc -mc 128 ./imagefile.png
 ```
-```
-optimize-images --reduce-colors --max-colors 128 ./imagefile.png
-```
 
 Try to optimize all image files in current working directory and all of
 its subdirectories, applying a quality of 65% to JPEG files and
@@ -332,9 +312,6 @@ reducing the color palette of PNG files to just 64 colors:
 
 ```
 optimize-images -q 60 -rc -mc 64 ./
-```
-```
-optimize-images --quality 60 --reduce-colors --max-colors 64 ./
 ```
 
 
@@ -354,7 +331,7 @@ REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION.**
 
 
 ```
-optimize-images -cc
+optimize-images -cb
 ```
 
 ```
@@ -363,11 +340,11 @@ optimize-images --convert_big
 
 
 You may force the deletion of the original PNG files when using
-automatic convertion to JPEG, by adding the `-fd` or `--force-delete`
+automatic conversion to JPEG, by adding the `-fd` or `--force-delete`
 argument:
 
 ```
-optimize-images -cc -fd
+optimize-images -cb -fd
 ```
 
 ```
@@ -380,7 +357,7 @@ optimize-images --convert_big --force-delete
 By default, when you choose some operations that remove transparency,
 like reducing colors or converting from PNG to JPEG it will apply a
 white background color. You may choose a different background by using
-the argument `-bg` or `--background-color` folowed by 3 integer numbers,
+the argument `-bg` followed by 3 integer numbers,
 separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
 `255 0 0` for a pure red color).
 
@@ -388,29 +365,20 @@ separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
 To convert a big PNG image with some transparency (like, for instance,
 macOS screenshots) applying a black background:
 ```
-optimize-images -cc -bg 0 0 0 ./image.png
-```
-
-```
-optimize-images --convert_big --bg-color 0 0 0 ./image.png
+optimize-images -cb -bg 0 0 0 ./image.png
 ```
 
 If you prefer to use hexadecimal values, like those that are usual in
-HTML code, you may alternatively use the argument `-hbg` or
-`--hex-bg-color` folowed by the color code without the hash (#)
-character. E.g.: `00FF00` for a pure
+HTML code, you may alternatively use the argument `-hbg` followed by the
+color code without the hash (#) character. E.g.: `00FF00` for a pure
 green color).
 
 To convert a big PNG image with some transparency applying a pure green
 background:
+```
+optimize-images -cb -hbg 0 255 0 ./image.png
+```
 
-```
-optimize-images -cc -hbg 0 255 0 ./image.png
-```
-
-```
-optimize-images --convert_big --hex-bg-color 00FF00 ./image.png
-```
 
 ### Other features
 
@@ -430,11 +398,11 @@ View a list of the supported image formats by their usual filename extensions
 (please note that files without the corresponding file extension will be ignored):
 
 ```
-optimize-images -sf
+optimize-images -s
 ```
 
 ```
-optimize-images --supported-formats
+optimize-images --supported
 ```
   
   

@@ -223,8 +223,8 @@ Estas opções encontram-se desativadas por defeito.
 Os seguintes argumentos opcionais podem ser utilizados para limitar o tamanho
 final das imagens:
 
-* Largura máxima: `-mw` ou `--max-width` 
-* Altura máxima: `-mh` ou `--max-height`
+* Largura máxima: `-mw`
+* Altura máxima: `-mh`
 
 O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da
 Largura e/ou altura especificada(s). Se o utilizador introduzir valores para 
@@ -239,22 +239,13 @@ forma recursiva, reduzindo o tamanho de cada imagem para uma larga máxima de
 optimize-images -mw 1600 ./
 ```
 
-```
-optimize-images --max-width 1600 ./
-```
-
 Tentar otimizar todos os ficheiros de imagem apenas na raiz da pasta de 
 trabalho atual, de forma não recursiva, reduzindo o tamanho de cada imagem 
 para uma altura máxima de 800 pixels:
 
 ```
-optimize-images -nr -mh 1600 ./
+optimize-images -nr -mh 800 ./
 ```
-
-```
-optimize-images --no-recursion --max-height 800 ./
-```
-
 
 
 ### Opções específicas para cada formato:
@@ -270,10 +261,9 @@ selecionadas e aplicadas automaticamente para cada imagem.
 ##### Qualidade
 
 Defina a qualidade para ficheiros JPEG (um número inteiro, entre 1 e 100), 
-usando o argumento `-q` ou `--quality`, seguido do valor de qualidade a 
+usando o argumento `-q`, seguido do valor de qualidade a
 aplicar. Um valor mais baixo reduzirá tanto a qualidade de imagem como o
 tamanho do ficheiro. O valor predefinido é 80.
-
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e 
 em todas as subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG:
@@ -282,10 +272,6 @@ em todas as subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG:
 optimize-images -q 65 ./
 ```
 
-```
-optimize-images --quality 65 ./
-```
-  
 
 ##### Manter dados EXIF
 
@@ -301,17 +287,13 @@ e mantendo os dados EXIF originais:
 optimize-images -q 65 -ke ./
 ```
 
-```
-optimize-images --quality 65 --keep-exif ./
-```
-
 
 #### PNG:
 
 ##### Reduzir o número de cores 
 
 Para reduzir o número de cores (PNG) usando uma paleta de cores adaptativa 
-Com difusão, utilize o argumento opcional `-rc` ou `--reduce-colors`. Esta 
+Com difusão, utilize o argumento opcional `-rc`. Esta
 opção pode ter um grande impacto no tamanho dos ficheiros, mas por favor
 tenha em consideração que também irá afetar de uma forma muito notória a 
 qualidade de imagem, especialmente em imagens que tenham gradientes de 
@@ -323,14 +305,10 @@ paleta de cores adaptativa, com o número de cores predefinido (255):
 ```
 optimize-images -rc ./imagefile.png
 ```
-```
-optimize-images --reduce-colors ./imagefile.png
-```
-
 
 ##### Número máximo de cores
 
-Utilize o argumento opcional `-mc` ou `--max-colors` para especificar o
+Utilize o argumento opcional `-mc` para especificar o
 Número máximo de cores para imagens PNG, ao utilizar a opção de redução de 
 cores (um número inteiro entre 0 e 255). O valor predefinido é 255.
 
@@ -340,9 +318,6 @@ paleta de cores para um valor específico:
 ```
 optimize-images -rc -mc 128 ./imagefile.png
 ```
-```
-optimize-images --reduce-colors --max-colors 128 ./imagefile.png
-```
 
 Tentar otimizar todos os ficheiros de imagem na pasta atual e em todas as 
 suas subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG e 
@@ -350,9 +325,6 @@ reduzindo a paleta de cores dos ficheiros PNG para apenas 64 cores:
 
 ```
 optimize-images -q 60 -rc -mc 64 ./
-```
-```
-optimize-images --quality 60 --reduce-colors --max-colors 64 ./
 ```
 
 
@@ -374,22 +346,14 @@ CONVERSÃO.**
 
 
 ```
-optimize-images -cc
-```
-
-```
-optimize-images --convert_big
+optimize-images -cb
 ```
 
 Para forçar o apagamento desses ficheiros PNG originais ao usar a conversão 
 automática para JPEG, adicione o argumento `-fd` ou `--force-delete`:
 
 ```
-optimize-images -cc -fd
-```
-
-```
-optimize-images --convert_big --force-delete
+optimize-images -cb -fd
 ```
 
 
@@ -397,8 +361,8 @@ optimize-images --convert_big --force-delete
 
 Por defeito, ao escolher opções que removem a transparência, como a redução de 
 cores ou a conversão de PNG para JPEG, será aplicado um fundo branco. É 
-possível escolher uma cor de fundo diferente usando o argumento `-bg` ou 
-`--background-color` seguido de 3 números inteiros, separados por espaços, 
+possível escolher uma cor de fundo diferente usando o argumento `-bg`
+seguido de 3 números inteiros, separados por espaços,
 entre 0 e 255, para Vermelho, Verde e Azul (RGB). Por exemplo: `255 0 0` (para 
 aplicar um vermelho vivo).
 
@@ -406,27 +370,19 @@ Para converter uma imagem PNG grande com alguma transparência (como, por
 exemplo, capturas de ecrã do macOS) aplicando um fundo preto:
 
 ```
-optimize-images -cc -bg 0 0 0 ./image.png
-```
-
-```
-optimize-images --convert_big --bg-color 0 0 0 ./image.png
+optimize-images -cb -bg 0 0 0 ./image.png
 ```
 
 Se preferir utilizar valores hezadecinais, como os que são usados normalmente 
-no código HTML, poderá utilizar em alternativa o argumento `-hbg` ou 
-`--hex-bg-color` seguido do código da cor sem o cardinal (#). Por exemplo: 
+no código HTML, poderá utilizar em alternativa o argumento `-hbg`
+seguido do código da cor sem o cardinal (#). Por exemplo:
 `00FF00` para uma cor verde pura e viva.
 
 Para converter uma imagem PNG grande com alguma transparência aplicando um 
 fundo verde puro:
 
 ```
-optimize-images -cc -hbg 0 255 0 ./image.png
-```
-
-```
-optimize-images --convert_big --hex-bg-color 00FF00 ./image.png
+optimize-images -cb -hbg 0 255 0 ./image.png
 ```
 
 ### Outras funcionalidades
@@ -447,11 +403,11 @@ suportados (note, por favor, que as imagens que não tenham no nome de ficheiro
 a extensão correta correspondente ao seu formato serão ignoradas):
 
 ```
-optimize-images -sf
+optimize-images -s
 ```
 
 ```
-optimize-images --supported-formats
+optimize-images --supported
 ```
   
   
