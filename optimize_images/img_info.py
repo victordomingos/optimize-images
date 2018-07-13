@@ -4,19 +4,20 @@ import os
 from PIL import Image, ImageFile
 
 from optimize_images.img_aux_processing import downsize_img
+from optimize_images.constants import MIN_BIG_IMG_SIZE, MIN_BIG_IMG_AREA
 
 
 def is_big_png_photo(src_path: str) -> bool:
     """Try to determine if a given image if a big photo in PNG format
 
     Expects a path to a PNG image file. Returns True if the image is a PNG
-    with an area bigger than XXXX pixels that when resized to XXXXX pixels
-    converts to a JPEG bigger than 300KB. Returns False otherwise.
+    with an area bigger than MIN_BIG_IMG_AREA pixels that when resized to 1600
+    pixels (wide or high) converts to a JPEG bigger than MIN_BIG_IMG_SIZE.
+    Returns False otherwise.
 
     Inspired by an idea first presented by Stephen Arthur
     (https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html)
     """
-    return True
     img = Image.open(src_path)
     orig_format = img.format
     orig_mode = img.mode
@@ -27,9 +28,9 @@ def is_big_png_photo(src_path: str) -> bool:
 
     w, h = img.size
 
-    if orig_format != 'PNG' or orig_mode == 'P':
+    if orig_format != 'PNG' or orig_mode in ['P', 'L', 'LA']:
         return False
-    elif (w * h) < (1024 * 768):
+    elif (w * h) < (MIN_BIG_IMG_AREA):
         return False
     else:
         img = img.convert("RGB")
@@ -39,11 +40,11 @@ def is_big_png_photo(src_path: str) -> bool:
             img, status = downsize_img(img, 0, 1600)
 
         try:
-            img.save(temp_file_path, quality=85, optimize=True,
+            img.save(temp_file_path, quality=90, optimize=True,
                      progressive=True, format="JPEG")
         except IOError:
             ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-            img.save(temp_file_path, quality=85, optimize=True,
+            img.save(temp_file_path, quality=90, optimize=True,
                      progressive=True, format="JPEG")
 
         final_size = os.path.getsize(temp_file_path)
@@ -53,5 +54,5 @@ def is_big_png_photo(src_path: str) -> bool:
         except OSError as e:
             print("\nError while removing temporary file.\n{e}\n")
 
-        return (final_size > 300000)
+        return (final_size > MIN_BIG_IMG_SIZE)
 
