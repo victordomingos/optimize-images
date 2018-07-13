@@ -154,9 +154,8 @@ disponível para ficheiros JPEG.
 
 Nos ficheiros PNG, conseguirá alcançar uma redução mais acentuada no tamanho 
 dos ficheiros se optar por reduzir o número de cores utilizando uma paleta 
-adaptativa. Tenha em consideração que ao usar esta opção todas as imagens PNG 
-irão perder a transparência e a qualidade de imagem poderá ser afetada de 
-forma bastante notória.
+adaptativa. Tenha em consideração que ao usar esta opção a qualidade de
+imagem poderá ser afetada de forma bastante notória.
 
 ### ADVERTÊNCIA
 **Por favor, tenha em consideração que a operação deste programa é feita DE 
@@ -359,12 +358,11 @@ optimize-images -cb -fd
 
 ##### Mudar a cor de fundo predefinida
 
-Por defeito, ao escolher opções que removem a transparência, como a redução de 
-cores ou a conversão de PNG para JPEG, será aplicado um fundo branco. É 
-possível escolher uma cor de fundo diferente usando o argumento `-bg`
-seguido de 3 números inteiros, separados por espaços,
-entre 0 e 255, para Vermelho, Verde e Azul (RGB). Por exemplo: `255 0 0` (para 
-aplicar um vermelho vivo).
+Por defeito, ao remover a transparência ou ao converter de PNG para
+JPEG, será aplicado um fundo branco. É possível escolher uma cor de
+fundo diferente usando o argumento `-bg` seguido de 3 números inteiros,
+separados por espaços, entre 0 e 255, para Vermelho, Verde e Azul (RGB).
+Por exemplo: `255 0 0` (para aplicar um vermelho vivo).
 
 Para converter uma imagem PNG grande com alguma transparência (como, por 
 exemplo, capturas de ecrã do macOS) aplicando um fundo preto:
@@ -373,7 +371,7 @@ exemplo, capturas de ecrã do macOS) aplicando um fundo preto:
 optimize-images -cb -bg 0 0 0 ./image.png
 ```
 
-Se preferir utilizar valores hezadecinais, como os que são usados normalmente 
+Se preferir utilizar valores hexadecinais, como os que são usados normalmente
 no código HTML, poderá utilizar em alternativa o argumento `-hbg`
 seguido do código da cor sem o cardinal (#). Por exemplo:
 `00FF00` para uma cor verde pura e viva.

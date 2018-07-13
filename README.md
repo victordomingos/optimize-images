@@ -141,8 +141,8 @@ for JPEG files.
 
 In PNG files, you will achieve a more drastic file size reduction if you 
 choose to reduce the number of colors using an adaptive palette. Be aware 
-that by using this option all PNG images will loose transparency and image 
-quality may be affected in a very noticeable way.
+that by using this option image quality may be affected in a very
+noticeable way.
 
 
 ### DISCLAIMER
@@ -354,10 +354,9 @@ optimize-images --convert_big --force-delete
 
 ##### Changing the default background color
 
-By default, when you choose some operations that remove transparency,
-like reducing colors or converting from PNG to JPEG it will apply a
-white background color. You may choose a different background by using
-the argument `-bg` followed by 3 integer numbers,
+By default, when removing transparency or converting from PNG to JPEG it
+will apply a white background color. You may choose a different
+background by using the argument `-bg` followed by 3 integer numbers,
 separated by spaces, between 0 and 255, for Red, Green and Blue. E.g.:
 `255 0 0` for a pure red color).
 
