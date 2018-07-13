@@ -3,7 +3,7 @@ import os
 import re
 
 from argparse import ArgumentParser
-from optimize_images.constants import DEFAULT_QUALITY
+from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
 
 
 def get_args():
@@ -90,7 +90,7 @@ def get_args():
               "Blue), between 0 and 255, separated by spaces. E.g.: " \
               "'255 0 0' for red)."
     png_group.add_argument(
-        '-bg', dest="VAL", type=int, nargs=3, help=bg_help)
+        '-bg', dest="val", type=int, nargs=3, help=bg_help)
 
     hbg_help = "The background color in hexadecimal (HTML style) to use " \
                "when removing transparency or converting to JPEG. E.g.: '00FF00' " \

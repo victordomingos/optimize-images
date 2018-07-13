@@ -12,7 +12,6 @@ from optimize_images.img_aux_processing import remove_transparency
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img
 
 
-
 def do_optimization(t: Task) -> TaskResult:
     """ Try to reduce file size of an image.
 
@@ -29,7 +28,7 @@ def do_optimization(t: Task) -> TaskResult:
     img = Image.open(t.src_path)
     orig_format = img.format
     orig_mode = img.mode
-    print(f'{t.src_path} - {orig_format}/{orig_mode} - {img.size[0]}x{img.size[1]}')
+    # print(f'{t.src_path} - {orig_format}/{orig_mode} - {img.size[0]}x{img.size[1]}')  # DEBUG
 
     folder, filename = os.path.split(t.src_path)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
