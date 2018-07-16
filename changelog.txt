@@ -5,7 +5,7 @@ Version history:
 
 
 ---
-v.1.2 - 06/07/2018
+v.1.2 - 30/07/2018
  * Adding a new big feature: "convert big PNG files to JPG format" (WIP)
  * Adding a new option to set background color while doing any PNG operations
    that remove transparency (convert big and reduce colors).

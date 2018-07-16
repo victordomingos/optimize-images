@@ -59,8 +59,8 @@ def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
 def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    src_path, recursive, quality, remove_transparency, reduce_colors, max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color = get_args(
-    )
+    (src_path, recursive, quality, remove_transparency, reduce_colors,
+     max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color) = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -68,18 +68,14 @@ def main():
 
     # Optimize all images in a directory
     if os.path.isdir(src_path):
-        if recursive:
-            recursion_txt = "Recursively searching"
-        else:
-            recursion_txt = "Searching"
+        recursion_txt = 'Recursively searching' if recursive else 'Searching'
+        opt_msg = 'and optimizing image files'
         exif_txt = '(keeping exif data) ' if keep_exif else ''
+        print(f"\n{recursion_txt} {opt_msg} {exif_txt}in:\n{src_path}\n")
 
-        print(
-            f"\n{recursion_txt} and optimizing image files {exif_txt}in:\n{src_path}\n"
-        )
-
-        tasks = (Task(img_path, quality, remove_transparency, reduce_colors, max_colors, max_w,
-                      max_h, keep_exif, conv_big, force_del, bg_color)
+        tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
+                      max_colors, max_w, max_h, keep_exif, conv_big,
+                      force_del, bg_color)
                  for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
@@ -91,14 +87,13 @@ def main():
                     total_bytes_saved += r.orig_size - r.final_size
                 show_file_status(r, line_width)
 
-
-
     # Optimize a single image
     elif os.path.isfile(src_path):
         found_files += 1
 
-        img_task = Task(src_path, quality, remove_transparency, reduce_colors, max_colors, max_w,
-                        max_h, keep_exif, conv_big, force_del, bg_color)
+        img_task = Task(src_path, quality, remove_transparency, reduce_colors,
+                        max_colors, max_w, max_h, keep_exif, conv_big,
+                        force_del, bg_color)
 
         r = do_optimization(img_task)
         total_src_size = r.orig_size
@@ -117,8 +112,7 @@ def main():
         show_final_report(found_files, optimized_files, total_src_size,
                           total_bytes_saved, time_passed)
     else:
-        print(
-            "No supported image files were found in the specified directory.\n")
+        print("No supported image files were found in the specified directory.\n")
 
 
 if __name__ == "__main__":
