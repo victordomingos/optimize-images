@@ -88,9 +88,10 @@ def main():
                 total_src_size += r.orig_size
                 if r.was_optimized:
                     optimized_files += 1
-                    total_bytes_saved = total_bytes_saved + (
-                            r.orig_size - r.final_size)
+                    total_bytes_saved += r.orig_size - r.final_size
                 show_file_status(r, line_width)
+
+
 
     # Optimize a single image
     elif os.path.isfile(src_path):
@@ -103,8 +104,7 @@ def main():
         total_src_size = r.orig_size
         if r.was_optimized:
             optimized_files = 1
-            total_bytes_saved = total_bytes_saved + (
-                    r.orig_size - r.final_size)
+            total_bytes_saved = r.orig_size - r.final_size
         show_file_status(r, line_width)
     else:
         print(

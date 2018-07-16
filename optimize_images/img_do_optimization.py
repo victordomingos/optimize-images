@@ -33,14 +33,14 @@ def do_optimization(t: Task) -> TaskResult:
     folder, filename = os.path.split(t.src_path)
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
-    if orig_mode == 'P':
-        orig_colors = len(img.getpalette()) // 3
-        final_colors = orig_colors
-    else:
-        orig_colors, final_colors = 0, 0
+    orig_colors, final_colors = 0, 0
 
     if orig_format.upper() == 'PNG':
         had_exif = has_exif = False  # Currently no exif methods for PNG files
+        if orig_mode == 'P':
+            orig_colors = len(img.getpalette()) // 3
+            final_colors = orig_colors
+
         if t.conv_big and is_big_png_photo(t.src_path):
             # convert to jpg format
             filename = os.path.splitext(os.path.basename(t.src_path))[0]
@@ -123,7 +123,9 @@ def do_optimization(t: Task) -> TaskResult:
         result_format = "JPEG"
         try:
             had_exif = True if piexif.load(t.src_path)['Exif'] else False
-        except:
+        except piexif.InvalidImageDataError:  # Not a supported format
+            had_exif = False
+        except ValueError:  # No exif info
             had_exif = False
 
         if t.max_w or t.max_h:
