@@ -26,8 +26,7 @@ def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
         return img
 
 
-def downsize_img(img: ImageType, max_w: int,
-                 max_h: int) -> Tuple[ImageType, bool]:
+def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, bool]:
     """ Reduce the size of an image to the indicated maximum dimensions
 
     This function takes a PIL.Image object and integer values for the maximum
@@ -37,33 +36,25 @@ def downsize_img(img: ImageType, max_w: int,
     indicating if the image was changed.
     """
     w, h = img.size
+    # Assume 0 as current size
+    if not max_w:
+        max_w = w
+    if not max_h:
+        max_h = h
+
+    if (max_w, max_h) == (w, h):  # If no changes, do nothing
+        return img, False
+
     if img.mode == "P":
         p_mode = True
         img = img.convert("RBGA", dither=None)
     else:
         p_mode = False
 
-    # Don't upsize images, assume 0 as current size
-    if max_w > w or max_w == 0:
-        max_w = w
-    if max_h > h or max_h == 0:
-        max_h = h
-
-    if (max_w, max_h) == (w, h):  # If no changes, do nothing
-        return img, False
-    else:  # Choose smaller size that fits in max_w and max_h
-        width_a, height_a = max_w, int(round(h * max_w / w))
-        width_b, height_b = int(round(max_h * w / h)), max_h
-
-        if (width_a * height_a) < (width_b * height_b):
-            max_w, max_h = width_a, height_a
-        else:
-            max_w, max_h = width_b, height_b
-
-        img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
-        if p_mode:
-            img = img.convert("P",)
-        return img, True
+    img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
+    if p_mode:
+        img = img.convert("P",)
+    return img, True
 
 
 def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
