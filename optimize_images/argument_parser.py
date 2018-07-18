@@ -11,11 +11,11 @@ def get_args():
            "size of images. You must explicitly pass it a path to the image " \
            "file or to the directory containing the image files to be " \
            "processed."
-    epilog="PLEASE NOTE: The operation is done DESTRUCTIVELY, " \
-           "by replacing the original files with the processed ones. You " \
-           "definitely should duplicate the original file or folder before " \
-           "using this utility, in order to be able to recover any damaged " \
-           "images that don't have the desired quality."
+    epilog = "PLEASE NOTE: The operation is done DESTRUCTIVELY, " \
+             "by replacing the original files with the processed ones. You " \
+             "definitely should duplicate the original file or folder before " \
+             "using this utility, in order to be able to recover any damaged " \
+             "images that don't have the desired quality."
     parser = ArgumentParser(description=desc, epilog=epilog)
 
     path_help = "The path to the image file or to the folder containing the " \
@@ -65,6 +65,12 @@ def get_args():
         "--keep-exif",
         action='store_true',
         help="Keep image EXIF data (by default, it's discarded).")
+
+    b_help = "Blur chroma bands in a YCbCr color space. This can save some " \
+             "space, but at the cost of adding a color bleed. So, it will have " \
+             "a visible impact in color details."
+    jpg_group.add_argument(
+        '-b', "--chroma-blur", dest="use_chroma_blur", action='store_true', help=b_help)
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -119,7 +125,6 @@ def get_args():
     recursive = not args.no_recursion
     quality = args.quality
 
-
     if args.supported_formats:
         formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
         msg = "These are the image formats currently supported (please " \
@@ -170,4 +175,4 @@ def get_args():
 
     return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete, bg_color
+           args.force_delete, bg_color, args.use_chroma_blur

@@ -8,8 +8,9 @@ from PIL import Image, ImageFile
 
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo
-from optimize_images.img_aux_processing import remove_transparency
+from optimize_images.img_aux_processing import remove_transparency, chroma_blur
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img
+from optimize_images.img_comparison import compare_images
 
 
 def optimize_png(t: Task) -> TaskResult:
@@ -172,6 +173,23 @@ def optimize_jpg(t: Task) -> TaskResult:
 
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
+
+    """
+    dynamic_quality = True
+    min_acceptable_quality = 1
+
+    if dynamic_quality:
+        if compare_images(t.src_path, temp_file_path) > min_acceptable_quality:
+            pass
+        else:
+            pass
+    else:
+        pass
+    """
+
+    if t.use_chroma_blur:
+        img = chroma_blur(img)
+
     try:
         img.save(
             temp_file_path,
@@ -196,9 +214,11 @@ def optimize_jpg(t: Task) -> TaskResult:
     else:
         has_exif = False
 
-    final_size = os.path.getsize(temp_file_path)
+
+
 
     # Only replace the original file if compression did save any space
+    final_size = os.path.getsize(temp_file_path)
     if orig_size - final_size > 0:
         shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True

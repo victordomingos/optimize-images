@@ -2,11 +2,11 @@
 
 from typing import Tuple
 
-from PIL import Image
+from PIL import Image, ImageFilter, ImageCms
 
 from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.data_structures import ImageType
-
+from math import sqrt
 
 def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
     """Remove alpha transparency from PNG images
@@ -53,7 +53,7 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
 
     img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
     if p_mode:
-        img = img.convert("P",)
+        img = img.convert("P", )
     return img, True
 
 
@@ -88,3 +88,27 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
 
     img = img.convert(mode, palette=palette, colors=final_colors)
     return img, orig_colors, final_colors
+
+
+def chroma_blur(img: ImageType) -> ImageType:
+    """
+
+    :param img:
+    :return: img
+    """
+    width, height = img.size
+    if width * height < 30000:
+        return img
+
+    img = img.convert(mode="YCbCr")
+    # Apply a blur filter only to Cb and Cr bands, making the blur radius
+    # smaller on small images, to make color change less noticeable
+    a_blur = sqrt(width/20)
+    b_blur = sqrt(width/20)
+
+    l, a, b = img.split()
+    a = a.filter(ImageFilter.GaussianBlur(a_blur))
+    b = b.filter(ImageFilter.GaussianBlur(b_blur))
+    img = Image.merge("YCbCr", (l, a, b))
+
+    return img.convert(mode="RGB")
