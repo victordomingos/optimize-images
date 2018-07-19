@@ -8,7 +8,7 @@ from PIL import Image, ImageFile
 
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo
-from optimize_images.img_aux_processing import remove_transparency, chroma_blur
+from optimize_images.img_aux_processing import remove_transparency
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img
 from optimize_images.img_comparison import compare_images
 
@@ -187,8 +187,6 @@ def optimize_jpg(t: Task) -> TaskResult:
         pass
     """
 
-    if t.use_chroma_blur:
-        img = chroma_blur(img)
 
     try:
         img.save(

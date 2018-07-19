@@ -66,11 +66,6 @@ def get_args():
         action='store_true',
         help="Keep image EXIF data (by default, it's discarded).")
 
-    b_help = "Blur chroma bands in a YCbCr color space. This can save some " \
-             "space, but at the cost of adding a color bleed. So, it will have " \
-             "a visible impact in color details."
-    jpg_group.add_argument(
-        '-b', "--chroma-blur", dest="use_chroma_blur", action='store_true', help=b_help)
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -175,4 +170,4 @@ def get_args():
 
     return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete, bg_color, args.use_chroma_blur
+           args.force_delete, bg_color

@@ -24,7 +24,6 @@ class Task(NamedTuple):
     conv_big: bool
     force_del: bool
     bg_color: Tuple[int, int, int]
-    use_chroma_blur: bool
 
 
 class TaskResult(NamedTuple):
