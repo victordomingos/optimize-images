@@ -10,6 +10,9 @@ v.1.2 - 30/07/2018
  * Adding a new option to set background color while doing any PNG operations
    that remove transparency (convert big and reduce colors).
  * Adding an option to set background color in hexadecimal mode (like in HTML).
+ * Added an option to convert to grayscale.
+ * Added an option to ignore file size comparison between original and
+   processed files, allowing to always save anyway the processed version.
  * Changed the transparency removal algorithm to something better.
  * Created some global constants for iOS console and thread settings.
  * Created a global constant for JPEG quality and raised the default to 80.

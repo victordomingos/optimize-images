@@ -45,28 +45,23 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
     if (max_w, max_h) == (w, h):  # If no changes, do nothing
         return img, False
 
-    if img.mode == "P":
-        p_mode = True
-        img = img.convert("RBGA", dither=None)
-    else:
-        p_mode = False
-
     img.thumbnail((max_w, max_h), resample=Image.LANCZOS)
-    if p_mode:
-        img = img.convert("P", )
     return img, True
 
 
 def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
-    mode = "P"
     orig_mode = img.mode
-    colors = img.getpalette()
+
+    if orig_mode == "1":
+        return img, 2, 2
+    colors = img.getcolors()
     if colors:
-        orig_colors = len(colors) // 3
+        orig_colors = len(colors)
     else:
         orig_colors = 0
+    #print(f"DEBUG: {img.format}: {img.mode}/{orig_colors} - {img.size[0]}x{img.size[1]} ")
 
-    if orig_mode == "RGB":
+    if orig_mode in ["RGB", "L"]:
         palette = Image.ADAPTIVE
         final_colors = max_colors
     elif orig_mode == "RGBA":
@@ -77,15 +72,36 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
         img = Image.composite(img, transparent, img)
 
     elif orig_mode == "P":
-        colors = img.getpalette()
-        orig_colors = len(colors) // 3
+        orig_colors = len(img.getcolors())
         if orig_colors >= 256:
             palette = Image.ADAPTIVE
             final_colors = max_colors
         else:
-            palette = colors
+            palette = img.getpalette()
             final_colors = orig_colors
+    else:
+        return img, 0, 0
 
-    img = img.convert(mode, palette=palette, colors=final_colors)
+    img = img.convert("P", palette=palette, colors=final_colors)
     return img, orig_colors, final_colors
 
+
+def make_grayscale(img):
+    orig_mode = img.mode
+
+    if orig_mode in ["RGB", "CMYK", "YCbCr", "LAB", "HSV"]:
+        return img.convert("L")
+    elif orig_mode == "RGBA":
+        return img.convert("LA").convert("RGBA")
+    elif orig_mode == "P":
+        # convert each colhor in palette to grayscale
+        # remove color duplicates from the pallete
+        # get the index of transparent color and keep it
+        palette = img.getpalette()
+        # convert palette to grayscale values?
+        img = img.convert("LA").convert("P")
+        img.putpalette(palette)
+        # TODO: DEBUG this (issue with some transparent logos)
+        return img
+    else:
+        return img

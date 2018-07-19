@@ -33,6 +33,15 @@ def get_args():
     parser.add_argument('-nr', '--no-recursion', action='store_true',
                         help="Don't recurse through subdirectories.")
 
+    parser.add_argument('-g', '--grayscale', action='store_true',
+                        help="Convert to grayscale.")
+
+    i_help = "Don't compare the original and resulting file sizes, and save " \
+             "the new image anyway (useful, for instance, if you prefer to " \
+             "have all images with the same color, size, or quality settings)."
+    parser.add_argument('-i', '--ignore-size-comparison', action='store_true',
+                        help=i_help)
+
     size_msg = "These options will be applied individually to each " \
                "image being processed. Any image that has a dimension " \
                "exceeding a specified value will be downsized as the first " \
@@ -41,7 +50,7 @@ def get_args():
                "size isn't any smaller than the original. These options are " \
                "disabled by default."
     size_group = parser.add_argument_group(
-        'Image resizing options'.upper(), description=size_msg)
+        'Image resizing'.upper(), description=size_msg)
 
     mw_help = "The maximum width (in pixels)."
     size_group.add_argument('-mw', dest="max_width",
@@ -170,4 +179,4 @@ def get_args():
 
     return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete, bg_color
+           args.force_delete, bg_color, args.grayscale, args.ignore_size_comparison

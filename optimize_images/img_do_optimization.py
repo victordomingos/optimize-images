@@ -8,7 +8,7 @@ from PIL import Image, ImageFile
 
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo
-from optimize_images.img_aux_processing import remove_transparency
+from optimize_images.img_aux_processing import remove_transparency, make_grayscale
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img
 from optimize_images.img_comparison import compare_images
 
@@ -34,11 +34,14 @@ def optimize_png(t: Task) -> TaskResult:
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
     orig_colors, final_colors = 0, 0
+    if 'transparency' in img.info:
+        transparency = img.info['transparency']
+    else:
+        transparency = None
 
     had_exif = has_exif = False  # Currently no exif methods for PNG files
     if orig_mode == 'P':
-        orig_colors = len(img.getpalette()) // 3
-        final_colors = orig_colors
+        final_colors = orig_colors = len(img.getcolors())
 
     if t.conv_big and is_big_png_photo(t.src_path):
         # convert to jpg format
@@ -52,6 +55,9 @@ def optimize_png(t: Task) -> TaskResult:
 
         img = remove_transparency(img, t.bg_color)
         img = img.convert("RGB")
+
+        if t.grayscale:
+            img = make_grayscale(img)
 
         try:
             img.save(
@@ -71,7 +77,7 @@ def optimize_png(t: Task) -> TaskResult:
 
         # Only save the converted file if conversion did save any space
         final_size = os.path.getsize(conv_file_path)
-        if orig_size - final_size > 0:
+        if t.ignore_size_comparison or (orig_size - final_size > 0):
             was_optimized = True
             if t.force_del:
                 try:
@@ -110,16 +116,19 @@ def optimize_png(t: Task) -> TaskResult:
             img, orig_colors, final_colors = do_reduce_colors(
                 img, t.max_colors)
 
+        if t.grayscale:
+            img = make_grayscale(img)
+
         try:
-            img.save(temp_file_path, optimize=True, format=result_format)
+            img.save(temp_file_path, optimize=True, format=result_format, transparency=transparency)
         except IOError:
             ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-            img.save(temp_file_path, optimize=True, format=result_format)
+            img.save(temp_file_path, optimize=True, format=result_format, transparency=transparency)
 
         final_size = os.path.getsize(temp_file_path)
 
         # Only replace the original file if compression did save any space
-        if orig_size - final_size > 0:
+        if t.ignore_size_comparison or (orig_size - final_size > 0):
             shutil.move(temp_file_path, os.path.expanduser(t.src_path))
             was_optimized = True
         else:
@@ -171,6 +180,9 @@ def optimize_jpg(t: Task) -> TaskResult:
     else:
         was_downsized = False
 
+    if t.grayscale:
+        img = make_grayscale(img)
+
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
@@ -186,7 +198,6 @@ def optimize_jpg(t: Task) -> TaskResult:
     else:
         pass
     """
-
 
     try:
         img.save(
@@ -212,12 +223,9 @@ def optimize_jpg(t: Task) -> TaskResult:
     else:
         has_exif = False
 
-
-
-
     # Only replace the original file if compression did save any space
     final_size = os.path.getsize(temp_file_path)
-    if orig_size - final_size > 0:
+    if t.ignore_size_comparison or (orig_size - final_size > 0):
         shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True
     else:
