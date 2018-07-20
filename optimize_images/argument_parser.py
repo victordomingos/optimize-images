@@ -84,7 +84,7 @@ def get_args():
 
     rc_help = "Reduce colors using an adaptive color palette. This option " \
               "can have a big impact both on file size and image quality."
-    png_group.add_argument('-rc', dest="reduce_colors",
+    png_group.add_argument('-rc', "--reduce-colors", dest="reduce_colors",
                            action='store_true', help=rc_help)
 
     mc_help = "The maximum number of colors when reducing colors (-rc) " \
@@ -109,10 +109,10 @@ def get_args():
                "for green color."
     png_group.add_argument('-hbg', dest="hex_color", type=str, help=hbg_help)
 
-    cb_help = "Automatically convert to JPEG any big PNG images that have " \
-              "gradients or a large number of colors. It uses an algorithm " \
+    cb_help = "Convert to JPEG any big PNG images that have " \
+              "a large number of colors. It uses an algorithm " \
               "to determine whether it is a good idea and automatically decide " \
-              "about it. By default, when using this option, the original PNG " \
+              "about it. By default, the original PNG " \
               "files will remain untouched and will be kept alongside the " \
               "optimized JPG images in their original folders (existing JPEGs " \
               "will be replaced)."
@@ -120,10 +120,10 @@ def get_args():
         '-cb', "--convert-big", action='store_true', help=cb_help)
 
 
-    ca_help = "Automatically convert to JPEG all PNG images found. By default, " \
-              "when using this option, the original PNG " \
+    ca_help = "Convert to JPEG all PNG images found. By default, " \
+              "the original PNG " \
               "files will remain untouched and will be kept alongside the " \
-              "optimized JPG images in their original folders. (existing JPEGs " \
+              "optimized JPG images in their original folders (existing JPEGs " \
               "will be replaced)."
     png_group.add_argument(
         '-ca', "--convert-all", action='store_true', help=ca_help)

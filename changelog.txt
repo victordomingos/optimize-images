@@ -6,8 +6,9 @@ Version history:
 
 ---
 v.1.2 - 30/07/2018
- * Adding a new big feature: "convert big PNG files to JPG format" (WIP)
- * Adding a new option to set background color while doing any PNG operations
+ * Adding a new big feature: "convert big PNG files to JPG format"
+ * Added also an option to convert all PNG files to JPEG format.
+ * Added a new option to set background color while doing any PNG operations
    that remove transparency (convert big and reduce colors).
  * Adding an option to set background color in hexadecimal mode (like in HTML).
  * Added an option to convert to grayscale.

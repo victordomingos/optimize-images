@@ -7,8 +7,8 @@ from io import BytesIO
 
 from optimize_images.img_aux_processing import downsize_img
 from optimize_images.constants import MIN_BIG_IMG_SIZE, MIN_BIG_IMG_AREA
-    
-    
+
+
 def is_big_png_photo(src_path: str) -> bool:
     """Try to determine if a given image if a big photo in PNG format
 
@@ -29,15 +29,14 @@ def is_big_png_photo(src_path: str) -> bool:
 
     w, h = img.size
     if (w * h) >= MIN_BIG_IMG_AREA:
-        unique_colors = {img.getpixel((x,y)) for x in range(w) for y in range(h) }        
+        unique_colors = {img.getpixel((x,y)) for x in range(w) for y in range(h) }
         if len(unique_colors) > 2**16:
-            print(f"Number of colors: {len(unique_colors)}")
             img = img.convert("RGB")
             if w > h:
                 img, status = downsize_img(img, 1600, 0)
             else:
                 img, status = downsize_img(img, 0, 1600)
-            
+
             tempfile = BytesIO()
             try:
                 img.save(tempfile, quality=80, format="JPEG")
@@ -46,7 +45,6 @@ def is_big_png_photo(src_path: str) -> bool:
                 img.save(tempfile, quality=80, format="JPEG")
 
             final_size = tempfile.getbuffer().nbytes
-            print("size", final_size)
             return (final_size > MIN_BIG_IMG_SIZE)
-            
+
     return False
