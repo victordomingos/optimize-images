@@ -94,14 +94,6 @@ def make_grayscale(img):
     elif orig_mode == "RGBA":
         return img.convert("LA").convert("RGBA")
     elif orig_mode == "P":
-        # convert each colhor in palette to grayscale
-        # remove color duplicates from the pallete
-        # get the index of transparent color and keep it
-        palette = img.getpalette()
-        # convert palette to grayscale values?
-        img = img.convert("LA").convert("P")
-        img.putpalette(palette)
-        # TODO: DEBUG this (issue with some transparent logos)
-        return img
+        return img.convert("LA").convert("P")
     else:
         return img

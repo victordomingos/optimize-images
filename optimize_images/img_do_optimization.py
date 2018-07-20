@@ -77,7 +77,7 @@ def optimize_png(t: Task) -> TaskResult:
 
         # Only save the converted file if conversion did save any space
         final_size = os.path.getsize(conv_file_path)
-        if t.ignore_size_comparison or (orig_size - final_size > 0):
+        if t.no_size_comparison or (orig_size - final_size > 0):
             was_optimized = True
             if t.force_del:
                 try:
@@ -128,7 +128,7 @@ def optimize_png(t: Task) -> TaskResult:
         final_size = os.path.getsize(temp_file_path)
 
         # Only replace the original file if compression did save any space
-        if t.ignore_size_comparison or (orig_size - final_size > 0):
+        if t.no_size_comparison or (orig_size - final_size > 0):
             shutil.move(temp_file_path, os.path.expanduser(t.src_path))
             was_optimized = True
         else:
@@ -225,7 +225,7 @@ def optimize_jpg(t: Task) -> TaskResult:
 
     # Only replace the original file if compression did save any space
     final_size = os.path.getsize(temp_file_path)
-    if t.ignore_size_comparison or (orig_size - final_size > 0):
+    if t.no_size_comparison or (orig_size - final_size > 0):
         shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True
     else:
@@ -257,5 +257,7 @@ def do_optimization(t: Task) -> TaskResult:
 
     if img.format.upper() == 'PNG':
         return optimize_png(t)
+    #elif img.format.upper() == 'JPEG':
     else:
         return optimize_jpg(t)
+
