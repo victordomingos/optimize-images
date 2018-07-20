@@ -60,7 +60,7 @@ def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
     (src_path, recursive, quality, remove_transparency, reduce_colors,
-     max_colors, max_w, max_h, keep_exif, conv_big, force_del, bg_color,
+     max_colors, max_w, max_h, keep_exif, convert_all, conv_big, force_del, bg_color,
      grayscale, ignore_size_comparison) = get_args()
     found_files = 0
     optimized_files = 0
@@ -75,7 +75,7 @@ def main():
         print(f"\n{recursion_txt} {opt_msg} {exif_txt}in:\n{src_path}\n")
 
         tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
-                      max_colors, max_w, max_h, keep_exif, conv_big,
+                      max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
                       force_del, bg_color, grayscale, ignore_size_comparison)
                  for img_path in search_images(src_path, recursive=recursive))
 
@@ -93,7 +93,7 @@ def main():
         found_files += 1
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,
-                        max_colors, max_w, max_h, keep_exif, conv_big,
+                        max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
                         force_del, bg_color, grayscale, ignore_size_comparison)
 
         r = do_optimization(img_task)

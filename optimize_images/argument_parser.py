@@ -15,7 +15,9 @@ def get_args():
              "by replacing the original files with the processed ones. You " \
              "definitely should duplicate the original file or folder before " \
              "using this utility, in order to be able to recover any damaged " \
-             "images that don't have the desired quality."
+             "images that don't have the desired quality. When doing format " \
+             "conversion, if a JPEG with the same name already exists, it " \
+             "be replaced by the JPEG file resulting from that conversion."
     parser = ArgumentParser(description=desc, epilog=epilog)
 
     path_help = "The path to the image file or to the folder containing the " \
@@ -36,11 +38,11 @@ def get_args():
     parser.add_argument('-g', '--grayscale', action='store_true',
                         help="Convert to grayscale.")
 
-    i_help = "Don't compare the original and resulting file sizes, and save " \
+    nc_help = "Don't compare the original and resulting file sizes, and save " \
              "the new image anyway (useful, for instance, if you prefer to " \
              "have all images with the same color, size, or quality settings)."
-    parser.add_argument('-i', '--ignore-size-comparison', action='store_true',
-                        help=i_help)
+    parser.add_argument('-nc', '--no-comparison', action='store_true',
+                        help=nc_help)
 
     size_msg = "These options will be applied individually to each " \
                "image being processed. Any image that has a dimension " \
@@ -112,11 +114,20 @@ def get_args():
               "to determine whether it is a good idea and automatically decide " \
               "about it. By default, when using this option, the original PNG " \
               "files will remain untouched and will be kept alongside the " \
-              "optimized JPG images in their original folders. IMPORTANT: " \
-              "IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE " \
-              "REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION."
+              "optimized JPG images in their original folders (existing JPEGs " \
+              "will be replaced)."
     png_group.add_argument(
-        '-cb', "--convert_big", action='store_true', help=cb_help)
+        '-cb', "--convert-big", action='store_true', help=cb_help)
+
+
+    ca_help = "Automatically convert to JPEG all PNG images found. By default, " \
+              "when using this option, the original PNG " \
+              "files will remain untouched and will be kept alongside the " \
+              "optimized JPG images in their original folders. (existing JPEGs " \
+              "will be replaced)."
+    png_group.add_argument(
+        '-ca', "--convert-all", action='store_true', help=ca_help)
+
 
     fd_help = "Delete the original file when converting to JPG."
     png_group.add_argument(
@@ -178,5 +189,5 @@ def get_args():
         parser.exit(status=0, message=msg)
 
     return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
-           args.max_width, args.max_height, args.keep_exif, args.convert_big, \
-           args.force_delete, bg_color, args.grayscale, args.ignore_size_comparison
+           args.max_width, args.max_height, args.keep_exif, args.convert_all, args.convert_big, \
+           args.force_delete, bg_color, args.grayscale, args.no_comparison

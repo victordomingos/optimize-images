@@ -21,6 +21,7 @@ class Task(NamedTuple):
     max_w: int
     max_h: int
     keep_exif: bool
+    convert_all: bool
     conv_big: bool
     force_del: bool
     bg_color: Tuple[int, int, int]

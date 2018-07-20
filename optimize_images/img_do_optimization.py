@@ -43,7 +43,7 @@ def optimize_png(t: Task) -> TaskResult:
     if orig_mode == 'P':
         final_colors = orig_colors = len(img.getcolors())
 
-    if t.conv_big and is_big_png_photo(t.src_path):
+    if t.convert_all or (t.conv_big and is_big_png_photo(t.src_path)):
         # convert to jpg format
         filename = os.path.splitext(os.path.basename(t.src_path))[0]
         conv_file_path = os.path.join(folder + "/" + filename + ".jpg")

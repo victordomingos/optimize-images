@@ -2,11 +2,13 @@
 import os
 
 from PIL import Image, ImageFile
+from io import BytesIO
+
 
 from optimize_images.img_aux_processing import downsize_img
 from optimize_images.constants import MIN_BIG_IMG_SIZE, MIN_BIG_IMG_AREA
-
-
+    
+    
 def is_big_png_photo(src_path: str) -> bool:
     """Try to determine if a given image if a big photo in PNG format
 
@@ -22,37 +24,29 @@ def is_big_png_photo(src_path: str) -> bool:
     orig_format = img.format
     orig_mode = img.mode
 
-    folder = os.path.split(src_path)[0]
-    filename = os.path.splitext(os.path.basename(src_path))[0]
-    temp_file_path = os.path.join(folder + "/~temp~" + filename + ".jpg")
-
-    w, h = img.size
-
     if orig_format != 'PNG' or orig_mode in ['P', 'L', 'LA']:
         return False
-    elif (w * h) < (MIN_BIG_IMG_AREA):
-        return False
-    else:
-        img = img.convert("RGB")
-        if w > h:
-            img, status = downsize_img(img, 1600, 0)
-        else:
-            img, status = downsize_img(img, 0, 1600)
 
-        try:
-            img.save(temp_file_path, quality=90, optimize=True,
-                     progressive=True, format="JPEG")
-        except IOError:
-            ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-            img.save(temp_file_path, quality=90, optimize=True,
-                     progressive=True, format="JPEG")
+    w, h = img.size
+    if (w * h) >= MIN_BIG_IMG_AREA:
+        unique_colors = {img.getpixel((x,y)) for x in range(w) for y in range(h) }        
+        if len(unique_colors) > 2**16:
+            print(f"Number of colors: {len(unique_colors)}")
+            img = img.convert("RGB")
+            if w > h:
+                img, status = downsize_img(img, 1600, 0)
+            else:
+                img, status = downsize_img(img, 0, 1600)
+            
+            tempfile = BytesIO()
+            try:
+                img.save(tempfile, quality=80, format="JPEG")
+            except IOError:
+                ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+                img.save(tempfile, quality=80, format="JPEG")
 
-        final_size = os.path.getsize(temp_file_path)
-
-        try:
-            os.remove(temp_file_path)
-        except OSError as e:
-            print("\nError while removing temporary file.\n{e}\n")
-
-        return (final_size > MIN_BIG_IMG_SIZE)
-
+            final_size = tempfile.getbuffer().nbytes
+            print("size", final_size)
+            return (final_size > MIN_BIG_IMG_SIZE)
+            
+    return False

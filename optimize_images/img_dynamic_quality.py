@@ -6,7 +6,7 @@ from io import BytesIO
 from PIL import Image
 from math import log
 
-from optimize_images.img_comparison import compare_images
+#from optimize_images.img_comparison import compare_images
 
 
 def get_diff_at_quality(photo, quality):
