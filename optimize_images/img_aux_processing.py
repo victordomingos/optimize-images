@@ -1,7 +1,5 @@
 # encoding: utf-8
-
 from typing import Tuple
-
 from PIL import Image
 
 from optimize_images.constants import DEFAULT_BG_COLOR
@@ -86,14 +84,27 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
     return img, orig_colors, final_colors
 
 
-def make_grayscale(img):
+def make_grayscale(img: ImageType) -> ImageType:
     orig_mode = img.mode
 
     if orig_mode in ["RGB", "CMYK", "YCbCr", "LAB", "HSV"]:
         return img.convert("L")
     elif orig_mode == "RGBA":
         return img.convert("LA").convert("RGBA")
+        # #Alternative:
+        #for i in range(img.size[0]):  # for every pixel:
+        #    for j in range(img.size[1]):
+        #        g = (pixels[i, j][0] * 299 + pixels[i, j][1] * 587 + pixels[i, j][2] * 114) // 1000
+        #        pixels[i, j] = (g, g, g, pixels[i, j][3])
     elif orig_mode == "P":
-        return img.convert("LA").convert("P")
+        # Using ITU-R 601-2 luma transform:  L = R * 299/1000 + G * 587/1000 + B * 114/1000
+        pal = img.getpalette()
+        for i in range(len(pal) // 3):
+            # Using ITU-R 601-2 luma transform
+            g = (pal[3*i] * 299 + pal[3*i+1] * 587 + pal[3*i+2] * 114) // 1000
+            pal[3*i: 3*i+3] = [g, g, g]
+        img.putpalette(pal)
+        return img
     else:
         return img
+
