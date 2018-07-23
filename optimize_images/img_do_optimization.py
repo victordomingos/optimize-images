@@ -116,7 +116,7 @@ def optimize_png(t: Task) -> TaskResult:
             img = make_grayscale(img)
 
         if t.insane and img.mode == "P":
-            img = rebuild_palette(img)
+            img, final_colors = rebuild_palette(img)
 
         try:
             img.save(temp_file_path, optimize=True, format=result_format)

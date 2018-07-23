@@ -74,10 +74,11 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
 
 def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
     orig_mode = img.mode
+    colors = img.getcolors()
 
     if orig_mode == "1":
         return img, 2, 2
-    colors = img.getcolors()
+
     if colors:
         orig_colors = len(colors)
     else:
@@ -86,39 +87,27 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
 
     if orig_mode in ["RGB", "L"]:
         palette = Image.ADAPTIVE
-        final_colors = max_colors
     elif orig_mode == "RGBA":
         palette = Image.ADAPTIVE
-        final_colors = max_colors
         transparent = Image.new("RGBA", img.size, (0, 0, 0, 0))
         # blend with transparent image using own alpha
         img = Image.composite(img, transparent, img)
 
     elif orig_mode == "P":
-        orig_colors = len(img.getcolors())
-        if orig_colors >= 256:
-            palette = Image.ADAPTIVE
-            final_colors = max_colors
-        else:
-            palette = img.get_palette()
-            final_colors = orig_colors
+        palette = img.getpalette()
+        img = img.convert("RGBA")
+        w, h = img.size
+        alpha_layer = Image.new("L", img.size)
+        for x in range(w):
+            for y in range(h):
+                r, g, b, a = img.getpixel((x, y))
+                alpha_layer.putpixel((x, y), a)
+        img.putalpha(alpha_layer)
     else:
         return img, 0, 0
 
-    img = img.convert("P", palette=palette, colors=final_colors)
-    return img, orig_colors, final_colors
-
-
-def remove_unused_colors(img):
-    w, h = img.size
-    count = Counter()
-    for i in range(w):  # for every pixel:
-        for y in range(h):
-
-            color = pixels[i, j][3]
-            count += color
-    print(count)
-    return img
+    img = img.convert("P", palette=palette, colors=max_colors)
+    return img, orig_colors, len(img.getcolors())
 
 
 def make_grayscale(img: ImageType) -> ImageType:
@@ -135,19 +124,18 @@ def make_grayscale(img: ImageType) -> ImageType:
         #        pixels[i, j] = (g, g, g, pixels[i, j][3])
     elif orig_mode == "P":
         # Using ITU-R 601-2 luma transform:  L = R * 299/1000 + G * 587/1000 + B * 114/1000
-        pal = img.get_palette()
+        pal = img.getpalette()
         for i in range(len(pal) // 3):
             # Using ITU-R 601-2 luma transform
             g = (pal[3*i] * 299 + pal[3*i+1] * 587 + pal[3*i+2] * 114) // 1000
             pal[3*i: 3*i+3] = [g, g, g]
         img.putpalette(pal)
-        img = remove_unused_colors(img)
         return img
     else:
         return img
 
 
-def rebuild_palette(img: ImageType) -> ImageType:
+def rebuild_palette(img: ImageType) -> Tuple[ImageType, int]:
     """ Rebuild the palette of a mode "P" PNG image
 
     It may allow for other tools, like PNGOUT and AdvPNG, to further reduce the
@@ -172,5 +160,6 @@ def rebuild_palette(img: ImageType) -> ImageType:
 
     img.putalpha(alpha_layer)
     palette = new_palette.get_palette()
-    img = img.convert("P", palette=palette, colors=len(palette) // 3)
-    return img
+    num_colors = len(palette) // 3
+    img = img.convert("P", palette=palette, colors=num_colors)
+    return img, len(img.getcolors())
