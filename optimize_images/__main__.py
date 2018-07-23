@@ -61,7 +61,7 @@ def main():
     line_width, our_pool_executor, workers = adjust_for_platform()
     (src_path, recursive, quality, remove_transparency, reduce_colors,
      max_colors, max_w, max_h, keep_exif, convert_all, conv_big, force_del, bg_color,
-     grayscale, ignore_size_comparison, insane) = get_args()
+     grayscale, ignore_size_comparison, fast_mode) = get_args()
     found_files = 0
     optimized_files = 0
     total_src_size = 0
@@ -76,7 +76,7 @@ def main():
 
         tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
                       max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                      force_del, bg_color, grayscale, ignore_size_comparison, insane)
+                      force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
                  for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
@@ -94,7 +94,7 @@ def main():
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,
                         max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                        force_del, bg_color, grayscale, ignore_size_comparison, insane)
+                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
 
         r = do_optimization(img_task)
         total_src_size = r.orig_size

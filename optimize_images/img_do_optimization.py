@@ -115,7 +115,7 @@ def optimize_png(t: Task) -> TaskResult:
         if t.grayscale:
             img = make_grayscale(img)
 
-        if t.insane and img.mode == "P":
+        if not t.fast_mode and img.mode == "P":
             img, final_colors = rebuild_palette(img)
 
         try:

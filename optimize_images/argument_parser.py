@@ -44,13 +44,9 @@ def get_args():
     parser.add_argument('-nc', '--no-comparison', action='store_true',
                         help=nc_help)
 
-    insane_help = "Do some aditional insane actions that will take a lot " \
-                  "longer time to complete, and probably won't result in any " \
-                  "immediate benefit. Currently it applies an experimental " \
-                  "palette rebuild algorithm to indexed PNG images, that may " \
-                  "in fact increase the file size, but can allow for better " \
-                  "using other external tools."
-    parser.add_argument('-ins', '--insane', action='store_true', help=insane_help)
+    fm_help = "Skip some actions, like the final palete rebuild for indexed " \
+              "PNG images, in order to finish faster."
+    parser.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
 
     size_msg = "These options will be applied individually to each " \
                "image being processed. Any image that has a dimension " \
@@ -198,4 +194,4 @@ def get_args():
 
     return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
            args.max_width, args.max_height, args.keep_exif, args.convert_all, args.convert_big, \
-           args.force_delete, bg_color, args.grayscale, args.no_comparison, args.insane
+           args.force_delete, bg_color, args.grayscale, args.no_comparison, args.fast_mode

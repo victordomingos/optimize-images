@@ -27,7 +27,7 @@ class Task(NamedTuple):
     bg_color: Tuple[int, int, int]
     grayscale: bool
     no_size_comparison: bool
-    insane: bool
+    fast_mode: bool
 
 
 class TaskResult(NamedTuple):

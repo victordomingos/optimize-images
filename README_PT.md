@@ -28,6 +28,7 @@ externos bem conhecidos.
    * [Obter ajuda sobre como usar esta aplicação](#obter-ajuda-sobre-como-usar-esta-aplicação)
    * [Opções independentes do formato](#opções-independentes-do-formato)
        - [Redimensionamento de imagens](#redimensionamento-de-imagens)
+       - [Modo rápido](#modo-rápido)
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
@@ -209,6 +210,25 @@ optimize-images --help
   
 
 ### Opções independentes do formato:
+
+#### Modo rápido:
+
+Algumas operações poderão eventualmente ser efetuadas mais rapidamente
+utilizando esta opção. De um modo geral, isso significa que os ficheiros
+resultantes serão um pouco maiores, para permitir em vez disso poupar alguns
+segundos durante o processamento das imagens.
+
+Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual, de
+forma recursiva, utilizando o modo rápido:
+
+```
+optimize-images -fm ./
+```
+
+```
+optimize-images --fast-mode ./
+```
+
 
 #### Redimensionamento de imagens:
 

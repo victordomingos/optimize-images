@@ -14,6 +14,10 @@ v.1.2 - 30/07/2018
  * Added an option to convert to grayscale.
  * Added an option to ignore file size comparison between original and
    processed files, allowing to always save anyway the processed version.
+ * Added new palette rebuild step for indexed color images (creates images that
+   may then be compressed more efficiently using other tools).
+ * Added a new "fast mode", that currently skips the (also recently
+   implemented) palette rebuild step.
  * Changed the transparency removal algorithm to something better.
  * Created some global constants for iOS console and thread settings.
  * Created a global constant for JPEG quality and raised the default to 80.

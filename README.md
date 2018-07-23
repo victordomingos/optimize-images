@@ -26,6 +26,7 @@ known external binaries.
    * [Getting help on how to use this application](#getting-help-on-how-to-use-this-application)
    * [Format independent options](#format-independent-options)
        - [Image resizing](#image-resizing)
+       - [Fast mode](#fast-mode)
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
@@ -197,6 +198,24 @@ optimize-images --help
   
 
 ### Format independent options:
+
+#### Fast mode:
+
+Some of the operations may eventually be finished sooner by using this option.
+Generally speaking, this means that the resulting files will have a slightly
+bigger size, in order to save instead a few seconds on image processing.
+
+Try to optimize all image files in current working directory, with recursion,
+using fast mode:
+
+```
+optimize-images -fm ./
+```
+
+```
+optimize-images --fast-mode ./
+```
+
 
 #### Image resizing:
 
