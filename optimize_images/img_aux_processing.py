@@ -1,9 +1,34 @@
 # encoding: utf-8
 from typing import Tuple
 from PIL import Image
+from collections import Counter
 
 from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.data_structures import ImageType
+
+
+class Palette:
+    def __init__(self):
+        self.palette = []
+
+    def add(self, r, g, b):
+        # map rgb tuple to colour index
+        rgb = r, g, b
+        try:
+            return self.palette.index(rgb)
+        except:
+            i = len(self.palette)
+            if i >= 256:
+                raise RuntimeError("all palette entries are used")
+            self.palette.append(rgb)
+            return i
+
+    def get_palette(self):
+        # return flattened palette
+        palette = []
+        for r, g, b in self.palette:
+            palette = palette + [r, g, b]
+        return palette
 
 
 def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
@@ -75,13 +100,25 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
             palette = Image.ADAPTIVE
             final_colors = max_colors
         else:
-            palette = img.getpalette()
+            palette = img.get_palette()
             final_colors = orig_colors
     else:
         return img, 0, 0
 
     img = img.convert("P", palette=palette, colors=final_colors)
     return img, orig_colors, final_colors
+
+
+def remove_unused_colors(img):
+    w, h = img.size
+    count = Counter()
+    for i in range(w):  # for every pixel:
+        for y in range(h):
+
+            color = pixels[i, j][3]
+            count += color
+    print(count)
+    return img
 
 
 def make_grayscale(img: ImageType) -> ImageType:
@@ -98,13 +135,42 @@ def make_grayscale(img: ImageType) -> ImageType:
         #        pixels[i, j] = (g, g, g, pixels[i, j][3])
     elif orig_mode == "P":
         # Using ITU-R 601-2 luma transform:  L = R * 299/1000 + G * 587/1000 + B * 114/1000
-        pal = img.getpalette()
+        pal = img.get_palette()
         for i in range(len(pal) // 3):
             # Using ITU-R 601-2 luma transform
             g = (pal[3*i] * 299 + pal[3*i+1] * 587 + pal[3*i+2] * 114) // 1000
             pal[3*i: 3*i+3] = [g, g, g]
         img.putpalette(pal)
+        img = remove_unused_colors(img)
         return img
     else:
         return img
 
+
+def rebuild_palette(img: ImageType) -> ImageType:
+    """ Rebuild the palette of a mode "P" PNG image
+
+    It may allow for other tools, like PNGOUT and AdvPNG, to further reduce the
+    size of some indexed PNG images. However, it it was already an optimized PNG,
+    the resulting file size may in fact be bigger (which means optimize-images
+    may discard it by default). You may use it as an intermediate process,
+    before doing a final optimization using those tools.
+
+    :param img: a mode "P" PNG image
+    :return: a mode "P" PNG image
+    """
+    w, h = img.size
+    img = img.convert("RGBA")
+    new_palette = Palette()
+    alpha_layer = Image.new("L", img.size)
+
+    for x in range(w):
+        for y in range(h):
+            r, g, b, a = img.getpixel((x,y))
+            new_palette.add(r, g, b)
+            alpha_layer.putpixel((x,y), a)
+
+    img.putalpha(alpha_layer)
+    palette = new_palette.get_palette()
+    img = img.convert("P", palette=palette, colors=len(palette) // 3)
+    return img

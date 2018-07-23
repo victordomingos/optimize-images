@@ -9,7 +9,7 @@ from PIL import Image, ImageFile
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo
 from optimize_images.img_aux_processing import remove_transparency, make_grayscale
-from optimize_images.img_aux_processing import do_reduce_colors, downsize_img
+from optimize_images.img_aux_processing import do_reduce_colors, downsize_img, rebuild_palette
 from optimize_images.img_comparison import compare_images
 
 
@@ -34,10 +34,6 @@ def optimize_png(t: Task) -> TaskResult:
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
     orig_colors, final_colors = 0, 0
-    if 'transparency' in img.info:
-        transparency = img.info['transparency']
-    else:
-        transparency = None
 
     had_exif = has_exif = False  # Currently no exif methods for PNG files
     if orig_mode == 'P':
@@ -119,11 +115,14 @@ def optimize_png(t: Task) -> TaskResult:
         if t.grayscale:
             img = make_grayscale(img)
 
+        if t.insane and img.mode == "P":
+            img = rebuild_palette(img)
+
         try:
-            img.save(temp_file_path, optimize=True, format=result_format, transparency=transparency)
+            img.save(temp_file_path, optimize=True, format=result_format)
         except IOError:
             ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-            img.save(temp_file_path, optimize=True, format=result_format, transparency=transparency)
+            img.save(temp_file_path, optimize=True, format=result_format)
 
         final_size = os.path.getsize(temp_file_path)
 
