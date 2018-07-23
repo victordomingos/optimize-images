@@ -45,6 +45,6 @@ def is_big_png_photo(src_path: str) -> bool:
                 img.save(tempfile, quality=80, format="JPEG")
 
             final_size = tempfile.getbuffer().nbytes
-            return (final_size > MIN_BIG_IMG_SIZE)
+            return final_size > MIN_BIG_IMG_SIZE
 
     return False
