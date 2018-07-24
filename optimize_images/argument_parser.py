@@ -35,36 +35,38 @@ def get_args():
     parser.add_argument('-nr', '--no-recursion', action='store_true',
                         help="Don't recurse through subdirectories.")
 
-    parser.add_argument('-g', '--grayscale', action='store_true',
+
+    general_msg = "These options will be applied individually to each " \
+               "image being processed, independently of its format."
+    general_group = parser.add_argument_group(
+        'General image settings'.upper(), description=general_msg)
+
+    mw_help = "The maximum width (in pixels)."
+    general_group.add_argument('-mw', dest="max_width",
+                            type=int, default=0, help=mw_help)
+
+    mh_help = "The maximum height (in pixels). Any image that has a dimension " \
+               "exceeding a specified value will be downsized as the first " \
+               "optimization step. The resizing will not take effect if, " \
+               "after the whole optimization process, the resulting file " \
+               "size isn't any smaller than the original."
+    general_group.add_argument('-mh', dest="max_height",
+                            type=int, default=0, help=mh_help)
+
+    general_group.add_argument('-g', '--grayscale', action='store_true',
                         help="Convert to grayscale.")
 
     nc_help = "Don't compare the original and resulting file sizes, and save " \
              "the new image anyway (useful, for instance, if you prefer to " \
              "have all images with the same color, size, or quality settings)."
-    parser.add_argument('-nc', '--no-comparison', action='store_true',
+    general_group.add_argument('-nc', '--no-comparison', action='store_true',
                         help=nc_help)
 
-    fm_help = "Skip some actions, like the final palete rebuild for indexed " \
-              "PNG images, in order to finish faster."
-    parser.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
+    fm_help = "Skip some actions (e.g., the final palete rebuild for indexed " \
+              "PNG images) in order to finish faster."
+    general_group.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
 
-    size_msg = "These options will be applied individually to each " \
-               "image being processed. Any image that has a dimension " \
-               "exceeding a specified value will be downsized as the first " \
-               "optimization step. The resizing will not take effect if, " \
-               "after the whole optimization process, the resulting file " \
-               "size isn't any smaller than the original. These options are " \
-               "disabled by default."
-    size_group = parser.add_argument_group(
-        'Image resizing'.upper(), description=size_msg)
 
-    mw_help = "The maximum width (in pixels)."
-    size_group.add_argument('-mw', dest="max_width",
-                            type=int, default=0, help=mw_help)
-
-    mh_help = "The maximum height (in pixels)."
-    size_group.add_argument('-mh', dest="max_height",
-                            type=int, default=0, help=mh_help)
 
     jpg_msg = 'The following options apply only to JPEG image files.'
     jpg_group = parser.add_argument_group(
