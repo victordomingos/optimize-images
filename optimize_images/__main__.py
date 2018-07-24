@@ -27,33 +27,36 @@ known external binaries.
 import os
 
 from timeit import default_timer as timer
-from typing import Iterable
 
-from optimize_images.constants import SUPPORTED_FORMATS
-from optimize_images.data_structures import Task
+from PIL import Image
+
+from optimize_images.file_utils import search_images
+from optimize_images.data_structures import Task, TaskResult
 from optimize_images.platforms import adjust_for_platform
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
-from optimize_images.img_do_optimization import do_optimization
+from optimize_images.img_optimize_png import optimize_png
+from optimize_images.img_optimize_jpg import optimize_jpg
 
 
-def search_images(dirpath: str, recursive: bool) -> Iterable[str]:
-    if recursive:
-        for root, dirs, files in os.walk(dirpath):
-            for f in files:
-                if not os.path.isfile(os.path.join(root, f)):
-                    continue
-                extension = os.path.splitext(f)[1][1:]
-                if extension.lower() in SUPPORTED_FORMATS:
-                    yield os.path.join(root, f)
+def do_optimization(t: Task) -> TaskResult:
+    """ Try to reduce file size of an image.
+
+    Expects a Task object containing all the parameters for the image processing.
+
+    The actual processing is done by the corresponding function,
+    according to the detected image format.
+
+    :param t: A Task object containing all the parameters for the image processing.
+    :return: A TaskResult object containing information for single file report.
+    """
+    img = Image.open(t.src_path)
+
+    if img.format.upper() == 'PNG':
+        return optimize_png(t)
+    # elif img.format.upper() == 'JPEG':
     else:
-        with os.scandir(dirpath) as directory:
-            for f in directory:
-                if not os.path.isfile(os.path.normpath(f)):
-                    continue
-                extension = os.path.splitext(f)[1][1:]
-                if extension.lower() in SUPPORTED_FORMATS:
-                    yield os.path.normpath(f)
+        return optimize_jpg(t)
 
 
 def main():

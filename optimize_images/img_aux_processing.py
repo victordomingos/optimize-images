@@ -1,7 +1,6 @@
 # encoding: utf-8
 from typing import Tuple
 from PIL import Image
-from collections import Counter
 
 from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.data_structures import ImageType
@@ -73,18 +72,38 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
 
 
 def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
+    """ Reduce the number of colors of an Image object
+
+    It takes a PIL image object and tries to reduce the total number of colors,
+    converting it to an indexed color (mode P) image. If the input image is in
+    mode 1, it cannot be further reduced, so it's returned back with no
+    changes.
+
+    :param img: a PIL image in color (modes P, RGBA, RGB, CMYK, YCbCr, LAB or HSV)
+    :param max_colors: an integer indicating the maximum number of colors allowed.
+    :return: a PIL image in mode P (or mode 1, as stated above), an integer
+             indicating the original number of colors (0 if source is not a
+             mode P or mode 1 image) and an integer stating the resulting
+             number of colors.
+    """
     orig_mode = img.mode
-    colors = img.getcolors()
 
     if orig_mode == "1":
         return img, 2, 2
 
+    colors = img.getcolors()
     if colors:
         orig_colors = len(colors)
     else:
         orig_colors = 0
-    #print(f"DEBUG: {img.format}: {img.mode}/{orig_colors} - {img.size[0]}x{img.size[1]} ")
 
+    # Intermediate conversion steps when needed
+    if orig_mode in ["CMYK", "YCbCr", "LAB", "HSV"]:
+        img = img.convert("RGB")
+    elif orig_mode == "LA":
+        img = img.convert("RGBA")
+
+    # Actual color reduction happening here
     if orig_mode in ["RGB", "L"]:
         palette = Image.ADAPTIVE
     elif orig_mode == "RGBA":
@@ -92,7 +111,6 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
         transparent = Image.new("RGBA", img.size, (0, 0, 0, 0))
         # blend with transparent image using own alpha
         img = Image.composite(img, transparent, img)
-
     elif orig_mode == "P":
         palette = img.getpalette()
         img = img.convert("RGBA")
@@ -111,24 +129,25 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
 
 
 def make_grayscale(img: ImageType) -> ImageType:
+    """ Convert an Image to grayscale
+
+    :param img: a PIL image in color (modes P, RGBA, RGB, CMYK, YCbCr, LAB or HSV)
+    :return: a PIL image object in modes P, L or RGBA, if converted, or the
+             original Image object in case no conversion is done.
+    """
     orig_mode = img.mode
 
     if orig_mode in ["RGB", "CMYK", "YCbCr", "LAB", "HSV"]:
         return img.convert("L")
     elif orig_mode == "RGBA":
         return img.convert("LA").convert("RGBA")
-        # #Alternative:
-        #for i in range(img.size[0]):  # for every pixel:
-        #    for j in range(img.size[1]):
-        #        g = (pixels[i, j][0] * 299 + pixels[i, j][1] * 587 + pixels[i, j][2] * 114) // 1000
-        #        pixels[i, j] = (g, g, g, pixels[i, j][3])
     elif orig_mode == "P":
         # Using ITU-R 601-2 luma transform:  L = R * 299/1000 + G * 587/1000 + B * 114/1000
         pal = img.getpalette()
         for i in range(len(pal) // 3):
             # Using ITU-R 601-2 luma transform
-            g = (pal[3*i] * 299 + pal[3*i+1] * 587 + pal[3*i+2] * 114) // 1000
-            pal[3*i: 3*i+3] = [g, g, g]
+            g = (pal[3 * i] * 299 + pal[3 * i + 1] * 587 + pal[3 * i + 2] * 114) // 1000
+            pal[3 * i: 3 * i + 3] = [g, g, g]
         img.putpalette(pal)
         return img
     else:
@@ -141,11 +160,12 @@ def rebuild_palette(img: ImageType) -> Tuple[ImageType, int]:
     It may allow for other tools, like PNGOUT and AdvPNG, to further reduce the
     size of some indexed PNG images. However, it it was already an optimized PNG,
     the resulting file size may in fact be bigger (which means optimize-images
-    may discard it by default). You may use it as an intermediate process,
-    before doing a final optimization using those tools.
+    may discard it by default). You may also want to use it as an intermediate
+    process, before doing a final optimization using those tools.
 
     :param img: a mode "P" PNG image
-    :return: a mode "P" PNG image
+    :return: a tuple composed by a mode "P" PNG image object and an integer
+             with the resulting number of colors
     """
     w, h = img.size
     img = img.convert("RGBA")
@@ -154,9 +174,9 @@ def rebuild_palette(img: ImageType) -> Tuple[ImageType, int]:
 
     for x in range(w):
         for y in range(h):
-            r, g, b, a = img.getpixel((x,y))
+            r, g, b, a = img.getpixel((x, y))
+            alpha_layer.putpixel((x, y), a)
             new_palette.add(r, g, b)
-            alpha_layer.putpixel((x,y), a)
 
     img.putalpha(alpha_layer)
     palette = new_palette.get_palette()

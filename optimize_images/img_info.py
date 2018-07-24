@@ -4,7 +4,6 @@ import os
 from PIL import Image, ImageFile
 from io import BytesIO
 
-
 from optimize_images.img_aux_processing import downsize_img
 from optimize_images.constants import MIN_BIG_IMG_SIZE, MIN_BIG_IMG_AREA
 
@@ -29,8 +28,8 @@ def is_big_png_photo(src_path: str) -> bool:
 
     w, h = img.size
     if (w * h) >= MIN_BIG_IMG_AREA:
-        unique_colors = {img.getpixel((x,y)) for x in range(w) for y in range(h) }
-        if len(unique_colors) > 2**16:
+        unique_colors = {img.getpixel((x, y)) for x in range(w) for y in range(h)}
+        if len(unique_colors) > 2 ** 16:
             img = img.convert("RGB")
             if w > h:
                 img, status = downsize_img(img, 1600, 0)

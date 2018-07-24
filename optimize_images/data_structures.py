@@ -6,7 +6,6 @@ from typing import NamedTuple, Tuple, NewType
 
 from PIL import Image
 
-
 ImageType = NewType('ImageType', Image)
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
 TPoolExType = NewType('PPoolExType', concurrent.futures.ThreadPoolExecutor)
@@ -44,4 +43,3 @@ class TaskResult(NamedTuple):
     was_downsized: bool
     had_exif: bool
     has_exif: bool
-

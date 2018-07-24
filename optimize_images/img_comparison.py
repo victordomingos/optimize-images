@@ -1,4 +1,4 @@
-from PIL import Image, ImageChops
+from PIL import Image
 
 
 def compare_images(image1: str, image2: str):
