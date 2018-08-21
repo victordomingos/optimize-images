@@ -59,7 +59,7 @@ diferentes plataformas, incluindo Pythonista em iOS. Neste momento, requer:
 
 Nota: Se está a utilizar um Mac com Python 3.6 e macOS X 10.11 El Capitan ou
 anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado 
-para Python 3.7, não deverá ter problemas com o Pillow 5.1.0.
+para Python3.7, não deverá ter problemas com o Pillow 5.1.0.
 
 Planeamos submeter esta aplicação ao PyPI tão brevemente quanto possível, para
 permitir oferecer uma forma de instalação e atualização mais simples.
