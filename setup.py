@@ -1,8 +1,8 @@
 # encoding: utf-8
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import sys
-
+import platform
 
 used = sys.version_info
 required = (3, 6)
@@ -17,8 +17,16 @@ if used[:2] < required:
     sys.exit(1)
 
 long_desc = "Count files, grouped by extension, in a directory. By "
-
 short_desc = "A little command-line interface (CLI) utility "
+
+old_macs = ['10.07', '10.08', '10.09', '10.10', '10.11']
+if sys.platform != "ios":
+    if platform.python_version().startswith("3.6") and platform.mac_ver()[0][:5] in old_macs:
+        pillow_version = 'Pillow==5.0.0'
+    else:
+        pillow_version = 'Pillow>=5.1.0'
+else:
+    pillow_version = ''
 
 
 def read_readme(file_name):
@@ -29,7 +37,7 @@ def read_readme(file_name):
 setup(name='optimize-images',
       version=__import__('optimize_images').__version__,
       description=short_desc,
-      packages=['optimize_images'],
+      packages=find_packages(),
       include_package_data=False,
       long_description=read_readme('README.md'),  # for PyPI
       long_description_content_type="text/markdown",
@@ -65,6 +73,12 @@ setup(name='optimize-images',
       install_requires=[
           'piexif==1.0.13',
       ],
+
+      extras_require={
+          ':sys_platform!="ios"': [
+              pillow_version
+          ]
+      },
 
       entry_points={
           'console_scripts': ['optimize-images = optimize_images.__main__:main']
