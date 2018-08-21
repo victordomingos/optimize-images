@@ -49,7 +49,7 @@ The current development version can be installed with `pip install -e`,
 followed by the path to the main project directory (the same directory that
 has the `setup.py` file). To run this application, you need to have a working
 Python 3.6+ instalation. We try to keep the external dependencies at a minimum,
-in order to keep compatibility with different plataforms, including Pythonista
+in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
   - Pillow==5.1.0
@@ -60,7 +60,7 @@ earlier, you should use Pillow 5.0.0 instead. In case you have already
 migrated to Python 3.7, you should be fine with Pillow 5.1.0.
 
 We plan to submit this to PyPI as soon as possible, in order to provide a more
-straight-forward instalation and upgrade process. While that doesn't happen,
+straight-forward installation and upgrade process. While that doesn't happen,
 please feel free to take a look at the last section and maybe consider
 contributing to this project.
 
