@@ -48,7 +48,7 @@ known external binaries.
 The current development version can be installed with `pip install -e`,
 followed by the path to the main project directory (the same directory that
 has the `setup.py` file). To run this application, you need to have a working
-Python 3.6+ instalation. We try to keep the external dependencies at a minimum,
+Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different plataforms, including Pythonista
 on iOS. At this moment, we require:
 
@@ -60,7 +60,7 @@ earlier, you should use Pillow 5.0.0 instead. In case you have already
 migrated to Python 3.7, you should be fine with Pillow 5.1.0.
 
 We plan to submit this to PyPI as soon as possible, in order to provide a more
-straight-forward instalation and upgrade process. While that doesn't happen,
+straight-forward installation and upgrade process. While that doesn't happen,
 please feel free to take a look at the last section and maybe consider
 contributing to this project.
 
@@ -97,7 +97,7 @@ pip install victordomingos/optimize-images
 
 If all goes well, it should install any dependencies, place a new `optimize_images`
 package inside the `~/Documents/site-packages-3/` folder and create an
-entrypoint script named `optimize-images.py` in `stash_extensions/bin`.
+entry point script named `optimize-images.py` in `stash_extensions/bin`.
 
 Currently, on Pythonista/iOS we require:
 
@@ -105,7 +105,7 @@ Currently, on Pythonista/iOS we require:
 
 Then force-quit and launch StaSh again. You should now be able to run this
 application directly from the shell or by creating a home screen shortcut
-with the required arguments to the entrypoint script
+with the required arguments to the entry point script
 `~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
 image files that you may have inside your Pythonista environment.
 
