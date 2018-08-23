@@ -333,6 +333,18 @@ reducing the color palette of PNG files to just 64 colors:
 optimize-images -q 60 -rc -mc 64 ./
 ```
 
+Please note that indicating a very small number of colors may remove transparency,
+replacing it with unintended colors. In such cases, you will probably achieve
+better results by combining this option with explicit transparency removal 
+(`rt`) and background color replacement (`-bg` or `hbg`).
+
+For instance, to optimize a single PNG image file, reducing the color palette
+to 8 colors maximum, removing transparency and applying a white background:
+
+```
+optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
+```
+
 
 ##### Automatic conversion of big PNG images to JPEG
 

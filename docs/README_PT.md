@@ -346,6 +346,19 @@ reduzindo a paleta de cores dos ficheiros PNG para apenas 64 cores:
 optimize-images -q 60 -rc -mc 64 ./
 ```
 
+Convém notar que se for indicado um número de cores muito baixo isso pode 
+implicar a perda de transparência, substituindo-a por cores inesperadas. Nesses 
+casos, é normalmente possível obter melhores resultados utilizando esta opção 
+combinada com a remoção explícita de transparência (`rt`) e com a substituição 
+da cor de fundo (`-bg` ou `hbg`).
+
+Por exemplo, para otimizar um ficheiro PNG, reduzindo a paleta para o máximo de 
+8 cores, removendo a transparência e aplicando um fundo branco:
+
+```
+optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
+```
+
 
 ##### Conversão automática de imagens PNG grandes para JPEG
 
