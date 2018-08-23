@@ -201,6 +201,7 @@ def optimize_jpg(t: Task) -> TaskResult:
     try:
         img.save(
             temp_file_path,
+            quality=t.quality,
             optimize=True,
             progressive=use_progressive_jpg,
             format=result_format)
@@ -208,6 +209,7 @@ def optimize_jpg(t: Task) -> TaskResult:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
         img.save(
             temp_file_path,
+            quality=t.quality,
             optimize=True,
             progressive=use_progressive_jpg,
             format=result_format)
