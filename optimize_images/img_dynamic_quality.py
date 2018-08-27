@@ -3,8 +3,13 @@ Adapted from:
 https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html
 """
 from io import BytesIO
-from PIL import Image
 from math import log
+
+try:
+    from PIL import Image
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 #from optimize_images.img_comparison import compare_images
 

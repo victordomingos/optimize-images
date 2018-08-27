@@ -25,10 +25,15 @@ known external binaries.
 © 2018 Victor Domingos (MIT License)
 """
 import os
+import platform
+
+try:
+    from PIL import Image
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 from timeit import default_timer as timer
-
-from PIL import Image
 
 from optimize_images.file_utils import search_images
 from optimize_images.data_structures import Task, TaskResult

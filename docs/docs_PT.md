@@ -9,7 +9,7 @@ Esta aplicação é escrita tanto quanto possível em Python puro, sem requisito
 técnicos especiais para além do Pillow, assegurando deste modo a
 compatibilidade com um vasto leque de sistemas, incluindo iPhones e iPads com
 a app Pythonista 3. Caso não tenha a necessidade de uma gestão de dependências
-tão rigorosa, encontrará certamente várias outras ferramentas de otimização de
+tão rigorosa, encontrará provavelmente várias outras ferramentas de otimização de
 imagem mais robustas e mais avançadas, baseadas em alguns binários executáveis
 externos bem conhecidos.
 

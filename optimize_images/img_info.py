@@ -1,8 +1,13 @@
 # encoding: utf-8
 import os
 
-from PIL import Image, ImageFile
 from io import BytesIO
+
+try:
+    from PIL import Image, ImageFile
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 from optimize_images.img_aux_processing import downsize_img
 from optimize_images.constants import MIN_BIG_IMG_SIZE, MIN_BIG_IMG_AREA

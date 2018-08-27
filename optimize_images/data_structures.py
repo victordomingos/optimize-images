@@ -4,7 +4,12 @@ import concurrent.futures
 
 from typing import NamedTuple, Tuple, NewType
 
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
+
 
 ImageType = NewType('ImageType', Image)
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)

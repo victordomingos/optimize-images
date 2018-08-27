@@ -4,7 +4,11 @@ import shutil
 
 import piexif
 
-from PIL import Image, ImageFile
+try:
+    from PIL import Image, ImageFile
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo

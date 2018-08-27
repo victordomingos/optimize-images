@@ -1,6 +1,11 @@
 # encoding: utf-8
 from typing import Tuple
-from PIL import Image
+
+try:
+    from PIL import Image
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.data_structures import ImageType

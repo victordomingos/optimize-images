@@ -1,4 +1,8 @@
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    msg = 'This application requires Pillow to be installed. Please, install it first.'
+    raise ImportError(msg)
 
 
 def compare_images(image1: str, image2: str):
