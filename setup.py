@@ -28,14 +28,19 @@ def read_readme(file_name):
 setup(name='optimize-images',
       version=__import__('optimize_images').__version__,
       description=short_desc,
+      author="Victor Domingos",
       packages=find_packages(),
       include_package_data=False,
       long_description=read_readme('README.md'),  # for PyPI
       long_description_content_type="text/markdown",
       license='MIT',
-      url='https://github.com/victordomingos/optimize-images',  # homepage
+      url='https://no-title.victordomingos.com/projects/optimize-images/',
+      project_urls={
+          'Documentation': 'https://github.com/victordomingos/optimize-images/blob/master/docs/docs_EN.md',
+          'Source': 'https://github.com/victordomingos/optimize-images',
+          'Bug Reports': 'https://github.com/victordomingos/optimize-images/issues',
+      },
       python_requires='>=3.6',
-
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
@@ -67,10 +72,5 @@ setup(name='optimize-images',
 
       entry_points={
           'console_scripts': ['optimize-images = optimize_images.__main__:main']
-      },
-      project_urls={
-          'Documentation': 'https://github.com/victordomingos/optimize-images/docs',
-          'Source': 'https://github.com/victordomingos/optimize-images',
-          'Bug Reports': 'https://github.com/victordomingos/optimize-images/issues',
       },
       )
