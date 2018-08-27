@@ -12,9 +12,13 @@ known external binaries.
 ![optimize-images_screenshot](https://user-images.githubusercontent.com/18650184/42172232-5788c43a-7e13-11e8-8094-5811e7fd55c1.png)
 
 
-## Installation and dependencies:
+## Documentation
+ * [English](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_EN.md)
+ * [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_PT.md)
 
-### On regular desktop operating systems
+
+
+## Installation and dependencies:
 
 To install and run this application, you need to have a working
 Python 3.6+ installation. We try to keep the external dependencies at a minimum,
@@ -36,54 +40,11 @@ earlier, you should use Pillow 5.0.0 instead (use instead:
 `pip3 install pillow==5.0.0 optimize-images`). In case you have already
 migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
 
-
-### On iPhone or iPad (in Pythonista 3 for iOS)
-
-First you will need a Python environment and a command-line shell compatible
-with Python 3. Presently, it means you need to have an app called
+You can also use this application on iOS, using an called
 [Pythonista 3](http://omz-software.com/pythonista/) (which is, among other
 things, a very nice environment for developing and/or running pure Python
-applications on iOS).
-
-Then you need to install [StaSh](https://github.com/ywangd/stash), which is a 
-Python-based shell application for Pythonista. It will enable you to use 
-useful commands like `wget`, `git clone`, `pip install` and many others. It 
-really deserves an home screen shortcut on your iPhone or iPad.
-
-After following the instructions for StaSh installation, you may need to 
-update it to a more recent version. Try this command:
-
-```
-selfupdate.py -f bennr01:command_testing
-```
-
-Then force-quit and restart Pythonista and launch StaSh again. It should now
-be running in Python 3. You may now try to install this application, directly
-from this git repository:
-
-```
-pip install optimize-images
-```
-
-If all goes well, it should install any dependencies, place a new `optimize_images`
-package inside the `~/Documents/site-packages-3/` folder and create an
-entrypoint script named `optimize-images.py` in `stash_extensions/bin`.
-
-Currently, on Pythonista/iOS we require:
-
-  - piexif==1.0.13
-
-Then force-quit and launch StaSh again. You should now be able to run this
-application directly from the shell or by creating a home screen shortcut
-with the required arguments to the entrypoint script
-`~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
-image files that you may have inside your Pythonista environment.
-
-
-## Documentation
- * [English](https://github.com/victordomingos/optimize-images/blob/master/README.md)
- * [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/README_PT.md)
-
+applications on iOS). Please check the detailed install procedure full in the 
+user documentation.
 
 ## How to use
 
@@ -106,22 +67,12 @@ processed version if its file size is smaller than the original.
 If no space savings were achieved for a given file, the original version will 
 be kept instead.
 
-In addition to the default settings, you may downsize the images to fit a 
-maximum width and/or a maximum height. This image resizing is done as the 
-first step in the image optimization process. 
+There are many other features and command-line options, like downsizing, 
+keeping EXIF data, color palete reduction, PNG to JPEG conversion. Please 
+check the docs for further information.
 
-You may also choose to keep the original EXIF data (if it exists) in the 
-optimized files. Note, however, that this option is currently available only 
-for JPEG files. 
-
-In PNG files, you will achieve a more drastic file size reduction if you 
-choose to reduce the number of colors using an adaptive palette. Be aware 
-that by using this option image quality may be affected in a very
-noticeable way.
-
-
-### DISCLAIMER
-**Please note that the operation is done DESTRUCTIVELY, by replacing the
+**DISCLAIMER:  
+Please note that the operation is done DESTRUCTIVELY, by replacing the
 original files with the processed ones. You definitely should duplicate the
 source file or folder before using this utility, in order to be able to
 recover any eventual damaged files or any resulting images that don't have the
