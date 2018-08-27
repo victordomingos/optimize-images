@@ -79,7 +79,7 @@ recover any eventual damaged files or any resulting images that don't have the
 desired quality.**
   
 
-### Examples of basic usage
+## Basic usage
 
 Try to optimize a single image file:
 
@@ -107,7 +107,7 @@ optimize-images --no-recursion ./
 ```
 
 
-### Getting help on how to use this application
+## Getting help
 
 To check the list of available options and their usage, you just need to use one of the 
 following commands:
