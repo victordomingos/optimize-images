@@ -16,8 +16,8 @@ if used[:2] < required:
                      "Python 3.6 or later is required." % (sys.version_info.major, sys.version_info.minor))
     sys.exit(1)
 
-long_desc = "Count files, grouped by extension, in a directory. By "
-short_desc = "A little command-line interface (CLI) utility "
+short_desc = "A command-line interface (CLI) utility written in pure Python " \
+             "to help you reduce the file size of images."
 
 
 def read_readme(file_name):

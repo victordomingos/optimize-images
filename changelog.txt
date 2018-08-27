@@ -5,6 +5,10 @@ Version history:
 
 
 ---
+v.1.3 - ?
+ *
+
+---
 v.1.2 - 27/08/2018 - Finally available at PyPI.org!
  * Adding a new big feature: "convert big PNG files to JPG format"
  * Added also an option to convert all PNG files to JPEG format.
