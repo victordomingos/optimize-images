@@ -75,7 +75,7 @@ def get_args():
     q_help = "The quality for JPEG files (an integer value, between 1 and " \
              f"100). The default is {DEFAULT_QUALITY}."
     jpg_group.add_argument('-q', dest="quality",
-                           type=int, default=DEFAULT_QUALITY, help=q_help)
+                           type=int, help=q_help)
 
     jpg_group.add_argument(
         '-ke',
@@ -83,6 +83,11 @@ def get_args():
         action='store_true',
         help="Keep image EXIF data (by default, it's discarded).")
 
+    jpg_group.add_argument(
+        '-d',
+        "--dynamic",
+        action='store_true',
+        help="Use dynamic (variable) JPG quality for each image. (experimental)")
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -145,6 +150,7 @@ def get_args():
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
+    use_dynamic_quality = args.dynamic
 
     if args.supported_formats:
         formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
@@ -160,9 +166,20 @@ def get_args():
         msg = "\nPlease specify the path of the image or folder to process.\n\n"
         parser.exit(status=0, message=msg)
 
-    if quality > 100 or quality < 1:
+    if not quality:
+        if use_dynamic_quality:
+            quality = 0
+        else:
+            quality = DEFAULT_QUALITY
+
+    elif use_dynamic_quality and quality:
+        msg = "\nPlease decide if you prefer a fixed JPG quality value or a dynamic one.\n\n"
+        parser.exit(status=0, message=msg)
+    elif quality > 100 or quality < 1:
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)
+
+
 
     if args.max_width < 0 or args.max_height < 0:
         msg = "\nPlease specify image dimensions as positive integers.\n\n"

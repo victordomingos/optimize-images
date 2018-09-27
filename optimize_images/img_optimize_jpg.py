@@ -14,6 +14,7 @@ from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_aux_processing import make_grayscale
 from optimize_images.img_aux_processing import downsize_img
 #from optimize_images.img_comparison import compare_images
+from optimize_images.img_dynamic_quality import jpeg_dynamic_quality
 
 
 def optimize_jpg(t: Task) -> TaskResult:
@@ -70,10 +71,16 @@ def optimize_jpg(t: Task) -> TaskResult:
         pass
     """
 
+    if t.quality:
+        quality = t.quality
+    else:
+        quality, jpgdiff = jpeg_dynamic_quality(img)
+        print(f"\nUsing dynamyc q={quality}, diff: {jpgdiff}\n")
+
     try:
         img.save(
             temp_file_path,
-            quality=t.quality,
+            quality=quality,
             optimize=True,
             progressive=use_progressive_jpg,
             format=result_format)
@@ -81,7 +88,7 @@ def optimize_jpg(t: Task) -> TaskResult:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
         img.save(
             temp_file_path,
-            quality=t.quality,
+            quality=quality,
             optimize=True,
             progressive=use_progressive_jpg,
             format=result_format)

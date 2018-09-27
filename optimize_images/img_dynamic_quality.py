@@ -4,6 +4,7 @@ https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html
 """
 from io import BytesIO
 from math import log
+from optimize_images.constants import DEFAULT_QUALITY
 
 try:
     from PIL import Image
@@ -11,18 +12,53 @@ except ImportError:
     msg = 'This application requires Pillow to be installed. Please, install it first.'
     raise ImportError(msg)
 
-#from optimize_images.img_comparison import compare_images
+
+def compare_images(img1: str, img2: str):
+    """Compute percentage of difference between 2 JPEG images of same size.
+    Alternatively, compare two bitmaps as defined in basic bitmap storage.
+    Useful for comparing two JPEG images saved with a different compression
+    ratios.
+
+    Adapted from:
+    http://rosettacode.org/wiki/Percentage_difference_between_images#Python
+
+    :param img1: an Image object
+    :param img2: an Image object
+    :return: A float with the percentage of difference, or None if images are
+    not directly comparable.
+    """
+
+    # Don't compare if images are of different modes or different sizes.
+    if (img1.mode != img2.mode) or (img1.size != img2.size):
+        return None
+
+    pairs = zip(img1.getdata(), img2.getdata())
+    if len(img1.getbands()) == 1:
+        # for gray-scale jpegs
+        dif = sum(abs(p1 - p2) for p1, p2 in pairs)
+    else:
+        dif = sum(abs(c1 - c2) for p1, p2 in pairs for c1, c2 in zip(p1, p2))
+
+    ncomponents = img1.size[0] * img1.size[1] * 3
+    return (dif / 255.0 * 100) / ncomponents  # Difference (percentage)
 
 
 def get_diff_at_quality(photo, quality):
-    """Return the ssim for this JPEG image saved at the specified quality"""
+    """Return a difference score for this JPEG image saved at the specified quality
+
+    A SSIM score would be much better, but currently there is no pure Python
+    implementation available.
+    """
     diff_photo = BytesIO()
     # optimize is omitted here as it doesn't affect
     # quality but requires additional memory and cpu
     photo.save(diff_photo, format="JPEG", quality=quality, progressive=True)
     diff_photo.seek(0)
     diff_score = compare_images(photo, Image.open(diff_photo))
-    return diff_score
+    if diff_score < 0:
+        return -1 + diff_score/100
+    else:
+        return 1 - diff_score/100
 
 
 def _diff_iteration_count(lo, hi):
@@ -33,28 +69,29 @@ def _diff_iteration_count(lo, hi):
         return int(log(hi - lo, 2)) + 1
 
 
-def jpeg_dynamic_quality(original_photo):
+def jpeg_dynamic_quality(original_photo, use_dynamic_quality=True):
     """Return an integer representing the quality that this JPEG image should be
     saved at to attain the quality threshold specified for this photo class.
 
     Args:
         original_photo - a prepared PIL JPEG image (only JPEG is supported)
     """
-    diff_goal = 0.95
+    diff_goal = 0.992
     hi = 85
-    lo = 80
+    lo = 75
 
     # working on a smaller size image doesn't give worse results but is faster
     # changing this value requires updating the calculated thresholds
     photo = original_photo.resize((400, 400))
 
-    if not _should_use_dynamic_quality():
-        default_ssim = get_diff_at_quality(photo, hi)
-        return hi, default_ssim
+    if not use_dynamic_quality:
+        default_diff = get_diff_at_quality(photo, hi)
+        return hi, default_diff
 
     # 95 is the highest useful value for JPEG. Higher values cause different behavior
     # Used to establish the image's intrinsic ssim without encoder artifacts
     normalized_diff = get_diff_at_quality(photo, 95)
+
     selected_quality = selected_diff = None
 
     # loop bisection. ssim function increases monotonically so this will converge
@@ -70,9 +107,12 @@ def jpeg_dynamic_quality(original_photo):
             hi = curr_quality
         else:
             lo = curr_quality
+        #print(f"CURR:{curr_diff}   NORM:{normalized_diff}     RATIO:{diff_ratio}  HI:{hi} LO:{lo}")
 
     if selected_quality:
+        #print(f"Selected quality: {selected_quality}     Selected diff:", selected_diff) #debug
         return selected_quality, selected_diff
     else:
         default_diff = get_diff_at_quality(photo, hi)
+        #print(f"Using HI:{hi}     Default diff:", default_diff) #debug
         return hi, default_diff
