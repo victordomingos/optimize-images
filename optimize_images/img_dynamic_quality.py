@@ -77,8 +77,8 @@ def jpeg_dynamic_quality(original_photo, use_dynamic_quality=True):
         original_photo - a prepared PIL JPEG image (only JPEG is supported)
     """
     diff_goal = 0.992
-    hi = 85
-    lo = 75
+    hi = DEFAULT_QUALITY
+    lo = hi - 5
 
     # working on a smaller size image doesn't give worse results but is faster
     # changing this value requires updating the calculated thresholds
