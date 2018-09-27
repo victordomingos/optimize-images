@@ -30,6 +30,7 @@ known external binaries.
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
+          - [Dynamic quality](#dynamic-quality)
           - [Keep EXIF data](#keep-exif-data)
        - [PNG](#png)
           - [Reduce the number of colors](#reduce-the-number-of-colors)
@@ -273,6 +274,25 @@ subdirectories, applying a quality of 65% to JPEG files:
 
 ```
 optimize-images -q 65 ./
+```
+
+##### Dynamic quality
+
+This option applies a variable quality setting (between 75 and 80), that is
+dynamically determined for each image according to the amount of change caused
+in its pixels by the quality setting. While this takes some additional
+processing time, it should allow you to save a little more space without a big
+change in quality.
+
+Try to optimize all image files in current working directory and all of its
+subdirectories, dynamically applying a variable quality setting to JPEG files:
+
+```
+optimize-images -d ./
+```
+
+```
+optimize-images --dynamic ./
 ```
 
 
