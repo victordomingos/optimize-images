@@ -90,8 +90,8 @@ def get_diff_at_quality(photo, quality):
     # quality but requires additional memory and cpu
     photo.save(diff_photo, format="JPEG", quality=quality, progressive=True)
     diff_photo.seek(0)
-    #diff_score = compare_images(photo, Image.open(diff_photo))
-    diff_score = compare_images_np(photo, Image.open(diff_photo))
+    diff_score = compare_images(photo, Image.open(diff_photo))
+    #diff_score = compare_images_np(photo, Image.open(diff_photo))
 
     """
     if diff_score != diff_score_np:
