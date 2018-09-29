@@ -69,11 +69,20 @@ def compare_images_np(img1: str, img2: str):
             or (img1.getbands() != img2.getbands()):
         return None
 
+    '''
     dif = 0
     for band_index, band in enumerate(img1.getbands()):
         m1 = np.array([p[band_index] for p in img1.getdata()]).reshape(*img1.size)
         m2 = np.array([p[band_index] for p in img2.getdata()]).reshape(*img2.size)
         dif += np.sum(np.abs(m1-m2))
+    '''
+    
+    m1 = np.array(img1.getdata())
+    m2 = np.array(img2.getdata())
+    dif = np.sum(np.abs(m1-m2))
+    
+    
+    #print(dif==dif2, 'Dif1:', dif, 'Dif2:',dif2)
 
     ncomponents = img1.size[0] * img1.size[1] * 3
     return (dif / 255.0 * 100) / ncomponents  # Difference (percentage)
@@ -90,8 +99,8 @@ def get_diff_at_quality(photo, quality):
     # quality but requires additional memory and cpu
     photo.save(diff_photo, format="JPEG", quality=quality, progressive=True)
     diff_photo.seek(0)
-    diff_score = compare_images(photo, Image.open(diff_photo))
-    #diff_score = compare_images_np(photo, Image.open(diff_photo))
+    #diff_score = compare_images(photo, Image.open(diff_photo))
+    diff_score = compare_images_np(photo, Image.open(diff_photo))
 
     """
     if diff_score != diff_score_np:
