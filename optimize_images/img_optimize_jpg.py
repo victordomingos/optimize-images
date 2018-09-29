@@ -58,24 +58,11 @@ def optimize_jpg(t: Task) -> TaskResult:
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    """
-    dynamic_quality = True
-    min_acceptable_quality = 1
-
-    if dynamic_quality:
-        if compare_images(t.src_path, temp_file_path) > min_acceptable_quality:
-            pass
-        else:
-            pass
-    else:
-        pass
-    """
-
     if t.quality:
         quality = t.quality
     else:
         quality, jpgdiff = jpeg_dynamic_quality(img)
-        print(f"\nUsing dynamyc q={quality}, diff: {jpgdiff}\n")
+        #print(f"\nUsing dynamyc q={quality}, diff: {jpgdiff}\n")
 
     try:
         img.save(
