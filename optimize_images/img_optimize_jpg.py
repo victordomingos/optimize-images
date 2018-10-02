@@ -13,8 +13,7 @@ except ImportError:
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_aux_processing import make_grayscale
 from optimize_images.img_aux_processing import downsize_img
-#from optimize_images.img_comparison import compare_images
-from optimize_images.img_dynamic_quality import jpeg_dynamic_quality
+from optimize_images.img_dynamic_quality import jpeg_dynamic_quality, jpeg_dynamic_quality_pil
 
 
 def optimize_jpg(t: Task) -> TaskResult:
@@ -61,8 +60,12 @@ def optimize_jpg(t: Task) -> TaskResult:
     if t.quality:
         quality = t.quality
     else:
-        quality, jpgdiff = jpeg_dynamic_quality(img)
-        #print(f"\nUsing dynamyc q={quality}, diff: {jpgdiff}\n")
+        #quality, jpgdiff = jpeg_dynamic_quality(img)
+        quality, jpgdiff = jpeg_dynamic_quality_pil(img)
+
+        #q_is_the_same = "Yo!" if quality == quality_pil else f"xxxxxxx Nope! {quality_pil/quality:.3f}%"
+        #diff_is_the_same = "Yo!" if jpgdiff == jpgdiff_pil else f"xxxxxxx Nope! {jpgdiff_pil/jpgdiff:.3f}%"
+        #print(f"\nUsing dynamic     q={quality}, diff: {jpgdiff}%\nUsing dynamic PIL q={quality_pil}, diff: {jpgdiff_pil}\n   - Quality:{q_is_the_same}\n   - DIFF:{diff_is_the_same}%\n")
 
     try:
         img.save(
