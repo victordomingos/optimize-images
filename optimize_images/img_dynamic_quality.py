@@ -8,6 +8,7 @@ from optimize_images.constants import DEFAULT_QUALITY
 
 try:
     from PIL import Image
+    from PIL import ImageChops, ImageStat
 except ImportError:
     msg = 'This application requires Pillow to be installed. Please, install it first.'
     raise ImportError(msg)
@@ -45,6 +46,48 @@ def compare_images(img1: str, img2: str):
     return (dif / 255.0 * 100) / ncomponents  # Difference (percentage)
 
 
+
+def compare_images_pil(img1, img2, delete_diff_file=False):
+    '''Calculate the difference between two images of the same size
+    by comparing channel values at the pixel level.
+    `delete_diff_file`: removes the diff image after ratio found
+    `diff_img_file`: filename to store diff image
+
+    Adapted from Nicolas Hahn:
+    https://github.com/nicolashahn/diffimg/blob/master/diffimg/__init__.py
+    '''
+
+    # Don't compare if images are of different modes or different sizes.
+    if (img1.mode != img2.mode) \
+            or (img1.size != img2.size) \
+            or (img1.getbands() != img2.getbands()):
+        return None
+
+    # Generate diff image in memory.
+    diff_img = ImageChops.difference(img1, img2)
+
+    """
+    if not delete_diff_file:
+        extension = diff_img_file.split('.')[-1]
+        if extension in ('jpg', 'jpeg'):
+            # For some reason, save() thinks "jpg" is invalid
+            # This doesn't affect the image's saved filename
+            extension = 'jpeg'
+            diff_img = diff_img.convert('RGB')
+        diff_img.save(diff_img_file, extension)
+    """
+
+    # Calculate difference as a ratio.
+    stat = ImageStat.Stat(diff_img)
+    # Can be [r,g,b] or [r,g,b,a].
+    sum_channel_values = sum(stat.mean)
+    max_all_channels = len(stat.mean) * 255
+    diff_ratio = sum_channel_values / max_all_channels
+
+    return diff_ratio * 100
+
+
+
 def get_diff_at_quality(photo, quality):
     """Return a difference score for this JPEG image saved at the specified quality
 
@@ -56,7 +99,10 @@ def get_diff_at_quality(photo, quality):
     # quality but requires additional memory and cpu
     photo.save(diff_photo, format="JPEG", quality=quality, progressive=True)
     diff_photo.seek(0)
-    diff_score = compare_images(photo, Image.open(diff_photo))
+    #diff_score = compare_images(photo, Image.open(diff_photo))
+    diff_score = compare_images_pil(photo, Image.open(diff_photo))
+
+    #print("================> DIFF1 == DIFF2? ", diff_score==diff_score2)
 
     if diff_score < 0:
         return -1 + diff_score / 100
