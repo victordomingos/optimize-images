@@ -2,7 +2,6 @@
 Adapted from:
 https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html
 """
-import numpy as np
 from io import BytesIO
 from math import log
 
@@ -33,25 +32,13 @@ def compare_images(img1, img2):
         return None
 
     # method 1
-    """
     # Generate diff image in memory.
     diff_img = ImageChops.difference(img1, img2)
     # Calculate difference as a ratio.
     stat = ImageStat.Stat(diff_img)
     diff_ratio = sum(stat.mean) / (len(stat.mean) * 255)
-    """
-
-    #method 2
-    # Load images, convert to RGB, then to numpy arrays and ravel into long, flat things
-    a=np.array(img1.convert('RGB')).ravel()
-    b=np.array(img2.convert('RGB')).ravel()
-    # Calculate the sum of the absolute differences divided by number of elements
-    diff_ratio = np.sum(np.abs(np.subtract(a,b,dtype=np.float))) / a.shape[0] / 255
 
     return diff_ratio * 100
-
-
-
 
 
 def get_diff_at_quality(photo, quality):
