@@ -57,7 +57,7 @@ def optimize_jpg(t: Task) -> TaskResult:
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    if t.quality:
+    if t.fast_mode:
         quality = t.quality
     else:
         quality, jpgdiff = jpeg_dynamic_quality(img)
