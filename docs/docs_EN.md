@@ -30,7 +30,6 @@ known external binaries.
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
-          - [Dynamic quality](#dynamic-quality)
           - [Keep EXIF data](#keep-exif-data)
        - [PNG](#png)
           - [Reduce the number of colors](#reduce-the-number-of-colors)
@@ -41,29 +40,29 @@ known external binaries.
    
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
-
 ## Installation and dependencies:
 
 ### On regular desktop operating systems
 
-The current development version can be installed with `pip install -e`,
-followed by the path to the main project directory (the same directory that
-has the `setup.py` file). To run this application, you need to have a working
-Python 3.6+ instalation. We try to keep the external dependencies at a minimum,
+To install and run this application, you need to have a working
+Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
-  - Pillow==5.1.0
+  - Pillow>=5.1.0
   - piexif==1.0.13
 
-Note: If you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
-earlier, you should use Pillow 5.0.0 instead. In case you have already
-migrated to Python 3.7, you should be fine with Pillow 5.1.0.
+The easiest way to install it in a single step, including any dependencies, is 
+by using this command:
 
-We plan to submit this to PyPI as soon as possible, in order to provide a more
-straight-forward installation and upgrade process. While that doesn't happen,
-please feel free to take a look at the last section and maybe consider
-contributing to this project.
+```
+pip3 install pillow optimize-images
+```
+
+However, if you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
+earlier, you should use Pillow 5.0.0 instead (use instead: 
+`pip3 install pillow==5.0.0 optimize-images`). In case you have already
+migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
 
 
 ### On iPhone or iPad (in Pythonista 3 for iOS)
@@ -85,7 +84,7 @@ StaSh installation, you may need to update it to a more recent version. Try
 this command:
 
 ```
-selfupdate.py -f bennr01:command_testing
+selfupdate.py -f dev
 ```
 
 Then force-quit and restart Pythonista and launch StaSh again. It should now
@@ -93,7 +92,7 @@ be running in Python 3. You may now try to install this application, directly
 from this git repository:
 
 ```
-pip install victordomingos/optimize-images
+pip install optimize-images
 ```
 
 If all goes well, it should install any dependencies, place a new `optimize_images`
@@ -110,6 +109,30 @@ with the required arguments to the entrypoint script
 `~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
 image files that you may have inside your Pythonista environment.
 
+
+## Installing the most recent development version (may be unstable):
+
+### On regular desktop operating systems
+
+After cloning this repository, the current development version can be easily, 
+by using the shell command `pip install -e`, followed by the path to the main 
+project directory (the same directory that has the `setup.py` file). 
+
+### On iPhone or iPad (in Pythonista 3 for iOS)
+
+On iOS, after folowing the required steps to install Pythonista and StaSh,
+the current development version can be installed directly from this git 
+repository:
+
+```
+pip install victordomingos/optimize-images
+```
+
+Then, as usual, force-quit and launch StaSh again. You should now be able to 
+run this application directly from the shell or by creating a home screen shortcut
+with the required arguments to the entrypoint script
+`~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any
+image files that you may have inside your Pythonista environment.
 
 
 ## How to use
