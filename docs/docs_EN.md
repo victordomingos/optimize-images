@@ -103,7 +103,7 @@ Currently, on Pythonista/iOS we require:
 
   - piexif==1.0.13
 
-Then force-quit and launch StaSh again. You should now be able to run this
+Then force-quit Pythonista and launch StaSh again. You should now be able to run this
 application directly from the shell or by creating a home screen shortcut
 with the required arguments to the entrypoint script
 `~/Documents/stash_extensions/bin/optimize-images.py`, to optimize any

@@ -47,24 +47,25 @@ externos bem conhecidos.
 
 ### Em sistemas operativos de secretária
 
-A atual versão de desenvolvimento pode ser instalada com o comando
-`pip install -e`, seguido do caminho para a pasta principal do projeto (a
-mesma pasta que contém o ficheiro `setup.py`). Para executar esta aplicação é
-necessária uma instalação do Python 3.6 ou superior. Procuramos manter no
-mínimo as dependências externas, de modo a manter a compatibilidade com
-diferentes plataformas, incluindo Pythonista em iOS. Neste momento, requer:
+Para executar esta aplicação é necessária uma instalação do Python 3.6 ou
+superior. Procuramos manter no mínimo as dependências externas, de modo a
+manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
+iOS. Neste momento, requer:
 
   - Pillow==5.1.0
   - piexif==1.0.13
 
-Nota: Se está a utilizar um Mac com Python 3.6 e macOS X 10.11 El Capitan ou
-anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado 
-para Python 3.7, não deverá ter problemas com o Pillow 5.1.0.
+A forma mais simples de instalar num único passo esta aplicação, incluindo
+quaisquer requisitos, é através deste comando:
 
-Planeamos submeter esta aplicação ao PyPI tão brevemente quanto possível, para
-permitir oferecer uma forma de instalação e atualização mais simples.
-Enquanto isso não acontece, estejam à vontade para dar uma olhada na última
-secção e talvez considerar contribuir também para este projeto.
+```
+pip3 install pillow optimize-images
+```
+
+Nota: Se está a utilizar um Mac com Python 3.6 e macOS X 10.11 El Capitan ou
+anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado
+para Python 3.7, não deverá ter problemas com o Pillow 5.1.0 ou mesmo uma
+versão mais recente.
 
 
 
@@ -88,7 +89,7 @@ poderá precisar de a atualizar para uma versão mais recente. Experimente este
 comando:
 
 ```
-selfupdate.py -f bennr01:command_testing
+selfupdate.py -f dev
 ```
 
 De seguida, force o encerramento do Pythonista, reiniciando-o de seguida, e
@@ -97,7 +98,7 @@ momento, pode tentar instalar esta aplicação, diretamente a partir deste
 repositório:
 
 ```
-pip install victordomingos/optimize-images
+pip install optimize-images
 ```
 
 Se tudo correr bem, o comando acima deverá instalar quais quer dependências,
@@ -116,6 +117,40 @@ diretamente a partir da consola ou criando um atalho no ecrã inicial do iOS,
 com os argumentos necessários, para o script de entrada, localizado em 
 `~/Documents/stash_extensions/bin/optimize-images.py`, para otimizar quaisquer 
 ficheiros de imagem que tenha no Pythonista.
+
+
+## Instalar a versão mais recente em desenvolvimento (possivelmente instável):
+
+### Em sistemas operativos de secretária
+
+Depois de clonar este repositório, a versão atual de desenvolvimento pode ser
+facilmente instalada com o comando `pip install -e`, seguido do caminho para
+a pasta principal do projeto (a mesma pasta que contém o ficheiro `setup.py`).
+
+
+### Em iPhone ou iPad (na app Pythonista 3 para iOS)
+
+Em iOS, depois de seguir os passos necessários à instalação do Pythonista e a
+StaSh, a versão atual de desenvolvimento pode ser instalada diretamente a
+partir deste repositório git:
+
+```
+pip install victordomingos/optimize-images
+```
+
+Se tudo correr bem, o comando acima deverá instalar quais quer dependências,
+colocar um pacote chamado `optimize_images` dentro da pasta
+`~/Documents/site-packages-3` e criar um *script* de execução chamado
+`optimize-images.py` em `stash_extensions/bin`.
+
+
+No final, como habitualmente, force o encerramento do Pythonista, reinicie
+a app e inicie novamente a StaSh. Já deverá conseguir executar esta aplicação
+diretamente a partir da consola ou criando um atalho no ecrã inicial do iOS,
+com os argumentos necessários, para o script de entrada, localizado em
+`~/Documents/stash_extensions/bin/optimize-images.py`, para otimizar quaisquer
+ficheiros de imagem que tenha no Pythonista.
+
 
 
 ## Como utilizar
