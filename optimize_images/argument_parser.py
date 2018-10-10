@@ -63,7 +63,8 @@ def get_args():
                         help=nc_help)
 
     fm_help = "Skip some actions (e.g., the final palete rebuild for indexed " \
-              "PNG images) in order to finish faster."
+              "PNG images or variable JPEG quality setting) in order to " \
+              "finish faster."
     general_group.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
 
 
@@ -72,8 +73,8 @@ def get_args():
     jpg_group = parser.add_argument_group(
         'JPEG specific options'.upper(), description=jpg_msg)
 
-    q_help = "The quality for JPEG files (an integer value, between 1 and " \
-             f"100). The default is {DEFAULT_QUALITY}."
+    q_help = "Specify a fixed quality setting for JPEG files (an integer " \
+             "value, between 1 and 100)."
     jpg_group.add_argument('-q', dest="quality",
                            type=int, help=q_help)
 
@@ -83,11 +84,6 @@ def get_args():
         action='store_true',
         help="Keep image EXIF data (by default, it's discarded).")
 
-    jpg_group.add_argument(
-        '-d',
-        "--dynamic",
-        action='store_true',
-        help="Use dynamic (variable) JPG quality for each image. (experimental)")
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -150,7 +146,6 @@ def get_args():
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
-    use_dynamic_quality = args.dynamic
 
     if args.supported_formats:
         formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
@@ -167,14 +162,7 @@ def get_args():
         parser.exit(status=0, message=msg)
 
     if not quality:
-        if use_dynamic_quality:
-            quality = 0
-        else:
-            quality = DEFAULT_QUALITY
-
-    elif use_dynamic_quality and quality:
-        msg = "\nPlease decide if you prefer a fixed JPG quality value or a dynamic one.\n\n"
-        parser.exit(status=0, message=msg)
+        quality = DEFAULT_QUALITY
     elif quality > 100 or quality < 1:
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)

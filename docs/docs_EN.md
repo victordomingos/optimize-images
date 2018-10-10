@@ -116,13 +116,15 @@ image files that you may have inside your Pythonista environment.
 
 The most simple form of usage is to type a simple command in the shell, 
 passing the path to an image or a folder containing images as an argument.
-The optional -nr or --no-recursion switch argument tells the application not 
-to scan recursively through the subdirectories.
+The optional `-nr` or `--no-recursion` switch argument tells the application
+not to scan recursively through the subdirectories.
 
 By default, this utility applies lossy compression to JPEG files using a 
-quality setting of 80% (by Pillow's scale), removes any EXIF metadata, tries 
-to optimize each encoder's settings for maximum space reduction and applies 
-the maximum ZLIB compression on PNG. 
+variable quality setting between 75 and 80 (by Pillow's scale), that is
+dynamically determined for each image according to the amount of change caused
+in its pixels, then it removes any EXIF metadata, tries to optimize each
+encoder's settings for maximum space reduction and applies the maximum ZLIB
+compression on PNG.
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will scan 
@@ -134,7 +136,7 @@ If no space savings were achieved for a given file, the original version will
 be kept instead.
 
 In addition to the default settings, you may downsize the images to fit a 
-maximum width and/or a maximum height. This image resizing is done as the 
+maximum width and/or a maximum height. This image resizing is done as the
 first step in the image optimization process. 
 
 You may also choose to keep the original EXIF data (if it exists) in the 
@@ -204,7 +206,8 @@ optimize-images --help
 
 Some of the operations may eventually be finished sooner by using this option.
 Generally speaking, this means that the resulting files will have a slightly
-bigger size, in order to save instead a few seconds on image processing.
+bigger size, in order to save instead a few seconds on image processing. Using
+this option disables dynamic JPEG quality setting.
 
 Try to optimize all image files in current working directory, with recursion,
 using fast mode:
@@ -264,35 +267,16 @@ applied for each image.
 
 ##### Quality
 
-Set the quality for JPEG files (an integer value, between 1 and 100), using 
-the `-q` argument, folowed by the quality value to apply.
-A lower value will reduce both the image quality and the file size. The
-default value is 80.
+Set a fixed value for the quality for JPEG files (an integer value, between 1
+and 100), using the `-q` argument, folowed by the quality value to apply. A
+lower value will reduce both the image quality and the file size. Using this
+option disables the default dynamically variable JPEG quality setting.
 
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files:
 
 ```
 optimize-images -q 65 ./
-```
-
-##### Dynamic quality
-
-This option applies a variable quality setting (between 75 and 80), that is
-dynamically determined for each image according to the amount of change caused
-in its pixels by the quality setting. While this takes some additional
-processing time, it should allow you to save a little more space without a big
-change in quality.
-
-Try to optimize all image files in current working directory and all of its
-subdirectories, dynamically applying a variable quality setting to JPEG files:
-
-```
-optimize-images -d ./
-```
-
-```
-optimize-images --dynamic ./
 ```
 
 

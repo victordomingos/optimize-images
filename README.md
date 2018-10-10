@@ -54,9 +54,11 @@ The optional `-nr` or `--no-recursion` switch argument tells the application not
 to scan recursively through the subdirectories.
 
 By default, this utility applies lossy compression to JPEG files using a 
-quality setting of 80% (by Pillow's scale), removes any EXIF metadata, tries 
-to optimize each encoder's settings for maximum space reduction and applies 
-the maximum ZLIB compression on PNG. 
+variable quality setting between 75 and 80 (by Pillow's scale), that is
+dynamically determined for each image according to the amount of change caused
+in its pixels, then it removes any EXIF metadata, tries to optimize each
+encoder's settings for maximum space reduction and applies the maximum ZLIB
+compression on PNG.
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will scan 

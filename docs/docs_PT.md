@@ -32,7 +32,6 @@ externos bem conhecidos.
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
-          - [Qualidade dinâmica](#qualidade-dinâmica)
           - [Manter dados EXIF](#manter-dados-exif)
        - [PNG](#png)
           - [Reduzir o número de cores](#reduzir-o-número-de-cores)
@@ -130,10 +129,11 @@ percorrer de forma recursiva todas as subpastas (ou seja, processar imagens
 apenas na raiz da pasta indicada).
 
 Por defeito, esta ferramenta aplica compressão com perdas a ficheiros JPEG 
-utilizando um valor de qualidade de 80% (pela escala do Pillow), remove 
-quaisquer metadados EXIF existentes, tenta otimizar as definições de cada 
-encodificador para a máxima redução de espaço e aplica a compressão ZLIB 
-máxima em ficheiros PNG.
+utilizando um valor de qualidade variável (entre 75 e 80), determinado de
+forma dinâmica para cada imagem segundo a quandidade de alteração causada
+nos seus pixels, removendo seguidamente quaisquer metadados EXIF existentes.
+Tenta ainda otimizar as definições de cada encodificador para a máxima redução
+de espaço e aplica a compressão ZLIB máxima em ficheiros PNG.
 
 É necessário indicar explicitamente o caminho para o ficheiro de imagem 
 original ou para a pasta que contém as imagens a processar. Por defeito, 
@@ -217,7 +217,8 @@ optimize-images --help
 Algumas operações poderão eventualmente ser efetuadas mais rapidamente
 utilizando esta opção. De um modo geral, isso significa que os ficheiros
 resultantes serão um pouco maiores, para permitir em vez disso poupar alguns
-segundos durante o processamento das imagens.
+segundos durante o processamento das imagens. A utilização desta opção
+desativa a definição de qualidade JPEG variável.
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual, de
 forma recursiva, utilizando o modo rápido:
@@ -283,7 +284,8 @@ selecionadas e aplicadas automaticamente para cada imagem.
 Defina a qualidade para ficheiros JPEG (um número inteiro, entre 1 e 100), 
 usando o argumento `-q`, seguido do valor de qualidade a
 aplicar. Um valor mais baixo reduzirá tanto a qualidade de imagem como o
-tamanho do ficheiro. O valor predefinido é 80.
+tamanho do ficheiro. A utilização desta opção desativa a definição de
+qualidade variável.
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e 
 em todas as subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG:
@@ -291,27 +293,6 @@ em todas as subpastas, aplicando uma qualidade de 65% aos ficheiros JPEG:
 ```
 optimize-images -q 65 ./
 ```
-
-##### Qualidade dinâmica
-
-Esta opção um valor de qualidade variável (entre 75 e 80), determinado de
-forma dinâmica para cada imagem segundo a quandidade de alteração causada
-nos seus pixels em função de cada valor de qualidade. Esta função requer
-mais tempod e processamento, mas pode permitir poupar algum espaço adicional
-sem que isso se traduza em grandes alterações na qualidade.
-
-Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e
-em todas as subpastas, aplicando dinamicamente um valor de qualidade variável
-aos ficheiros JPEG:
-
-```
-optimize-images -d ./
-```
-
-```
-optimize-images --dynamic ./
-```
-
 
 
 ##### Manter dados EXIF
