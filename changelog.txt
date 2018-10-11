@@ -5,7 +5,7 @@ Version history:
 
 
 ---
-v.1.3 - ?
+v.1.3 - 10-10-2018
  * Added dynamic (variable) JPG quality setting.
  * Some code cleaning.
 
