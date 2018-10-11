@@ -31,7 +31,6 @@ def compare_images(img1, img2):
             or (img1.getbands() != img2.getbands()):
         return None
 
-    # method 1
     # Generate diff image in memory.
     diff_img = ImageChops.difference(img1, img2)
     # Calculate difference as a ratio.
