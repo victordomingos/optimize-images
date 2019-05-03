@@ -34,6 +34,10 @@ def optimize_jpg(t: Task) -> TaskResult:
     orig_mode = img.mode
 
     folder, filename = os.path.split(t.src_path)
+
+    if folder == '':
+        folder = os.getcwd()
+
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
     orig_colors, final_colors = 0, 0
@@ -44,6 +48,9 @@ def optimize_jpg(t: Task) -> TaskResult:
     except piexif.InvalidImageDataError:  # Not a supported format
         had_exif = False
     except ValueError:  # No exif info
+        had_exif = False
+    # TODO: Check if we can provide a more specific treatment of piexif exceptions.
+    except Exception:
         had_exif = False
 
     if t.max_w or t.max_h:
@@ -85,6 +92,9 @@ def optimize_jpg(t: Task) -> TaskResult:
             has_exif = True
         except ValueError:
             has_exif = False
+        # TODO: Check if we can provide a more specific treatment of piexif exceptions.
+        except Exception:
+            had_exif = False
     else:
         has_exif = False
 

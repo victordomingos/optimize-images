@@ -55,8 +55,12 @@ def do_optimization(t: Task) -> TaskResult:
     :param t: A Task object containing all the parameters for the image processing.
     :return: A TaskResult object containing information for single file report.
     """
+    # TODO: Catch exceptions that may occur here.
     img = Image.open(t.src_path)
 
+    # TODO: improve method of image format detection (what should happen if the
+    #       file extension does not match the image content's format? Maybe we
+    #       should skip unsupported formats?)
     if img.format.upper() == 'PNG':
         return optimize_png(t)
     # elif img.format.upper() == 'JPEG':
