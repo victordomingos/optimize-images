@@ -10,6 +10,23 @@ from optimize_images.constants import IOS_FONT, IPHONE_FONT_SIZE, IPAD_FONT_SIZE
 from optimize_images.constants import IOS_WORKERS
 
 
+class IconGenerator:
+    def __init__(self):
+        try:
+            print('ℹ️⤵✅🔴')
+            self.info = 'ℹ️ '
+            self.downsized = '⤵ '
+            self.optimized = '✅'
+            self.skipped = '🔴'
+            self.size_is_smaller = '🔻'
+        except UnicodeEncodeError:
+            self.info = 'i'
+            self.downsized = 'v '
+            self.optimized = 'OK'
+            self.skipped = '- '
+            self.size_is_smaller = 'v'
+
+
 def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':
         if platform.machine().startswith('iPad'):
@@ -41,4 +58,5 @@ def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
         pool_ex = concurrent.futures.ProcessPoolExecutor
         from multiprocessing import cpu_count
         workers = cpu_count() + 1
+
     return line_width, pool_ex, workers
