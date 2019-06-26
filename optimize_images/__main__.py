@@ -25,7 +25,6 @@ known external binaries.
 © 2018 Victor Domingos (MIT License)
 """
 import os
-import platform
 
 try:
     from PIL import Image
@@ -37,7 +36,7 @@ from timeit import default_timer as timer
 
 from optimize_images.file_utils import search_images
 from optimize_images.data_structures import Task, TaskResult
-from optimize_images.platforms import adjust_for_platform
+from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.img_optimize_png import optimize_png
@@ -79,6 +78,8 @@ def main():
     total_src_size = 0
     total_bytes_saved = 0
 
+    icons = IconGenerator()
+
     # Optimize all images in a directory
     if os.path.isdir(src_path):
         recursion_txt = 'Recursively searching' if recursive else 'Searching'
@@ -98,7 +99,7 @@ def main():
                 if r.was_optimized:
                     optimized_files += 1
                     total_bytes_saved += r.orig_size - r.final_size
-                show_file_status(r, line_width)
+                show_file_status(r, line_width, icons)
 
     # Optimize a single image
     elif os.path.isfile(src_path):
@@ -113,7 +114,7 @@ def main():
         if r.was_optimized:
             optimized_files = 1
             total_bytes_saved = r.orig_size - r.final_size
-        show_file_status(r, line_width)
+        show_file_status(r, line_width, icons)
     else:
         print(
             "No image files were found. Please enter a valid path to the "

@@ -13,7 +13,7 @@ from optimize_images.constants import IOS_WORKERS
 class IconGenerator:
     def __init__(self):
         try:
-            print('ℹ️⤵✅🔴')
+            print('ℹ️⤵✅🔴🔻\b\b\b\b\b\b\b\b\b\b                    ')
             self.info = 'ℹ️ '
             self.downsized = '⤵ '
             self.optimized = '✅'

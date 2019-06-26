@@ -2,6 +2,7 @@
 from optimize_images.data_structures import TaskResult
 from optimize_images.platforms import IconGenerator
 
+
 def human(number: int, suffix='B') -> str:
     """Return a human readable memory size in a string.
 
@@ -15,8 +16,7 @@ def human(number: int, suffix='B') -> str:
     return f"{number:.1f}{'Yi'}{suffix}"
 
 
-def show_file_status(r: TaskResult, line_width: int):
-    icons = IconGenerator()
+def show_file_status(r: TaskResult, line_width: int, icons: IconGenerator):
     if r.was_optimized:
         short_img = r.img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (r.final_size / r.orig_size * 100)
@@ -40,7 +40,7 @@ def show_file_status(r: TaskResult, line_width: int):
         exif_str2 = icons.info if r.has_exif else ''
         downstr = icons.downsized if r.was_downsized else ''
         line1 = f'\n{icons.optimized}  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {exif_str1}{orig_format}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{result_format}/{r.result_mode}{colors}: {h_final} {icons.size_is_smaller} {percent:.1f}%'
+        line2 = f'    {exif_str1} {orig_format}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{result_format}/{r.result_mode}{colors}: {h_final} {icons.size_is_smaller} {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = r.img[-(line_width - 15):].ljust(line_width - 15)
