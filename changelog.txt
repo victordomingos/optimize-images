@@ -6,7 +6,9 @@ Version history:
 
 
 ---
-v.1.3.2 - 26-06-2019
+v.1.3.2 - 27-06-2019
+ * Added a symbol legend to the beginning of the optimization report, so that
+   the user knows what each symbol means.
  * Fixed a UnicodeEncodeError that would occur in some environments when
    printing Emoji to screen.
 
