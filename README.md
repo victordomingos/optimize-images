@@ -26,7 +26,7 @@ in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
   - Pillow>=5.1.0
-  - piexif==1.0.13
+  - piexif>=1.1.2
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
