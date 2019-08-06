@@ -1,4 +1,4 @@
-# Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images)
+# Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images) ![PyPI](https://img.shields.io/pypi/v/optimize-images) ![PyPI - Downloads](https://img.shields.io/pypi/dm/optimize-images)
 A command-line interface (CLI) utility written in pure Python to help you 
 reduce the file size of images.
 
