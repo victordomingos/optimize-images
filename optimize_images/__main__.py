@@ -22,15 +22,15 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
-© 2018 Victor Domingos (MIT License)
+© 2019 Victor Domingos (MIT License)
 """
 import os
 
 try:
     from PIL import Image
 except ImportError:
-    msg = 'This application requires Pillow to be installed. Please, install it first.'
-    raise ImportError(msg)
+    print('\n    This application requires Pillow to be installed. Please, install it first.\n')
+    exit()
 
 from timeit import default_timer as timer
 
@@ -90,7 +90,8 @@ def main():
         tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
                       max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
                       force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
-                 for img_path in search_images(src_path, recursive=recursive))
+                 for img_path in search_images(src_path, recursive=recursive)
+                 if '~temp~' not in img_path)
 
         with our_pool_executor(max_workers=workers) as executor:
             for r in executor.map(do_optimization, tasks):
@@ -102,7 +103,7 @@ def main():
                 show_file_status(r, line_width, icons)
 
     # Optimize a single image
-    elif os.path.isfile(src_path):
+    elif os.path.isfile(src_path) and '~temp~' not in src_path:
         found_files += 1
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,

@@ -57,6 +57,7 @@ setup(name='optimize-images',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
           'Topic :: Utilities',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Graphics Conversion',
@@ -67,7 +68,7 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=[
-          'piexif==1.1.2',
+          'piexif>=1.1.2',
       ],
 
       entry_points={
