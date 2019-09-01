@@ -62,9 +62,10 @@ def do_optimization(t: Task) -> TaskResult:
     #       should skip unsupported formats?)
     if img.format.upper() == 'PNG':
         return optimize_png(t)
-    # elif img.format.upper() == 'JPEG':
-    else:
+    elif (img.format.upper() == 'JPEG'):
         return optimize_jpg(t)
+    else:
+        pass
 
 
 def main():
