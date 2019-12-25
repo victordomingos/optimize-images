@@ -68,7 +68,7 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=[
-          'piexif>=1.1.2',
+          'piexif>=1.1.3',
       ],
 
       entry_points={
