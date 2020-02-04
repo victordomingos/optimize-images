@@ -16,7 +16,7 @@ known external binaries.
  * [English](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_EN.md)
  * [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_PT.md)
 
-Please refer to the above links if you want to know about all the options available in this application. For a quick intro with, just to get a feeling of what it can do, please keep reading below.
+Please refer to the above links if you want to know about all the options available in this application. For a quick intro, just to get a feeling of what it can do, please keep reading below.
 
 ## Installation and dependencies:
 
@@ -39,6 +39,14 @@ However, if you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
 earlier, you should use Pillow 5.0.0 instead (use instead: 
 `pip3 install pillow==5.0.0 optimize-images`). In case you have already
 migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
+
+If you are able to swap Pillow with the faster version 
+[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
+to get a considerably faster speed. For that reason, we provide, as a 
+friendly courtesy, an optional shell script (`replace_pillow__macOS.sh`) to 
+replace Pillow with the faster Pillow-SIMD on macOS. Please notice, however, 
+that it usually requires a compilation step and it was not throughly tested 
+by us, so your mileage may vary.
 
 You can also use this application on iOS, using an called
 [Pythonista 3](http://omz-software.com/pythonista/) (which is, among other
