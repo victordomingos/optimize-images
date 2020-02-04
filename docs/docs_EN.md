@@ -65,6 +65,14 @@ earlier, you should use Pillow 5.0.0 instead (use instead:
 `pip3 install pillow==5.0.0 optimize-images`). In case you have already
 migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
 
+If you are able to swap Pillow with the faster version 
+[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
+to get a considerably faster speed. For that reason, we provide, as a 
+friendly courtesy, an optional shell script (`replace_pillow__macOS.sh`) to 
+replace Pillow with the faster Pillow-SIMD on macOS. Please notice, however, 
+that it usually requires a compilation step and it was not throughly tested 
+by us, so your mileage may vary.
+
 
 ### On iPhone or iPad (in Pythonista 3 for iOS)
 
