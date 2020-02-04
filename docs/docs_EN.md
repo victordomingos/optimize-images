@@ -433,7 +433,7 @@ green color).
 To convert a big PNG image with some transparency applying a pure green
 background:
 ```
-optimize-images -cb -hbg 0 255 0 ./image.png
+optimize-images -cb -hbg 00FF00 ./image.png
 ```
 
 
