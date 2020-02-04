@@ -67,6 +67,14 @@ anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado
 para Python 3.7, não deverá ter problemas com o Pillow 5.1.0 ou mesmo uma
 versão mais recente.
 
+Caso tenha a possibilidade de substituir o Pillow pela versão mais rápida 
+[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), deverá conseguir
+notar um desempenho consideravelmente superior. É por isso que, por cortesia,
+disponibilizamos um pequeno *script* de linha de comandos opcional 
+(`replace_pillow__macOS.sh`) para substituir o Pillow pelo Pillow-SIMD no 
+macOS. Tenha em consideração, contudo, que isso geralmente implica um passo 
+de compilação e é um processo que não testámos de forma aprofundada, pelo 
+que os seus resultados podem variar.
 
 
 ### Em iPhone ou iPad (na app Pythonista 3 para iOS)
