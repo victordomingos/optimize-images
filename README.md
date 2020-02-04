@@ -12,11 +12,11 @@ known external binaries.
 ![optimize-images_screenshot](https://user-images.githubusercontent.com/18650184/42172232-5788c43a-7e13-11e8-8094-5811e7fd55c1.png)
 
 
-## Documentation
+## Full Documentation:
  * [English](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_EN.md)
  * [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_PT.md)
 
-
+Please refer to the above links if you want to know about all the options available in this application. For a quick intro with, just to get a feeling of what it can do, please keep reading below.
 
 ## Installation and dependencies:
 
