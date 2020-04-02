@@ -1,2 +1,2 @@
-Pillow>=5.1.0
+Pillow>=6.2.2
 piexif>=1.1.2
