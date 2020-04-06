@@ -26,6 +26,8 @@ known external binaries.
 """
 import os
 
+import piexif
+
 try:
     from PIL import Image
 except ImportError:
@@ -62,10 +64,28 @@ def do_optimization(t: Task) -> TaskResult:
     #       should skip unsupported formats?)
     if img.format.upper() == 'PNG':
         return optimize_png(t)
-    elif (img.format.upper() == 'JPEG'):
+    elif img.format.upper() in ('JPEG', 'MPO'):
         return optimize_jpg(t)
     else:
-        pass
+        try:
+            had_exif = True if piexif.load(t.src_path)['Exif'] else False
+        except piexif.InvalidImageDataError:  # Not a supported format
+            had_exif = False
+        except ValueError:  # No exif info
+            had_exif = False
+        return TaskResult(img=t.src_path,
+                          orig_format=img.format.upper(),
+                          result_format=img.format.upper(),
+                          orig_mode=img.mode,
+                          result_mode=img.mode,
+                          orig_colors=0,
+                          final_colors=0,
+                          orig_size=os.path.getsize(t.src_path),
+                          final_size=0,
+                          was_optimized=False,
+                          was_downsized=False,
+                          had_exif=had_exif,
+                          has_exif=had_exif)
 
 
 def main():

@@ -50,8 +50,8 @@ Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
-  - Pillow>=5.1.0
-  - piexif==1.0.13
+  - Pillow>=6.2.2
+  - piexif==1.1.3
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
@@ -59,11 +59,6 @@ by using this command:
 ```
 pip3 install pillow optimize-images
 ```
-
-However, if you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
-earlier, you should use Pillow 5.0.0 instead (use instead: 
-`pip3 install pillow==5.0.0 optimize-images`). In case you have already
-migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
 
 If you are able to swap Pillow with the faster version 
 [Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
@@ -179,6 +174,10 @@ In PNG files, you will achieve a more drastic file size reduction if you
 choose to reduce the number of colors using an adaptive palette. Be aware 
 that by using this option image quality may be affected in a very
 noticeable way.
+
+Since version 1.3.5, Optimize Images also offers experimental support for MPO 
+images, which are now treated as single picture JPEG image files (if multiple 
+pictures are present in one MPO file, only the first one will be processed).
 
 
 ### DISCLAIMER

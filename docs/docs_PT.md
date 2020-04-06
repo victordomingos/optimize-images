@@ -52,8 +52,8 @@ superior. Procuramos manter no mínimo as dependências externas, de modo a
 manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
 iOS. Neste momento, requer:
 
-  - Pillow==5.1.0
-  - piexif==1.0.13
+  - Pillow==6.2.2
+  - piexif==1.1.3
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:
@@ -61,11 +61,6 @@ quaisquer requisitos, é através deste comando:
 ```
 pip3 install pillow optimize-images
 ```
-
-Nota: Se está a utilizar um Mac com Python 3.6 e macOS X 10.11 El Capitan ou
-anterior, deverá usar antes a versão Pillow 5.0.0. No caso de já ter migrado
-para Python 3.7, não deverá ter problemas com o Pillow 5.1.0 ou mesmo uma
-versão mais recente.
 
 Caso tenha a possibilidade de substituir o Pillow pela versão mais rápida 
 [Pillow-SIMD](https://github.com/uploadcare/pillow-simd), deverá conseguir
@@ -201,6 +196,12 @@ Nos ficheiros PNG, conseguirá alcançar uma redução mais acentuada no tamanho
 dos ficheiros se optar por reduzir o número de cores utilizando uma paleta 
 adaptativa. Tenha em consideração que ao usar esta opção a qualidade de
 imagem poderá ser afetada de forma bastante notória.
+
+Desde a versão 1.3.5, a aplicação Optimize Images oferece suporte experimental 
+para imagens no formato MPO, as quais são tratadas como ficheiros JPEG de imagem 
+única (caso um ficheiro MPO contenha várias imagens, apenas a primeira será 
+processada).
+
 
 ### ADVERTÊNCIA
 **Por favor, tenha em consideração que a operação deste programa é feita DE 

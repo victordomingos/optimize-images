@@ -25,8 +25,8 @@ Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
-  - Pillow>=5.1.0
-  - piexif>=1.1.2
+  - Pillow>=6.2.2
+  - piexif>=1.1.3
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
@@ -34,11 +34,6 @@ by using this command:
 ```
 pip3 install pillow optimize-images
 ```
-
-However, if you are on a Mac with Python 3.6 and macOS X 10.11 El Capitan or
-earlier, you should use Pillow 5.0.0 instead (use instead: 
-`pip3 install pillow==5.0.0 optimize-images`). In case you have already
-migrated to Python 3.7, you should be fine with Pillow 5.1.0 or later.
 
 If you are able to swap Pillow with the faster version 
 [Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
