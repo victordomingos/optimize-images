@@ -25,7 +25,7 @@ known external binaries.
 © 2019 Victor Domingos (MIT License)
 """
 import os
-
+import concurrent.futures.process
 import piexif
 
 try:
@@ -38,55 +38,12 @@ from timeit import default_timer as timer
 
 from optimize_images.file_utils import search_images
 from optimize_images.data_structures import Task, TaskResult
+from optimize_images.do_optimization import do_optimization
 from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.img_optimize_png import optimize_png
 from optimize_images.img_optimize_jpg import optimize_jpg
-
-
-def do_optimization(t: Task) -> TaskResult:
-    """ Try to reduce file size of an image.
-
-    Expects a Task object containing all the parameters for the image processing.
-
-    The actual processing is done by the corresponding function,
-    according to the detected image format.
-
-    :param t: A Task object containing all the parameters for the image processing.
-    :return: A TaskResult object containing information for single file report.
-    """
-    # TODO: Catch exceptions that may occur here.
-    img = Image.open(t.src_path)
-
-    # TODO: improve method of image format detection (what should happen if the
-    #       file extension does not match the image content's format? Maybe we
-    #       should skip unsupported formats?)
-    if img.format.upper() == 'PNG':
-        return optimize_png(t)
-    elif img.format.upper() in ('JPEG', 'MPO'):
-        return optimize_jpg(t)
-    else:
-        try:
-            had_exif = True if piexif.load(t.src_path)['Exif'] else False
-        except piexif.InvalidImageDataError:  # Not a supported format
-            had_exif = False
-        except ValueError:  # No exif info
-            had_exif = False
-        return TaskResult(img=t.src_path,
-                          orig_format=img.format.upper(),
-                          result_format=img.format.upper(),
-                          orig_mode=img.mode,
-                          result_mode=img.mode,
-                          orig_colors=0,
-                          final_colors=0,
-                          orig_size=os.path.getsize(t.src_path),
-                          final_size=0,
-                          was_optimized=False,
-                          was_downsized=False,
-                          had_exif=had_exif,
-                          has_exif=had_exif)
-
 
 def main():
     appstart = timer()
@@ -115,13 +72,16 @@ def main():
                  if '~temp~' not in img_path)
 
         with our_pool_executor(max_workers=workers) as executor:
-            for r in executor.map(do_optimization, tasks):
-                found_files += 1
-                total_src_size += r.orig_size
-                if r.was_optimized:
-                    optimized_files += 1
-                    total_bytes_saved += r.orig_size - r.final_size
-                show_file_status(r, line_width, icons)
+            try:
+                for r in executor.map(do_optimization, tasks):
+                    found_files += 1
+                    total_src_size += r.orig_size
+                    if r.was_optimized:
+                        optimized_files += 1
+                        total_bytes_saved += r.orig_size - r.final_size
+                    show_file_status(r, line_width, icons)
+            except concurrent.futures.process.BrokenProcessPool as e:
+                print("\nAn error has occurred while trying to optimize a file: \n", e)
 
     # Optimize a single image
     elif os.path.isfile(src_path) and '~temp~' not in src_path:

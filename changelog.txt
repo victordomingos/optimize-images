@@ -4,20 +4,27 @@ Version history:
 ================
 
 ---
-v.1.3.5 - 07-04-2020
+v.1.3.6 - 2020-?
+ * Fixed a UnicodeEncodeError that would occur in some environments when
+   printing Emoji to screen (yeah, Windows, we are looking at you!...).
+ * Fixed a strange multiprocessing error that apparently only occured
+   on... you guessed, *that* operating system.
+   
+---
+v.1.3.5 - 2020-04-07
  * Fixed a small bug in unsupported image format treatment.
  * Added experimental support for MPO images, which are now treated as JPEG
    image files (if multiple pictures are present in one MPO file, only the first
    one will be processed).
 
 ---
-v.1.3.4 - 19-02-2020
+v.1.3.4 - 2020-02-19
  * Ignore unsupported image formats (contributed by Petro (liashchynskyi@GitHub).
  * Added brief instructions (and a script for macOS) for Pillow-SIMD
    installation, as a faster alternative to Pillow.
  
 ---
-v.1.3.3 - 06-08-2019
+v.1.3.3 - 2019-08-06
  * Any temporary files (e.g.: '~temp~filename.jpg') created by this utility
    are now ignored, to avoid stepping on its own feet. As a side effect, if
    you have the strange habit of naming your image files ~temp~something.xxx,
@@ -28,14 +35,14 @@ v.1.3.3 - 06-08-2019
    traceback.
 
 ---
-v.1.3.2 - 27-06-2019
+v.1.3.2 - 2019-06-27
  * Added a symbol legend to the beginning of the optimization report, so that
    the user knows what each symbol means.
  * Fixed a UnicodeEncodeError that would occur in some environments when
    printing Emoji to screen.
 
 ---
-v.1.3.1 - 03-05-2019
+v.1.3.1 - 2019-05-03
  * Fixed a PermissionError that would occur when trying to optimize a single
    image in the current directory without explicitly specifying its path.
  * Added basic Exception handling for piexif related instructions. This is a
@@ -45,12 +52,12 @@ v.1.3.1 - 03-05-2019
    related to issue #3. Let's hope they can be addressed in the next release.
 
 ---
-v.1.3 - 10-10-2018
+v.1.3 - 2018-10-10
  * Added dynamic (variable) JPG quality setting.
  * Some code cleaning.
 
 ---
-v.1.2 - 27/08/2018 - Finally available at PyPI.org!
+v.1.2 - 2018-08-27 - Finally available at PyPI.org!
  * Adding a new big feature: "convert big PNG files to JPG format"
  * Added also an option to convert all PNG files to JPEG format.
  * Added a new option to set background color while doing any PNG operations
@@ -72,11 +79,11 @@ v.1.2 - 27/08/2018 - Finally available at PyPI.org!
  * Other minor changes.
 
 ---
-v.1.1.1 - 24/06/2018
+v.1.1.1 - 2018-06-24
  * Bug fix in single image optimization.
 
 ---
-v.1.1 - 24/06/2018
+v.1.1 - 2018-06-24
  * Added new options to allow downsizing of images to a maximum width and/or
    height before applying any other optimization (guess what? It really makes
    a huge difference in file sizes…).
@@ -88,7 +95,7 @@ v.1.1 - 24/06/2018
  * Added some bigger JPEG photos with EXIF to text-images.zip.
 
 ---
-v.1.0 - 20/06/2018 (First public release)
+v.1.0 - 2018-06-20 (First public release)
  * No special dependencies, besides PIL/Pillow (this enables full compatibility
    with iPhones and iPads running Pythonista 3)
  * Basic CLI argument parsing, with separate groups of arguments for JPEG and

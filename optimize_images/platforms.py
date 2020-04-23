@@ -13,6 +13,9 @@ from optimize_images.constants import IOS_WORKERS
 class IconGenerator:
     def __init__(self):
         try:
+            if platform.system() == 'Windows':
+                raise WindowsError
+            
             print('\n\nUsing these symbols:\n\n'
                   '  ✅ Optimized file     ℹ️  EXIF info present\n'
                   '  🔴 Skipped file       ⤵  Image was downsized     🔻 Size reduction (%)\n')
@@ -20,8 +23,8 @@ class IconGenerator:
             self.downsized = '⤵ '
             self.optimized = '✅'
             self.skipped = '🔴'
-            self.size_is_smaller = '🔻'
-        except UnicodeEncodeError:
+            self.size_is_smaller = '🔻'            
+        except (UnicodeEncodeError, WindowsError):
             print('\n\nUsing these symbols:\n\n'
                   '  OK Optimized file      i EXIF info present\n'
                   '  -- Skipped file        V Image was downsized      v Size reduction')
@@ -63,5 +66,5 @@ def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
         pool_ex = concurrent.futures.ProcessPoolExecutor
         from multiprocessing import cpu_count
         workers = cpu_count() + 1
-
+        
     return line_width, pool_ex, workers
