@@ -6,9 +6,10 @@ Version history:
 ---
 v.1.3.6 - 2020-?
  * Fixed a UnicodeEncodeError that would occur in some environments when
-   printing Emoji to screen (yeah, Windows, we are looking at you!...).
+   printing Emoji to screen (Windows, Haiku, maybe others). 
  * Fixed a strange multiprocessing error that apparently only occured
-   on... you guessed, *that* operating system.
+   on... you guessed (yeah, Windows, we are looking at you!...).
+
    
 ---
 v.1.3.5 - 2020-04-07

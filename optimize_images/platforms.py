@@ -13,8 +13,8 @@ from optimize_images.constants import IOS_WORKERS
 class IconGenerator:
     def __init__(self):
         try:
-            if platform.system() == 'Windows':
-                raise WindowsError
+            if platform.system() in ('Windows','Haiku'):
+                raise Exception
             
             print('\n\nUsing these symbols:\n\n'
                   '  ✅ Optimized file     ℹ️  EXIF info present\n'
@@ -24,7 +24,7 @@ class IconGenerator:
             self.optimized = '✅'
             self.skipped = '🔴'
             self.size_is_smaller = '🔻'            
-        except (UnicodeEncodeError, WindowsError):
+        except (UnicodeEncodeError, Exception):
             print('\n\nUsing these symbols:\n\n'
                   '  OK Optimized file      i EXIF info present\n'
                   '  -- Skipped file        V Image was downsized      v Size reduction')
