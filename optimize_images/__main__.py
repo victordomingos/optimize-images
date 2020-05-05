@@ -22,10 +22,10 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
-© 2019 Victor Domingos (MIT License)
+© 2020 Victor Domingos (MIT License)
 """
-import os
 import concurrent.futures.process
+import os
 import piexif
 
 try:
@@ -44,6 +44,7 @@ from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.img_optimize_png import optimize_png
 from optimize_images.img_optimize_jpg import optimize_jpg
+
 
 def main():
     appstart = timer()

@@ -1,21 +1,20 @@
 # encoding: utf-8
+import concurrent.futures
 import platform
 import shutil
-import concurrent.futures
-
 from typing import Tuple, Union
 
-from optimize_images.data_structures import PPoolExType, TPoolExType
 from optimize_images.constants import IOS_FONT, IPHONE_FONT_SIZE, IPAD_FONT_SIZE
 from optimize_images.constants import IOS_WORKERS
+from optimize_images.data_structures import PPoolExType, TPoolExType
 
 
 class IconGenerator:
     def __init__(self):
         try:
-            if platform.system() in ('Windows','Haiku'):
+            if platform.system() in ('Windows', 'Haiku'):
                 raise Exception
-            
+
             print('\n\nUsing these symbols:\n\n'
                   '  ✅ Optimized file     ℹ️  EXIF info present\n'
                   '  🔴 Skipped file       ⤵  Image was downsized     🔻 Size reduction (%)\n')
@@ -23,7 +22,7 @@ class IconGenerator:
             self.downsized = '⤵ '
             self.optimized = '✅'
             self.skipped = '🔴'
-            self.size_is_smaller = '🔻'            
+            self.size_is_smaller = '🔻'
         except (UnicodeEncodeError, Exception):
             print('\n\nUsing these symbols:\n\n'
                   '  OK Optimized file      i EXIF info present\n'
@@ -66,5 +65,5 @@ def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
         pool_ex = concurrent.futures.ProcessPoolExecutor
         from multiprocessing import cpu_count
         workers = cpu_count() + 1
-        
+
     return line_width, pool_ex, workers
