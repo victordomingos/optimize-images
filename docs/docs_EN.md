@@ -120,7 +120,13 @@ image files that you may have inside your Pythonista environment.
 
 After cloning this repository, the current development version can be easily, 
 by using the shell command `pip install -e`, followed by the path to the main 
-project directory (the same directory that has the `setup.py` file). 
+project directory (the same directory that has the `setup.py` file). Alternatively,
+you can create a virtual environment and use the following command (just replace 
+`python3.8` with your intended python3 version)
+
+```
+python3.8 -m pip install git+https://github.com/victordomingos/optimize-images
+
 
 ### On iPhone or iPad (in Pythonista 3 for iOS)
 
