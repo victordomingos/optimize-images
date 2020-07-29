@@ -10,7 +10,6 @@ except ImportError:
     msg = 'This application requires Pillow to be installed. Please, install it first.'
     raise ImportError(msg)
 
-
 ImageType = NewType('ImageType', Image)
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
 TPoolExType = NewType('PPoolExType', concurrent.futures.ThreadPoolExecutor)

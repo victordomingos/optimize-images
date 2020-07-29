@@ -83,7 +83,3 @@ def do_optimization(t: Task) -> TaskResult:
                           was_downsized=False,
                           had_exif=had_exif,
                           has_exif=had_exif)
-
-
-
-

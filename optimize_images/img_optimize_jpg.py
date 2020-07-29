@@ -14,6 +14,7 @@ from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_aux_processing import make_grayscale
 from optimize_images.img_aux_processing import downsize_img
 from optimize_images.img_dynamic_quality import jpeg_dynamic_quality
+from optimize_images.reporting import show_img_exception
 
 
 def optimize_jpg(t: Task) -> TaskResult:
@@ -109,7 +110,8 @@ def optimize_jpg(t: Task) -> TaskResult:
         try:
             os.remove(temp_file_path)
         except OSError as e:
-            print(f"\nError while removing temporary file.\n{e}\n")
+            details = 'Error while removing temporary file.'
+            show_img_exception(e, t.src_path, details)
 
     return TaskResult(t.src_path, orig_format, result_format, orig_mode,
                       img.mode, orig_colors, final_colors, orig_size,

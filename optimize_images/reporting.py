@@ -63,10 +63,21 @@ def show_final_report(found_files: int,
         average = 0
         percent = 0
 
-    print(f"\n{40*'-'}\n")
+    print(f"\n{40 * '-'}\n")
     print(
         f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s)."
     )
     print(f"   Optimized {optimized_files} files.")
     print(f"   Average savings: {human(average)} per optimized file")
     print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")
+
+
+def show_img_exception(exception: Exception, image_path: str, details: str = '') -> None:
+    print("\nAn error has occurred while trying to optimize this file:")
+    print(image_path)
+
+    if details:
+        print(f'\n{details}')
+
+    print("\nThe following info may help to understand what has gone wrong here:\n")
+    print(exception)

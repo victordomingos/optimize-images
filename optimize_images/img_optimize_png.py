@@ -2,8 +2,6 @@
 import os
 import shutil
 
-import piexif
-
 try:
     from PIL import Image, ImageFile
 except ImportError:
@@ -14,6 +12,7 @@ from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_info import is_big_png_photo
 from optimize_images.img_aux_processing import remove_transparency, make_grayscale
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img, rebuild_palette
+from optimize_images.reporting import show_img_exception
 
 
 def optimize_png(t: Task) -> TaskResult:
@@ -34,6 +33,10 @@ def optimize_png(t: Task) -> TaskResult:
     orig_mode = img.mode
 
     folder, filename = os.path.split(t.src_path)
+
+    if folder == '':
+        folder = os.getcwd()
+
     temp_file_path = os.path.join(folder + "/~temp~" + filename)
     orig_size = os.path.getsize(t.src_path)
     orig_colors, final_colors = 0, 0
@@ -82,17 +85,16 @@ def optimize_png(t: Task) -> TaskResult:
                 try:
                     os.remove(t.src_path)
                 except OSError as e:
-                    msg = "Error while replacing original PNG with the " \
-                          "new JPEG version."
-                    print(f"\n{msg}\n{e}\n")
+                    details = 'Error while replacing original PNG with the new JPEG version.'
+                    show_img_exception(e, t.src_path, details)
         else:
             final_size = orig_size
             was_optimized = False
             try:
                 os.remove(conv_file_path)
             except OSError as e:
-                msg = "Error while removing temporary JPEG converted file."
-                print(f"\n{msg}\n{e}\n")
+                details = 'Error while removing temporary JPEG converted file.'
+                show_img_exception(e, t.src_path, details)
 
         result_format = "JPEG"
         return TaskResult(t.src_path, orig_format, result_format,
@@ -139,10 +141,10 @@ def optimize_png(t: Task) -> TaskResult:
             try:
                 os.remove(temp_file_path)
             except OSError as e:
-                print(f"\nError while removing temporary file.\n{e}\n")
+                details = 'Error while removing temporary file.'
+                show_img_exception(e, t.src_path, details)
 
         return TaskResult(t.src_path, orig_format, result_format, orig_mode,
                           img.mode, orig_colors, final_colors, orig_size,
                           final_size, was_optimized, was_downsized, had_exif,
                           has_exif)
-

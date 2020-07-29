@@ -26,7 +26,6 @@ known external binaries.
 """
 import concurrent.futures.process
 import os
-import piexif
 
 try:
     from PIL import Image
@@ -37,13 +36,12 @@ except ImportError:
 from timeit import default_timer as timer
 
 from optimize_images.file_utils import search_images
-from optimize_images.data_structures import Task, TaskResult
+from optimize_images.data_structures import Task
 from optimize_images.do_optimization import do_optimization
 from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import show_file_status, show_final_report
-from optimize_images.img_optimize_png import optimize_png
-from optimize_images.img_optimize_jpg import optimize_jpg
+from optimize_images.reporting import show_img_exception
 
 
 def main():
@@ -73,8 +71,10 @@ def main():
                  if '~temp~' not in img_path)
 
         with our_pool_executor(max_workers=workers) as executor:
+            current_img = ''
             try:
                 for r in executor.map(do_optimization, tasks):
+                    current_img = r.img
                     found_files += 1
                     total_src_size += r.orig_size
                     if r.was_optimized:
@@ -82,7 +82,8 @@ def main():
                         total_bytes_saved += r.orig_size - r.final_size
                     show_file_status(r, line_width, icons)
             except concurrent.futures.process.BrokenProcessPool as e:
-                print("\nAn error has occurred while trying to optimize a file: \n", e)
+                show_img_exception(e, current_img)
+
 
     # Optimize a single image
     elif os.path.isfile(src_path) and '~temp~' not in src_path:
