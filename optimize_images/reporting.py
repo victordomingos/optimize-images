@@ -40,7 +40,9 @@ def show_file_status(r: TaskResult, line_width: int, icons: IconGenerator):
         exif_str2 = icons.info if r.has_exif else ''
         downstr = icons.downsized if r.was_downsized else ''
         line1 = f'\n{icons.optimized}  [OPTIMIZED] {short_img}\n'
-        line2 = f'    {exif_str1} {orig_format}/{r.orig_mode}{o_colors}: {h_orig}  ->  {downstr}{exif_str2}{result_format}/{r.result_mode}{colors}: {h_final} {icons.size_is_smaller} {percent:.1f}%'
+        line2 = f'    {exif_str1} {orig_format}/{r.orig_mode}{o_colors}: {h_orig}' \
+                f'  ->  {downstr}{exif_str2}{result_format}/{r.result_mode}{colors}: ' \
+                f'{h_final} {icons.size_is_smaller} {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = r.img[-(line_width - 15):].ljust(line_width - 15)
@@ -64,9 +66,8 @@ def show_final_report(found_files: int,
         percent = 0
 
     print(f"\n{40 * '-'}\n")
-    print(
-        f"   Processed {found_files} files ({human(src_size)}) in {time_passed:.1f}s ({fps:.1f} f/s)."
-    )
+    print(f"   Processed {found_files} files ({human(src_size)}) in "
+          f"{time_passed:.1f}s ({fps:.1f} f/s).")
     print(f"   Optimized {optimized_files} files.")
     print(f"   Average savings: {human(average)} per optimized file")
     print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")

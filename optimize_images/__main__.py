@@ -47,7 +47,7 @@ from optimize_images.reporting import show_img_exception
 def main():
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    (src_path, recursive, quality, remove_transparency, reduce_colors,
+    (watch_dir, src_path, recursive, quality, remove_transparency, reduce_colors,
      max_colors, max_w, max_h, keep_exif, convert_all, conv_big, force_del, bg_color,
      grayscale, ignore_size_comparison, fast_mode) = get_args()
     found_files = 0
@@ -55,10 +55,18 @@ def main():
     total_src_size = 0
     total_bytes_saved = 0
 
-    icons = IconGenerator()
+
+    if watch_dir:
+        from optimize_images.watch import watch_for_new_files
+        watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
+                        max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
+                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+        watch_for_new_files(watch_task)
+        exit()
 
     # Optimize all images in a directory
-    if os.path.isdir(src_path):
+    elif os.path.isdir(src_path):
+        icons = IconGenerator()
         recursion_txt = 'Recursively searching' if recursive else 'Searching'
         opt_msg = 'and optimizing image files'
         exif_txt = '(keeping exif data) ' if keep_exif else ''
@@ -84,9 +92,9 @@ def main():
             except concurrent.futures.process.BrokenProcessPool as e:
                 show_img_exception(e, current_img)
 
-
     # Optimize a single image
     elif os.path.isfile(src_path) and '~temp~' not in src_path:
+        icons = IconGenerator()
         found_files += 1
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,

@@ -1,16 +1,16 @@
 # encoding: utf-8
 import os
 import re
-
 from argparse import ArgumentParser
+
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
 
 
 def get_args():
-    desc = "A command-line utility written in pure Python to reduce the file " \
-           "size of images. You must explicitly pass it a path to the image " \
-           "file or to the directory containing the image files to be " \
-           "processed."
+    desc = 'A command-line utility written in pure Python to reduce the file ' \
+           'size of images. You must explicitly pass it a path to the image ' \
+           'file or to the directory containing the image files to be ' \
+           'processed.'
     epilog = "PLEASE NOTE: The operation is done DESTRUCTIVELY, " \
              "by replacing the original files with the processed ones. You " \
              "definitely should duplicate the original file or folder before " \
@@ -20,70 +20,72 @@ def get_args():
              "be replaced by the JPEG file resulting from that conversion."
     parser = ArgumentParser(description=desc, epilog=epilog)
 
-    path_help = "The path to the image file or to the folder containing the " \
-                "images to be optimized. By default, it will try to process " \
-                "any images found in all of its subdirectories."
+    path_help = 'The path to the image file or to the folder containing the ' \
+                'images to be optimized. By default, it will try to process ' \
+                'any images found in all of its subdirectories.'
     parser.add_argument('path', nargs="?", type=str, help=path_help)
 
     parser.add_argument('-v', '--version', action='version',
                         version=__import__('optimize_images').__version__)
 
-    sf_help = "Display the list of image formats currently supported."
+    sf_help = 'Display the list of image formats currently supported.'
     parser.add_argument('-s', '--supported', dest="supported_formats",
                         action='store_true', help=sf_help)
 
     parser.add_argument('-nr', '--no-recursion', action='store_true',
                         help="Don't recurse through subdirectories.")
 
+    parser.add_argument('-wd', '--watch-directory', action='store_true',
+                        help='Watch a directory continuously for new files and '
+                             'optimize any file as soon as it is created (file '
+                             'paths are saved in a temporary list, so that each '
+                             'file should just be processed once per session).')
 
-    general_msg = "These options will be applied individually to each " \
-               "image being processed, independently of its format."
+    general_msg = 'These options will be applied individually to each ' \
+                  'image being processed, independently of its format.'
     general_group = parser.add_argument_group(
         'General image settings'.upper(), description=general_msg)
 
     mw_help = "The maximum width (in pixels)."
     general_group.add_argument('-mw', dest="max_width",
-                            type=int, default=0, help=mw_help)
+                               type=int, default=0, help=mw_help)
 
     mh_help = "The maximum height (in pixels). Any image that has a dimension " \
-               "exceeding a specified value will be downsized as the first " \
-               "optimization step. The resizing will not take effect if, " \
-               "after the whole optimization process, the resulting file " \
-               "size isn't any smaller than the original."
+              "exceeding a specified value will be downsized as the first " \
+              "optimization step. The resizing will not take effect if, " \
+              "after the whole optimization process, the resulting file " \
+              "size isn't any smaller than the original."
     general_group.add_argument('-mh', dest="max_height",
-                            type=int, default=0, help=mh_help)
+                               type=int, default=0, help=mh_help)
 
     general_group.add_argument('-g', '--grayscale', action='store_true',
-                        help="Convert to grayscale.")
+                               help="Convert to grayscale.")
 
     nc_help = "Don't compare the original and resulting file sizes, and save " \
-             "the new image anyway (useful, for instance, if you prefer to " \
-             "have all images with the same color, size, or quality settings)."
+              "the new image anyway (useful, for instance, if you prefer to " \
+              "have all images with the same color, size, or quality settings)."
     general_group.add_argument('-nc', '--no-comparison', action='store_true',
-                        help=nc_help)
+                               help=nc_help)
 
-    fm_help = "Skip some actions (e.g., the final palete rebuild for indexed " \
-              "PNG images or variable JPEG quality setting) in order to " \
-              "finish faster."
+    fm_help = 'Skip some actions (e.g., the final palete rebuild for indexed ' \
+              'PNG images or variable JPEG quality setting) in order to ' \
+              'finish faster.'
     general_group.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
-
-
 
     jpg_msg = 'The following options apply only to JPEG image files.'
     jpg_group = parser.add_argument_group(
         'JPEG specific options'.upper(), description=jpg_msg)
 
-    q_help = "Specify a fixed quality setting for JPEG files (an integer " \
-             "value, between 1 and 100)."
-    jpg_group.add_argument('-q', dest="quality",
+    q_help = 'Specify a fixed quality setting for JPEG files (an integer ' \
+             'value, between 1 and 100).'
+    jpg_group.add_argument('-q', dest='quality',
                            type=int, help=q_help)
 
     jpg_group.add_argument(
         '-ke',
-        "--keep-exif",
+        '--keep-exif',
         action='store_true',
         help="Keep image EXIF data (by default, it's discarded).")
-
 
     png_msg = 'The following options apply only to PNG image files.'
     png_group = parser.add_argument_group(
@@ -126,7 +128,6 @@ def get_args():
     png_group.add_argument(
         '-cb', "--convert-big", action='store_true', help=cb_help)
 
-
     ca_help = "Convert to JPEG all PNG images found. By default, " \
               "the original PNG " \
               "files will remain untouched and will be kept alongside the " \
@@ -134,7 +135,6 @@ def get_args():
               "will be replaced)."
     png_group.add_argument(
         '-ca', "--convert-all", action='store_true', help=ca_help)
-
 
     fd_help = "Delete the original file when converting to JPG."
     png_group.add_argument(
@@ -146,6 +146,7 @@ def get_args():
     args = parser.parse_args()
     recursive = not args.no_recursion
     quality = args.quality
+    watch_dir = args.watch_directory
 
     if args.supported_formats:
         formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
@@ -166,8 +167,6 @@ def get_args():
     elif quality > 100 or quality < 1:
         msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
         parser.exit(status=0, message=msg)
-
-
 
     if args.max_width < 0 or args.max_height < 0:
         msg = "\nPlease specify image dimensions as positive integers.\n\n"
@@ -199,6 +198,7 @@ def get_args():
               "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
         parser.exit(status=0, message=msg)
 
-    return src_path, recursive, quality, args.remove_transparency, args.reduce_colors, args.max_colors, \
-           args.max_width, args.max_height, args.keep_exif, args.convert_all, args.convert_big, \
-           args.force_delete, bg_color, args.grayscale, args.no_comparison, args.fast_mode
+    return watch_dir, src_path, recursive, quality, args.remove_transparency, \
+           args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
+           args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
+           bg_color, args.grayscale, args.no_comparison, args.fast_mode
