@@ -29,7 +29,7 @@ externos bem conhecidos.
    * [Opções independentes do formato](#opções-independentes-do-formato)
        - [Redimensionamento de imagens](#redimensionamento-de-imagens)
        - [Modo rápido](#modo-rápido)
-       - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros:)
+       - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros)
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
