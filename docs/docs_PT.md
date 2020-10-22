@@ -29,6 +29,7 @@ externos bem conhecidos.
    * [Opções independentes do formato](#opções-independentes-do-formato)
        - [Redimensionamento de imagens](#redimensionamento-de-imagens)
        - [Modo rápido](#modo-rápido)
+       - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros:)
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
@@ -135,7 +136,7 @@ seguinte comando, substituindo `python3.8` pela versão pretendida do Python 3:
 
 ```
 python3.8 -m pip install git+https://github.com/victordomingos/optimize-images
-
+```
 
 ### Em iPhone ou iPad (na app Pythonista 3 para iOS)
 
@@ -319,7 +320,7 @@ optimize-images -nr -mh 800 ./
 ```
 
 
-#### Monitorizar pasta sobre novos ficheiros:
+#### Monitorizar pasta pela criação de novos ficheiros:
 
 Utilize esta opção quando tiver uma pasta onde pretenda monitorizar o
 aparecimento de novos ficheiros de imagem e procesá-los logo que possível. A 

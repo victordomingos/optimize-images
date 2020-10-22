@@ -28,6 +28,7 @@ known external binaries.
    * [Format independent options](#format-independent-options)
        - [Image resizing](#image-resizing)
        - [Fast mode](#fast-mode)
+       - [Watch directory for new files](#watch-directory-for-new-files)
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
@@ -127,6 +128,7 @@ you can create a virtual environment and use the following command (just replace
 
 ```
 python3.8 -m pip install git+https://github.com/victordomingos/optimize-images
+```
 
 
 ### On iPhone or iPad (in Pythonista 3 for iOS)
