@@ -52,14 +52,15 @@ superior. Procuramos manter no mínimo as dependências externas, de modo a
 manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
 iOS. Neste momento, requer:
 
-  - Pillow==6.2.2
-  - piexif==1.1.3
+  - Pillow>=8.0.0
+  - piexif>=1.1.3
+  - watchdog>=0.10.3
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:
 
 ```
-pip3 install pillow optimize-images
+pip3 install pillow watchdog optimize-images
 ```
 
 Caso tenha a possibilidade de substituir o Pillow pela versão mais rápida 
@@ -316,6 +317,36 @@ para uma altura máxima de 800 pixels:
 ```
 optimize-images -nr -mh 800 ./
 ```
+
+
+#### Monitorizar pasta sobre novos ficheiros:
+
+Utilize esta opção quando tiver uma pasta onde pretenda monitorizar o
+aparecimento de novos ficheiros de imagem e procesá-los logo que possível. A 
+aplicação Optimize Images irá vigiar a pasta especificada de forma contínua e
+otimizará de forma autmática qualquer ficheiro acabado de criar. Os caminhos dos
+ficheiros são guardados numa lista temporária em memória, de modo a que cada 
+ficheiro seja processado uma única vez por sessão.
+
+Geralmente, os ficheiros que já existam quando Optimized Images é iniciada com 
+esta opção não serão processados, mas é possível forçar esse processamento. Para 
+tal, basta usar dois comandos consecutivos: primeiro, uma passagem normal sem o 
+argumento `-wd`, para processar os ficheiros existentes; depos, uma segunda 
+chamada, desta vez já com o argumento `-wd`, para continuar a vigiar a pasta e
+processar quaisquer novos ficheiros à medida que forem criados.
+
+```
+optimize-images -wd ./
+```
+
+```
+optimize-images --watch-directory ./
+```
+
+Esta funcionalidade requer o pacote opcional `watchdog`, fornecido por 
+terceiros, bem como as suas respetivas dependências, e está disponível apenas 
+nos sistemas operativos suportados por ele. Não está disponível, por exemplo, 
+em iOS. 
 
 
 ### Opções específicas para cada formato:

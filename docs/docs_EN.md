@@ -50,14 +50,15 @@ Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
-  - Pillow>=6.2.2
-  - piexif==1.1.3
+  - Pillow>=8.0.0
+  - piexif>=1.1.3
+  - watchdog>=0.10.3
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
 
 ```
-pip3 install pillow optimize-images
+pip3 install pillow watchdog optimize-images
 ```
 
 If you are able to swap Pillow with the faster version 
@@ -290,6 +291,32 @@ recursion, downsizing each of them to a maximum height of 800 pixels:
 optimize-images -nr -mh 800 ./
 ```
 
+
+#### Watch directory for new files:
+
+Use this option when you have a folder which you would like to monitor for new 
+image files and process them as soon as possible. Optimize Images will watch the 
+specified directory continuously and will optimize automatically any newly 
+created file. File paths are saved in a temporary list in memory, so that each 
+file should just be processed once per session.
+
+Files that exist when Optimized Images is started using this 
+option will generally not be processed, but you can force it, by issuing two
+consecutive shell commands, first doing a regular pass without the `-wd` 
+argument to process existing files, then a second call with the `-wd` argument 
+to keep the utility watching for new files and process them as they are created.
+
+```
+optimize-images -wd ./
+```
+
+```
+optimize-images --watch-directory ./
+```
+
+This feature requires the optional third-party `watchdog` package and its 
+dependencies, and is only available on operating systems supported by it. It is
+not available, for instance, on iOS.
 
 
 ### Format specific options:
