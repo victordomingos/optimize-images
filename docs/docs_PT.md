@@ -323,15 +323,15 @@ optimize-images -nr -mh 800 ./
 #### Monitorizar pasta pela criação de novos ficheiros:
 
 Utilize esta opção quando tiver uma pasta onde pretenda monitorizar o
-aparecimento de novos ficheiros de imagem e procesá-los logo que possível. A 
+aparecimento de novos ficheiros de imagem e processá-los logo que possível. A 
 aplicação Optimize Images irá vigiar a pasta especificada de forma contínua e
 otimizará de forma autmática qualquer ficheiro acabado de criar. Os caminhos dos
 ficheiros são guardados numa lista temporária em memória, de modo a que cada 
 ficheiro seja processado uma única vez por sessão.
 
-Geralmente, os ficheiros que já existam quando Optimized Images é iniciada com 
-esta opção não serão processados, mas é possível forçar esse processamento. Para 
-tal, basta usar dois comandos consecutivos: primeiro, uma passagem normal sem o 
+Geralmente, os ficheiros que já existam quando inicia Optimized Images com esta 
+opção não serão processados, mas é possível forçar esse processamento. Para tal,
+basta usar dois comandos consecutivos: primeiro, uma passagem normal sem o 
 argumento `-wd`, para processar os ficheiros existentes; depos, uma segunda 
 chamada, desta vez já com o argumento `-wd`, para continuar a vigiar a pasta e
 processar quaisquer novos ficheiros à medida que forem criados.
