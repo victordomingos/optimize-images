@@ -56,10 +56,16 @@ def main():
     total_bytes_saved = 0
 
     if watch_dir:
+        if not os.path.isdir(os.path.abspath(src_path)):
+            print("\nPlease secify a valid path to an existing folder.")
+            exit(1)
+
         from optimize_images.watch import watch_for_new_files
+
         watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
-                          max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                          force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+                          max_colors, max_w, max_h, keep_exif, convert_all,
+                          conv_big, force_del, bg_color, grayscale,
+                          ignore_size_comparison, fast_mode)
 
         watch_for_new_files(watch_task)
         exit()
@@ -111,7 +117,7 @@ def main():
         show_file_status(r, line_width, icons)
     else:
         print(
-            "No image files were found. Please enter a valid path to the "
+            "\nNo image files were found. Please enter a valid path to the "
             "image file or the folder containing any images to be processed.")
         exit()
 
@@ -120,7 +126,7 @@ def main():
         show_final_report(found_files, optimized_files, total_src_size,
                           total_bytes_saved, time_passed)
     else:
-        print("No supported image files were found in the specified directory.\n")
+        print("\nNo supported image files were found in the specified directory.\n")
 
 
 if __name__ == "__main__":

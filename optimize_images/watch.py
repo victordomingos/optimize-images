@@ -22,15 +22,13 @@ def is_image(filepath):
         return extension.lower() in ['jpg', 'jpeg', 'png']
 
 
-def optimize_image(img_path):
-    print(img_path)
-
-
-def wait_for_write_finish(filename):
-    # https://stackoverflow.com/a/23525690/6167478 (by goncalopp@stackoverflow)
-    last_size, size = -1, 0
-    while size != last_size:
-        last_size, size = size, os.stat(filename).st_size
+def wait_for_write_finish(filename: str) -> None:
+    """ Wait until file has been completely written (when file size stabilizes)
+    """
+    size = -1
+    while size != os.stat(filename).st_size:
+        size = os.stat(filename).st_size
+        time.sleep(0.01)
 
 
 class OptimizeImageEventHandler(FileSystemEventHandler):
