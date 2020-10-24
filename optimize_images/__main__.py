@@ -55,12 +55,12 @@ def main():
     total_src_size = 0
     total_bytes_saved = 0
 
-
     if watch_dir:
         from optimize_images.watch import watch_for_new_files
         watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
-                        max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+                          max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
+                          force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+
         watch_for_new_files(watch_task)
         exit()
 
@@ -91,6 +91,8 @@ def main():
                     show_file_status(r, line_width, icons)
             except concurrent.futures.process.BrokenProcessPool as e:
                 show_img_exception(e, current_img)
+            except KeyboardInterrupt:
+                print("\b \n\n  == Operation was interrupted by the user. ==\n")
 
     # Optimize a single image
     elif os.path.isfile(src_path) and '~temp~' not in src_path:

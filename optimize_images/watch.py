@@ -12,7 +12,6 @@ from optimize_images.data_structures import Task
 from optimize_images.do_optimization import do_optimization
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.platforms import adjust_for_platform, IconGenerator
-from timeit import default_timer as timer
 
 
 def is_image(filepath):
@@ -77,26 +76,26 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
 
 
 def watch_for_new_files(t: Task):
-    appstart = timer()
-    print("preparing for watch dir…")
+    folder = os.path.abspath(t.src_path)
+    print(f"\nPreparing to watch directory (press CTRL+C to quit):\n {folder}\n")
+
     event_handler = OptimizeImageEventHandler(t)
     observer = Observer()
-    observer.schedule(event_handler, t.src_path, recursive=True)
+    observer.schedule(event_handler, folder, recursive=True)
     observer.start()
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("\b \n\n  == Operation was interrupted by the user. ==\n")
         observer.stop()
     observer.join()
 
-    # report stats…
     if event_handler.new_files > 0:
-        time_passed = timer() - appstart
         show_final_report(event_handler.new_files,
                           event_handler.optimized_files,
                           event_handler.total_src_size,
                           event_handler.total_bytes_saved,
-                          time_passed)
+                          -1)
     else:
-        print("No supported image files were found in the specified directory.\n")
+        print("No files were processed.\n")

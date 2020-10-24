@@ -56,6 +56,15 @@ def show_final_report(found_files: int,
                       src_size: int,
                       bytes_saved: int,
                       time_passed: float):
+    """
+    Show a final report with the time spent and filesize savings
+
+    :param found_files: number of found image files
+    :param optimized_files: number of image files that were processed
+    :param src_size: original sum of file sizes
+    :param bytes_saved: savings in file sizes (sum)
+    :param time_passed: specify -1 in order to hide this (watch directory)
+    """
     fps = found_files / time_passed
 
     if bytes_saved:
@@ -65,12 +74,17 @@ def show_final_report(found_files: int,
         average = 0
         percent = 0
 
-    print(f"\n{40 * '-'}\n")
-    print(f"   Processed {found_files} files ({human(src_size)}) in "
-          f"{time_passed:.1f}s ({fps:.1f} f/s).")
-    print(f"   Optimized {optimized_files} files.")
-    print(f"   Average savings: {human(average)} per optimized file")
-    print(f"   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n")
+    report = f"\n{40 * '-'}\n"
+    if time_passed == -1:
+        report += f"\n   Processed {found_files} files ({human(src_size)})."
+    else:
+        report += f"\n   Processed {found_files} files ({human(src_size)}) in " \
+                  f"{time_passed:.1f}s ({fps:.1f} f/s)."
+
+    report += f"\n   Optimized {optimized_files} files." \
+              f"\n   Average savings: {human(average)} per optimized file" \
+              f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
+    print(report)
 
 
 def show_img_exception(exception: Exception, image_path: str, details: str = '') -> None:

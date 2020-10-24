@@ -9,6 +9,11 @@ v.1.4.0 - 2020-?
    soon as it is created (no multiprocessing for now, sorry). This feature is
    not compatible with Pythonista for iOS, since it requires a third-party
    package called Watchdog, which is currently not available on Pythonista).
+ * Long running tasks, like optimizing recursively a folder containing a large
+   number of image files, or watching for new files a a directory, can now be
+   interrupted by the user with CTRL+C. Instead of an ugly traceback, the final
+   report is presented with the usual statistics for the images that were
+   processed.
 
 ---
 v.1.3.6 - 2020-08-02
