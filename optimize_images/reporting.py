@@ -1,8 +1,11 @@
 # encoding: utf-8
+from functools import lru_cache
+
 from optimize_images.data_structures import TaskResult
 from optimize_images.platforms import IconGenerator
 
 
+@lru_cache
 def human(number: int, suffix='B') -> str:
     """Return a human readable memory size in a string.
 

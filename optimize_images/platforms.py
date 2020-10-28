@@ -2,6 +2,7 @@
 import concurrent.futures
 import platform
 import shutil
+from functools import lru_cache
 from typing import Tuple, Union
 
 from optimize_images.constants import IOS_FONT, IPHONE_FONT_SIZE, IPAD_FONT_SIZE
@@ -34,6 +35,7 @@ class IconGenerator:
             self.size_is_smaller = 'v'
 
 
+@lru_cache
 def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':
         if platform.machine().startswith('iPad'):

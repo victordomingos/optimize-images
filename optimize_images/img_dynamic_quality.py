@@ -2,6 +2,7 @@
 Adapted from:
 https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html
 """
+from functools import lru_cache
 from io import BytesIO
 from math import log
 
@@ -61,6 +62,7 @@ def get_diff_at_quality(photo, quality):
         return 1 - diff_score / 100
 
 
+@lru_cache
 def _diff_iteration_count(lo, hi):
     """Return the depth of the binary search tree for this range"""
     if lo >= hi:
