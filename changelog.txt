@@ -14,6 +14,9 @@ v.1.4.0 - 2020-?
    interrupted by the user with CTRL+C. Instead of an ugly traceback, the final
    report is presented with the usual statistics for the images that were
    processed.
+ * Added the ability to specify the number of tasks to run simultaneously, so
+   that you can optionally limit the number of processor cores being used by
+   this application and keep in reserve some CPU power for any other tasks.
 
 ---
 v.1.3.6 - 2020-08-02

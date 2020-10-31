@@ -41,12 +41,20 @@ def get_args():
                              'paths are saved in a temporary list, so that each '
                              'file should just be processed once per session).')
 
+    jobs_help = 'The max. number of simultaneous jobs to run at a given time. ' \
+                'The default value (0), for most platforms, will generate a ' \
+                'total of N + 1 processes, where N is the number of CPUs or ' \
+                'cores in the system.'
+
+    parser.add_argument('-jobs', dest="jobs",
+                        type=int, default=0, help=jobs_help)
+
     general_msg = 'These options will be applied individually to each ' \
                   'image being processed, independently of its format.'
     general_group = parser.add_argument_group(
         'General image settings'.upper(), description=general_msg)
 
-    mw_help = "The maximum width (in pixels)."
+    mw_help = 'The maximum width (in pixels).'
     general_group.add_argument('-mw', dest="max_width",
                                type=int, default=0, help=mw_help)
 
@@ -201,4 +209,5 @@ def get_args():
     return watch_dir, src_path, recursive, quality, args.remove_transparency, \
            args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
            args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
-           bg_color, args.grayscale, args.no_comparison, args.fast_mode
+           bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
+           args.jobs

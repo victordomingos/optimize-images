@@ -22,15 +22,6 @@ def is_image(filepath):
         return extension.lower() in ['jpg', 'jpeg', 'png']
 
 
-def wait_for_write_finish(filename: str) -> None:
-    """ Wait until file has been completely written (when file size stabilizes)
-    """
-    size = -1
-    while size != os.stat(filename).st_size:
-        size = os.stat(filename).st_size
-        time.sleep(0.01)
-
-
 class OptimizeImageEventHandler(FileSystemEventHandler):
     def __init__(self, t: Task):
         super().__init__()
@@ -41,7 +32,7 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
         self.total_bytes_saved = 0
         self.total_src_size = 0
 
-        self.line_width, _, _ = adjust_for_platform()
+        self.line_width, pool_ex, default_workers = adjust_for_platform()
         self.icons = IconGenerator()
 
     def on_created(self, event):
@@ -55,7 +46,7 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
 
         self.paths_to_ignore.append(event.src_path)
         if is_image(event.src_path) and '~temp~' not in event.src_path:
-            wait_for_write_finish(event.src_path)
+            self.wait_for_write_finish(event.src_path)
             self.new_files += 1
 
             img_task = Task(event.src_path, t.quality, t.remove_transparency,
@@ -72,6 +63,15 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
 
             show_file_status(r, self.line_width, self.icons)
 
+    @staticmethod
+    def wait_for_write_finish(filename: str) -> None:
+        """ Wait until file has been completely written (when file size stabilizes)
+        """
+        size = -1
+        while size != os.stat(filename).st_size:
+            size = os.stat(filename).st_size
+            time.sleep(0.01)
+
 
 def watch_for_new_files(t: Task):
     folder = os.path.abspath(t.src_path)
@@ -81,12 +81,14 @@ def watch_for_new_files(t: Task):
     observer = Observer()
     observer.schedule(event_handler, folder, recursive=True)
     observer.start()
+
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print("\b \n\n  == Operation was interrupted by the user. ==\n")
         observer.stop()
+
     observer.join()
 
     if event_handler.new_files > 0:

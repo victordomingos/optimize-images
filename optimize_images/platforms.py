@@ -61,11 +61,11 @@ def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
         char_width = ui.measure_string('.', font=(IOS_FONT, font_size)).width
         line_width = int(screen_width / char_width - 1.5) - 1
         pool_ex = concurrent.futures.ThreadPoolExecutor
-        workers = IOS_WORKERS
+        default_workers = IOS_WORKERS
     else:
         line_width = shutil.get_terminal_size((80, 24)).columns
         pool_ex = concurrent.futures.ProcessPoolExecutor
         from multiprocessing import cpu_count
-        workers = cpu_count() + 1
+        default_workers = cpu_count() + 1
 
-    return line_width, pool_ex, workers
+    return line_width, pool_ex, default_workers
