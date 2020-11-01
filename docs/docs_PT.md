@@ -30,6 +30,7 @@ externos bem conhecidos.
        - [Redimensionamento de imagens](#redimensionamento-de-imagens)
        - [Modo rápido](#modo-rápido)
        - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros)
+       - [Número máximo de tarefas em simultâneo](#número-máximo-de-tarefas-em-simultâneo)
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
@@ -348,6 +349,21 @@ Esta funcionalidade requer o pacote opcional `watchdog`, fornecido por
 terceiros, bem como as suas respetivas dependências, e está disponível apenas 
 nos sistemas operativos suportados por ele. Não está disponível, por exemplo, 
 em iOS. 
+
+Neste momento, ao utilizar esta funcionalidade, não se encontra disponível a 
+execução com multiprocessamento.
+
+
+#### Número máximo de tarefas em simultâneo
+
+É possível especificar o número máximo de tarefas de processamento a executar em
+simultâneo. O valor predefinido (0), na maior parte das plataformas, irá gerar 
+um total de N + 1 processos, em que N é o número de processadores ou núcleos 
+presentes no sistema.
+
+```
+optimize-images -jobs 16 ./
+```
 
 
 ### Opções específicas para cada formato:

@@ -29,6 +29,7 @@ known external binaries.
        - [Image resizing](#image-resizing)
        - [Fast mode](#fast-mode)
        - [Watch directory for new files](#watch-directory-for-new-files)
+       - [Maximum number of simultaneous jobs](#maximum-number-of-simultaneous-jobs)
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
@@ -319,6 +320,20 @@ optimize-images --watch-directory ./
 This feature requires the optional third-party `watchdog` package and its 
 dependencies, and is only available on operating systems supported by it. It is
 not available, for instance, on iOS.
+
+At this time, multiprocessing is not available when using this feature.
+
+
+####Maximum number of simultaneous jobs
+
+You can specify the maximum number of simultaneous jobs that should be alowed 
+to run at a given time. The default value (0), for most platforms, will 
+generate a total of N + 1 processes, where N is the number of CPUs or cores in 
+the system.
+
+```
+optimize-images -jobs 16 ./
+```
 
 
 ### Format specific options:
