@@ -62,7 +62,7 @@ def get_diff_at_quality(photo, quality):
         return 1 - diff_score / 100
 
 
-@lru_cache
+@lru_cache(maxsize=None)
 def _diff_iteration_count(lo, hi):
     """Return the depth of the binary search tree for this range"""
     if lo >= hi:

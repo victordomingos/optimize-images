@@ -5,7 +5,7 @@ from optimize_images.data_structures import TaskResult
 from optimize_images.platforms import IconGenerator
 
 
-@lru_cache
+@lru_cache(maxsize=None)
 def human(number: int, suffix='B') -> str:
     """Return a human readable memory size in a string.
 

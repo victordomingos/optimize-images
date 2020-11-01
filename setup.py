@@ -5,7 +5,7 @@ import sys
 import platform
 
 used = sys.version_info
-required = (3, 6)
+required = (3, 7)
 
 # if version of pip that doesn't understand the python_requires classifier, must be pip >= 9.0.0
 # must be built using at least version 24.2.0 of setuptools
@@ -40,7 +40,7 @@ setup(name='optimize-images',
           'Source': 'https://github.com/victordomingos/optimize-images',
           'Bug Reports': 'https://github.com/victordomingos/optimize-images/issues',
       },
-      python_requires='>=3.6',
+      python_requires='>=3.7',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
@@ -55,9 +55,9 @@ setup(name='optimize-images',
           'Operating System :: Unix',
           'Operating System :: POSIX :: Linux ',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
           'Topic :: Utilities',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Graphics Conversion',
@@ -68,7 +68,7 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=[
-          'piexif>=1.1.3',
+          'piexif==1.1.3',
       ],
 
       entry_points={

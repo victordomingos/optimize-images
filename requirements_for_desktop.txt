@@ -1,3 +1,3 @@
-Pillow>=8.0.0
+Pillow>=8.0.01
 piexif>=1.1.3
 watchdog>=0.10.3

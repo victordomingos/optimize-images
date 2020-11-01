@@ -35,7 +35,7 @@ class IconGenerator:
             self.size_is_smaller = 'v'
 
 
-@lru_cache
+@lru_cache(maxsize=None)
 def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
     if platform.system() == 'Darwin':
         if platform.machine().startswith('iPad'):

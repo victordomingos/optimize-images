@@ -54,7 +54,7 @@ superior. Procuramos manter no mínimo as dependências externas, de modo a
 manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
 iOS. Neste momento, requer:
 
-  - Pillow>=8.0.0
+  - Pillow>=8.0.1
   - piexif>=1.1.3
   - watchdog>=0.10.3
 

@@ -4,7 +4,7 @@ Version history:
 ================
 
 ---
-v.1.4.0 - 2020-?
+v.1.4.0 - 2020-11-01
  * New feature: watch a directory for changes and optimize any new image file as
    soon as it is created (no multiprocessing for now, sorry). This feature is
    not compatible with Pythonista for iOS, since it requires a third-party
