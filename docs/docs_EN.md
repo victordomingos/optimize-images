@@ -324,7 +324,7 @@ not available, for instance, on iOS.
 At this time, multiprocessing is not available when using this feature.
 
 
-####Maximum number of simultaneous jobs
+#### Maximum number of simultaneous jobs
 
 You can specify the maximum number of simultaneous jobs that should be alowed 
 to run at a given time. The default value (0), for most platforms, will 
