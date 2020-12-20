@@ -42,6 +42,10 @@ externos bem conhecidos.
           - [Mudar a cor de fundo predefinida](#mudar-a-cor-de-fundo-predefinida)
    * [Outras funcionalidades](#outras-funcionalidades)
    
+   
+* **[Projetos relacionados](#projetos-relacionados)**
+   * [Optimize Images Docker](#optimize-images-docker)   
+
 - **[Encontrou um bug ou tem uma sugestão?](#encontrou-um-bug-ou-tem-uma-sugestão)**
 
 
@@ -540,7 +544,14 @@ optimize-images -s
 ```
 optimize-images --supported
 ```
-  
+
+
+
+### Projetos relacionados
+
+#### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
+Uma implementação de Optimize Images para docker, da autoria de terceiros. Inclui algumas otimizações interessantes, como por exemplo o uso de uma versão recente da biblioteca [mozjpeg](https://github.com/mozilla/mozjpeg) ou uma versão do Pillow compilada com a [libimagequant](https://github.com/ImageOptim/libimagequant), o que deve resultar numa compressão ainda mais rápida e mais eficiente.
+
   
 ## Encontrou um *bug* ou tem uma sugestão?
 
