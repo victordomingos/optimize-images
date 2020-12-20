@@ -41,6 +41,9 @@ known external binaries.
           - [Changing the default background color](#changing-the-default-background-color)
    * [Other features](#other-features)
    
+* **[Related projects](#related-projects)**
+   * [Optimize Images Docker](#optimize-images-docker)   
+
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
 ## Installation and dependencies:
@@ -519,7 +522,13 @@ optimize-images -s
 ```
 optimize-images --supported
 ```
-  
+
+
+### Related projects
+
+#### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
+A third-party dockerized implementation of Optimize Images. It includes a few  interesting optimizations, like the usage of a recent version of [mozjpeg](https://github.com/mozilla/mozjpeg) library, or a Pillow binary compiled with [libimagequant](https://github.com/ImageOptim/libimagequant), which should result in faster and more efficient compression.
+
   
 ## Did you find a bug or do you have a suggestion?
 
