@@ -8,7 +8,7 @@ from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
 
 
-def show_version_info(app_path: str) -> str:
+def get_version_info() -> str:
     """ Get a string that displays current application version as well as
         some useful environment info.
     """
@@ -16,12 +16,14 @@ def show_version_info(app_path: str) -> str:
     import platform
 
     try:
-        from piexif import VERSION as piexif_version
+        import piexif
+        piexif_version = piexif.VERSION
     except ImportError:
         piexif_version = "missing (package needed for EXIF support)"
 
     try:
-        from watchdog.version import VERSION_STRING as wd_version
+        import watchdog.version
+        wd_version = watchdog.version.VERSION_STRING
     except ImportError:
         wd_version = "missing (package needed for watching folders for changes)"
 
@@ -197,7 +199,7 @@ def get_args():
     watch_dir = args.watch_directory
 
     if args.version:
-        parser.exit(status=0, message=show_version_info(parser.prog))
+        parser.exit(status=0, message=get_version_info())
 
     if args.supported_formats:
         parser.exit(status=0, message=get_formats())

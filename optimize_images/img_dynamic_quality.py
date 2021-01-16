@@ -4,19 +4,16 @@ https://engineeringblog.yelp.com/2017/06/making-photos-smaller.html
 """
 from functools import lru_cache
 from io import BytesIO
+from typing import Optional, Tuple
+
+from PIL import Image
+from PIL import ImageChops, ImageStat
 from math import log
 
 from optimize_images.constants import DEFAULT_QUALITY
 
-try:
-    from PIL import Image
-    from PIL import ImageChops, ImageStat
-except ImportError:
-    msg = 'This application requires Pillow to be installed. Please, install it first.'
-    raise ImportError(msg)
 
-
-def compare_images(img1, img2):
+def compare_images(img1: Image.Image, img2: Image.Image) -> Optional[float]:
     """Calculate the difference between two images of the same size
     by comparing channel values at the pixel level.
     `delete_diff_file`: removes the diff image after ratio found
@@ -41,7 +38,7 @@ def compare_images(img1, img2):
     return diff_ratio * 100
 
 
-def get_diff_at_quality(photo, quality):
+def get_diff_at_quality(photo, quality: int) -> float:
     """Return a difference score for this JPEG image saved at the specified quality
 
     A SSIM score would be much better, but currently there is no pure Python
@@ -63,7 +60,7 @@ def get_diff_at_quality(photo, quality):
 
 
 @lru_cache(maxsize=None)
-def _diff_iteration_count(lo, hi):
+def _diff_iteration_count(lo: int, hi: int) -> int:
     """Return the depth of the binary search tree for this range"""
     if lo >= hi:
         return 0
@@ -71,7 +68,8 @@ def _diff_iteration_count(lo, hi):
         return int(log(hi - lo, 2)) + 1
 
 
-def jpeg_dynamic_quality(original_photo, use_dynamic_quality=True):
+def jpeg_dynamic_quality(original_photo: Image.Image,
+                         use_dynamic_quality: bool = True) -> Tuple[int, float]:
     """Return an integer representing the quality that this JPEG image should be
     saved at to attain the quality threshold specified for this photo class.
 

@@ -33,7 +33,7 @@ def do_optimization(t: Task) -> TaskResult:
     """
     # TODO: Catch exceptions that may occur here.
     try:
-        img = Image.open(t.src_path)
+        img: Image.Image = Image.open(t.src_path)
 
         # TODO: improve method of image format detection (what should happen if the
         #       file extension does not match the image content's format? Maybe we

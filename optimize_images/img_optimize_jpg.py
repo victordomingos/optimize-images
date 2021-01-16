@@ -30,7 +30,7 @@ def optimize_jpg(t: Task) -> TaskResult:
     :param t: A Task object containing all the parameters for the image processing.
     :return: A TaskResult object containing information for single file report.
     """
-    img = Image.open(t.src_path)
+    img: Image.Image = Image.open(t.src_path)
     orig_format = img.format
     orig_mode = img.mode
 

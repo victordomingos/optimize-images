@@ -8,7 +8,6 @@ except ImportError:
     raise ImportError(msg)
 
 from optimize_images.constants import DEFAULT_BG_COLOR
-from optimize_images.data_structures import ImageType
 
 
 class Palette:
@@ -35,7 +34,9 @@ class Palette:
         return palette
 
 
-def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
+def remove_transparency(
+        img: Image.Image,
+        bg_color: Tuple[int, int, int] = DEFAULT_BG_COLOR) -> Image.Image:
     """Remove alpha transparency from PNG images
 
     Expects a PIL.Image object and returns an object of the same type with the
@@ -53,7 +54,9 @@ def remove_transparency(img: ImageType, bg_color=DEFAULT_BG_COLOR) -> ImageType:
         return img
 
 
-def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, bool]:
+def downsize_img(img: Image.Image,
+                 max_w: int,
+                 max_h: int) -> Tuple[Image.Image, bool]:
     """ Reduce the size of an image to the indicated maximum dimensions
 
     This function takes a PIL.Image object and integer values for the maximum
@@ -76,7 +79,8 @@ def downsize_img(img: ImageType, max_w: int, max_h: int) -> Tuple[ImageType, boo
     return img, True
 
 
-def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, int]:
+def do_reduce_colors(img: Image.Image,
+                     max_colors: int) -> Tuple[Image.Image, int, int]:
     """ Reduce the number of colors of an Image object
 
     It takes a PIL image object and tries to reduce the total number of colors,
@@ -133,7 +137,7 @@ def do_reduce_colors(img: ImageType, max_colors: int) -> Tuple[ImageType, int, i
     return img, orig_colors, len(img.getcolors())
 
 
-def make_grayscale(img: ImageType) -> ImageType:
+def make_grayscale(img: Image.Image) -> Image.Image:
     """ Convert an Image to grayscale
 
     :param img: a PIL image in color (modes P, RGBA, RGB, CMYK, YCbCr, LAB or HSV)
@@ -159,7 +163,7 @@ def make_grayscale(img: ImageType) -> ImageType:
         return img
 
 
-def rebuild_palette(img: ImageType) -> Tuple[ImageType, int]:
+def rebuild_palette(img: Image.Image) -> Tuple[Image.Image, int]:
     """ Rebuild the palette of a mode "P" PNG image
 
     It may allow for other tools, like PNGOUT and AdvPNG, to further reduce the
@@ -173,9 +177,9 @@ def rebuild_palette(img: ImageType) -> Tuple[ImageType, int]:
              with the resulting number of colors
     """
     w, h = img.size
-    img = img.convert("RGBA")
+    img: Image.Image = img.convert("RGBA")
     new_palette = Palette()
-    alpha_layer = Image.new("L", img.size)
+    alpha_layer: Image.Image = Image.new("L", img.size)
 
     for x in range(w):
         for y in range(h):
