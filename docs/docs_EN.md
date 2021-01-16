@@ -13,6 +13,10 @@ for such a strict dependency management, you will probably be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
+Some aditional features can be added which require the presence of other 
+third-party packages that are not written in pure Python, but those packages 
+and the features depending on them should be treated as optional.
+
 ![optimize-images_screenshot](https://user-images.githubusercontent.com/18650184/42172232-5788c43a-7e13-11e8-8094-5811e7fd55c1.png)
 
 

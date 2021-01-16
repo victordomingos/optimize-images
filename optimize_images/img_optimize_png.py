@@ -132,7 +132,8 @@ def optimize_png(t: Task) -> TaskResult:
         final_size = os.path.getsize(temp_file_path)
 
         # Only replace the original file if compression did save any space
-        if t.no_size_comparison or (orig_size - final_size > 0):
+        if t.no_size_comparison \
+                or ((orig_size - final_size > 0) and (final_size / orig_size < .99)):
             shutil.move(temp_file_path, os.path.expanduser(t.src_path))
             was_optimized = True
         else:

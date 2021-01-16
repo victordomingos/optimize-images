@@ -1,9 +1,49 @@
 # encoding: utf-8
 import os
 import re
+import sys
 from argparse import ArgumentParser
 
+from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
+
+
+def show_version_info(app_path: str) -> str:
+    """ Get a string that displays current application version as well as
+        some useful environment info.
+    """
+    import PIL  # it exists, was checked on main
+    import platform
+
+    try:
+        from piexif import VERSION as piexif_version
+    except ImportError:
+        piexif_version = "missing (package needed for EXIF support)"
+
+    try:
+        from watchdog.version import VERSION_STRING as wd_version
+    except ImportError:
+        wd_version = "missing (package needed for watching folders for changes)"
+
+    python_version = f'Python {platform.python_version()} ({sys.executable})'
+
+    return f'\nOptimize Images {__version__}' \
+           f'\n\nRunning environment:' \
+           f'\n  - Location: {sys.argv[0]}' \
+           f'\n  - Pillow {PIL.__version__}' \
+           f'\n  - Piexif {piexif_version}' \
+           f'\n  - {python_version}' \
+           f'\n\nOptional packages:' \
+           f'\n  - Watchdog {wd_version}\n\n'
+
+
+def get_formats() -> str:
+    """ Get a string that displays a list of supported formats. """
+    formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
+    msg = "These are the image formats currently supported (please " \
+          "note that any files without one of these file extensions " \
+          "will be ignored):"
+    return f"\n{msg} {formats}\n\n"
 
 
 def get_args():
@@ -25,8 +65,8 @@ def get_args():
                 'any images found in all of its subdirectories.'
     parser.add_argument('path', nargs="?", type=str, help=path_help)
 
-    parser.add_argument('-v', '--version', action='version',
-                        version=__import__('optimize_images').__version__)
+    parser.add_argument('-v', '--version', action='store_true',
+                        help="Check the version of this app and its environment.")
 
     sf_help = 'Display the list of image formats currently supported.'
     parser.add_argument('-s', '--supported', dest="supported_formats",
@@ -156,13 +196,11 @@ def get_args():
     quality = args.quality
     watch_dir = args.watch_directory
 
+    if args.version:
+        parser.exit(status=0, message=show_version_info(parser.prog))
+
     if args.supported_formats:
-        formats = ', '.join(SUPPORTED_FORMATS).strip().upper()
-        msg = "These are the image formats currently supported (please " \
-              "note that any files without one of these file extensions " \
-              "will be ignored):"
-        msg = f"\n{msg} {formats}\n\n"
-        parser.exit(status=0, message=msg)
+        parser.exit(status=0, message=get_formats())
 
     if args.path:
         src_path = os.path.expanduser(args.path)

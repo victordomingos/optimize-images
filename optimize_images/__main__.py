@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 """
-A little command-line interface (CLI) utility written in pure Python to help
-you reduce the file size of images.
+A command-line interface (CLI) utility written in pure Python to help you
+reduce the file size of images.
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will go
@@ -22,7 +22,11 @@ for such a strict dependency management, you will certainly be better served
 by any several other image optimization utilities that are based on some well
 known external binaries.
 
-© 2020 Victor Domingos (MIT License)
+Some aditional features can be added which require the presence of other
+third-party packages that are not written in pure Python, but those packages and
+the features depending on them should be treated as optional.
+
+© 2021 Victor Domingos (MIT License)
 """
 import concurrent.futures.process
 import os
@@ -30,7 +34,16 @@ import os
 try:
     from PIL import Image
 except ImportError:
-    print('\n    This application requires Pillow to be installed. Please, install it first.\n')
+    print('\n    This application requires Pillow to be installed. '
+          'Please, install it first.\n')
+    exit()
+
+
+try:
+    import piexif
+except ImportError:
+    print('\n    This application requires Piexif to be installed. '
+          'Please, install it first.\n')
     exit()
 
 from timeit import default_timer as timer
@@ -40,8 +53,9 @@ from optimize_images.data_structures import Task
 from optimize_images.do_optimization import do_optimization
 from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.argument_parser import get_args
-from optimize_images.reporting import show_file_status, show_final_report
-from optimize_images.reporting import show_img_exception
+from optimize_images.reporting import (show_file_status,
+                                       show_final_report,
+                                       show_img_exception)
 
 
 def main():

@@ -36,32 +36,30 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
         self.icons = IconGenerator()
 
     def on_created(self, event):
-        t = self.t
-        if '~temp~' in event.src_path:
-            return
-        if event.is_directory:
-            return
-        if event.src_path in self.paths_to_ignore:
+        if (event.is_directory
+                or not is_image(event.src_path)
+                or '~temp~' in event.src_path
+                or event.src_path in self.paths_to_ignore):
             return
 
         self.paths_to_ignore.append(event.src_path)
-        if is_image(event.src_path) and '~temp~' not in event.src_path:
-            self.wait_for_write_finish(event.src_path)
-            self.new_files += 1
+        self.wait_for_write_finish(event.src_path)
+        self.new_files += 1
 
-            img_task = Task(event.src_path, t.quality, t.remove_transparency,
-                            t.reduce_colors, t.max_colors, t.max_w, t.max_h,
-                            t.keep_exif, t.convert_all, t.conv_big, t.force_del,
-                            t.bg_color, t.grayscale, t.no_size_comparison,
-                            t.fast_mode)
+        t = self.t
+        img_task = Task(event.src_path, t.quality, t.remove_transparency,
+                        t.reduce_colors, t.max_colors, t.max_w, t.max_h,
+                        t.keep_exif, t.convert_all, t.conv_big, t.force_del,
+                        t.bg_color, t.grayscale, t.no_size_comparison,
+                        t.fast_mode)
 
-            r = do_optimization(img_task)
-            self.total_src_size += r.orig_size
-            if r.was_optimized:
-                self.optimized_files += 1
-                self.total_bytes_saved += r.orig_size - r.final_size
+        r = do_optimization(img_task)
+        self.total_src_size += r.orig_size
+        if r.was_optimized:
+            self.optimized_files += 1
+            self.total_bytes_saved += r.orig_size - r.final_size
 
-            show_file_status(r, self.line_width, self.icons)
+        show_file_status(r, self.line_width, self.icons)
 
     @staticmethod
     def wait_for_write_finish(filename: str) -> None:

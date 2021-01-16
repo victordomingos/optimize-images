@@ -93,7 +93,8 @@ def optimize_jpg(t: Task) -> TaskResult:
             has_exif = True
         except ValueError:
             has_exif = False
-        # TODO: Check if we can provide a more specific treatment of piexif exceptions.
+        # TODO: Check if we can provide a more specific treatment
+        #       of piexif exceptions.
         except Exception:
             had_exif = False
     else:
@@ -101,7 +102,8 @@ def optimize_jpg(t: Task) -> TaskResult:
 
     # Only replace the original file if compression did save any space
     final_size = os.path.getsize(temp_file_path)
-    if t.no_size_comparison or ((orig_size - final_size > 0) and (final_size / orig_size * 100 < 99)):
+    if t.no_size_comparison \
+            or ((orig_size - final_size > 0) and (final_size / orig_size < .99)):
         shutil.move(temp_file_path, os.path.expanduser(t.src_path))
         was_optimized = True
     else:

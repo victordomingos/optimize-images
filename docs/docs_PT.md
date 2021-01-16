@@ -13,6 +13,9 @@ tão rigorosa, encontrará provavelmente várias outras ferramentas de otimizaç
 imagem mais robustas e mais avançadas, baseadas em alguns binários executáveis
 externos bem conhecidos.
 
+Podem ser adicionadas algumas funcionalidades que requeiram a presença de pacotes 
+de terceiros não escritos em Python puro, sendo que esses pacotes serão tratados 
+como opcionais, tais como as funcionalidades que deles dependam.
 
 ![optimize-images - captura de imagem](https://user-images.githubusercontent.com/18650184/42172232-5788c43a-7e13-11e8-8094-5811e7fd55c1.png)
 
