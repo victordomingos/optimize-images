@@ -30,13 +30,14 @@ the features depending on them should be treated as optional.
 """
 import concurrent.futures.process
 import os
+import sys
 
 try:
     from PIL import Image
 except ImportError:
     print('\n    This application requires Pillow to be installed. '
           'Please, install it first.\n')
-    exit()
+    sys.exit()
 
 
 try:
@@ -44,7 +45,7 @@ try:
 except ImportError:
     print('\n    This application requires Piexif to be installed. '
           'Please, install it first.\n')
-    exit()
+    sys.exit()
 
 from timeit import default_timer as timer
 
@@ -56,6 +57,7 @@ from optimize_images.argument_parser import get_args
 from optimize_images.reporting import (show_file_status,
                                        show_final_report,
                                        show_img_exception)
+from optimize_images.watch import watch_for_new_files
 
 
 def main():
@@ -78,9 +80,8 @@ def main():
     if watch_dir:
         if not os.path.isdir(os.path.abspath(src_path)):
             print("\nPlease secify a valid path to an existing folder.")
-            exit(1)
+            sys.exit(1)
 
-        from optimize_images.watch import watch_for_new_files
 
         watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
                           max_colors, max_w, max_h, keep_exif, convert_all,
@@ -88,7 +89,7 @@ def main():
                           ignore_size_comparison, fast_mode)
 
         watch_for_new_files(watch_task)
-        exit()
+        sys.exit()
 
     # Optimize all images in a directory
     elif os.path.isdir(src_path):
@@ -101,22 +102,21 @@ def main():
         tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
                       max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
                       force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
-                 for img_path in search_images(src_path, recursive=recursive)
-                 if '~temp~' not in img_path)
+                 for img_path in search_images(src_path, recursive=recursive))
 
         with our_pool_executor(max_workers=workers) as executor:
             current_img = ''
             try:
-                for r in executor.map(do_optimization, tasks):
-                    current_img = r.img
+                for result in executor.map(do_optimization, tasks):
+                    current_img = result.img
                     found_files += 1
-                    total_src_size += r.orig_size
-                    if r.was_optimized:
+                    total_src_size += result.orig_size
+                    if result.was_optimized:
                         optimized_files += 1
-                        total_bytes_saved += r.orig_size - r.final_size
-                    show_file_status(r, line_width, icons)
-            except concurrent.futures.process.BrokenProcessPool as e:
-                show_img_exception(e, current_img)
+                        total_bytes_saved += result.orig_size - result.final_size
+                    show_file_status(result, line_width, icons)
+            except concurrent.futures.process.BrokenProcessPool as bppex:
+                show_img_exception(bppex, current_img)
             except KeyboardInterrupt:
                 print("\b \n\n  == Operation was interrupted by the user. ==\n")
 
@@ -129,17 +129,17 @@ def main():
                         max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
                         force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
 
-        r = do_optimization(img_task)
-        total_src_size = r.orig_size
-        if r.was_optimized:
+        result = do_optimization(img_task)
+        total_src_size = result.orig_size
+        if result.was_optimized:
             optimized_files = 1
-            total_bytes_saved = r.orig_size - r.final_size
-        show_file_status(r, line_width, icons)
+            total_bytes_saved = result.orig_size - result.final_size
+        show_file_status(result, line_width, icons)
     else:
         print(
             "\nNo image files were found. Please enter a valid path to the "
             "image file or the folder containing any images to be processed.")
-        exit()
+        sys.exit()
 
     if found_files:
         time_passed = timer() - appstart

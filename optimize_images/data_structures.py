@@ -1,17 +1,10 @@
 # encoding: utf-8
-
 import concurrent.futures
 
 from typing import NamedTuple, Tuple, NewType
 
-try:
-    from PIL import Image
-except ImportError:
-    msg = 'This application requires Pillow to be installed. Please, install it first.'
-    raise ImportError(msg)
-
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
-TPoolExType = NewType('PPoolExType', concurrent.futures.ThreadPoolExecutor)
+TPoolExType = NewType('TPoolExType', concurrent.futures.ThreadPoolExecutor)
 
 
 class Task(NamedTuple):

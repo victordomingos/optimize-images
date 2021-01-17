@@ -3,6 +3,7 @@ import concurrent.futures
 import platform
 import shutil
 from functools import lru_cache
+from multiprocessing import cpu_count
 from typing import Tuple, Union
 
 from optimize_images.constants import IOS_FONT, IPHONE_FONT_SIZE, IPAD_FONT_SIZE
@@ -60,12 +61,11 @@ def adjust_for_platform() -> Tuple[int, Union[TPoolExType, PPoolExType], int]:
         screen_width = ui.get_screen_size().width
         char_width = ui.measure_string('.', font=(IOS_FONT, font_size)).width
         line_width = int(screen_width / char_width - 1.5) - 1
-        pool_ex = concurrent.futures.ThreadPoolExecutor
+        t_pool_ex = concurrent.futures.ThreadPoolExecutor
         default_workers = IOS_WORKERS
+        return line_width, t_pool_ex, default_workers
     else:
         line_width = shutil.get_terminal_size((80, 24)).columns
-        pool_ex = concurrent.futures.ProcessPoolExecutor
-        from multiprocessing import cpu_count
+        p_pool_ex = concurrent.futures.ProcessPoolExecutor
         default_workers = cpu_count() + 1
-
-    return line_width, pool_ex, default_workers
+        return line_width, p_pool_ex, default_workers

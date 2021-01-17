@@ -10,7 +10,7 @@ from PIL import Image
 from PIL import ImageChops, ImageStat
 from math import log
 
-from optimize_images.constants import DEFAULT_QUALITY
+from .constants import DEFAULT_QUALITY
 
 
 def compare_images(img1: Image.Image, img2: Image.Image) -> Optional[float]:
@@ -60,12 +60,12 @@ def get_diff_at_quality(photo, quality: int) -> float:
 
 
 @lru_cache(maxsize=None)
-def _diff_iteration_count(lo: int, hi: int) -> int:
+def _diff_iteration_count(low: int, high: int) -> int:
     """Return the depth of the binary search tree for this range"""
-    if lo >= hi:
+    if low >= high:
         return 0
     else:
-        return int(log(hi - lo, 2)) + 1
+        return int(log(high - low, 2)) + 1
 
 
 def jpeg_dynamic_quality(original_photo: Image.Image,
@@ -77,16 +77,16 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
         original_photo - a prepared PIL JPEG image (only JPEG is supported)
     """
     diff_goal = 0.992
-    hi = DEFAULT_QUALITY
-    lo = hi - 5
+    high = DEFAULT_QUALITY
+    low = high - 5
 
     # working on a smaller size image doesn't give worse results but is faster
     # changing this value requires updating the calculated thresholds
     photo = original_photo.resize((400, 400))
 
     if not use_dynamic_quality:
-        default_diff = get_diff_at_quality(photo, hi)
-        return hi, default_diff
+        default_diff = get_diff_at_quality(photo, high)
+        return high, default_diff
 
     # 95 is the highest useful value for JPEG. Higher values cause different behavior
     # Used to establish the image's intrinsic ssim without encoder artifacts
@@ -95,8 +95,8 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
     selected_quality = selected_diff = None
 
     # loop bisection. ssim/diff function increases monotonically so this will converge
-    for i in range(_diff_iteration_count(lo, hi)):
-        curr_quality = (lo + hi) // 2
+    for _ in range(_diff_iteration_count(low, high)):
+        curr_quality = (low + high) // 2
         curr_diff = get_diff_at_quality(photo, curr_quality)
         diff_ratio = curr_diff / normalized_diff
 
@@ -104,12 +104,12 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
             # continue to check whether a lower quality level also exceeds the goal
             selected_quality = curr_quality
             selected_diff = curr_diff
-            hi = curr_quality
+            high = curr_quality
         else:
-            lo = curr_quality
+            low = curr_quality
 
     if selected_quality:
         return selected_quality, selected_diff
     else:
-        default_diff = get_diff_at_quality(photo, hi)
-        return hi, default_diff
+        default_diff = get_diff_at_quality(photo, high)
+        return high, default_diff

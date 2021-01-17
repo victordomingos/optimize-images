@@ -1,19 +1,22 @@
 # encoding: utf-8
-from setuptools import setup, find_packages
 import os
 import sys
-import platform
+
+from setuptools import setup, find_packages
 
 used = sys.version_info
 required = (3, 7)
 
-# if version of pip that doesn't understand the python_requires classifier, must be pip >= 9.0.0
+# if version of pip that doesn't understand the python_requires classifier,
+# must be pip >= 9.0.0
 # must be built using at least version 24.2.0 of setuptools
-# in order for the python_requires argument to be recognized and the appropriate metadata generated
+# in order for the python_requires argument to be recognized and the appropriate
+# metadata generated
 # python -m pip install --upgrade pip setuptools
 if used[:2] < required:
     sys.stderr.write("Unsupported Python version: %s.%s. "
-                     "Python 3.6 or later is required." % (sys.version_info.major, sys.version_info.minor))
+                     "Python 3.7 or later is required." % (sys.version_info.major,
+                                                           sys.version_info.minor))
     sys.exit(1)
 
 short_desc = "A command-line interface (CLI) utility written in pure Python " \

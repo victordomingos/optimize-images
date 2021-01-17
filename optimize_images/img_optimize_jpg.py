@@ -1,23 +1,17 @@
 # encoding: utf-8
 import os
-import shutil
+from io import BytesIO
 
 import piexif
+from PIL import Image, ImageFile
 
-try:
-    from PIL import Image, ImageFile
-except ImportError:
-    msg = 'This application requires Pillow to be installed. Please, install it first.'
-    raise ImportError(msg)
-
-from optimize_images.data_structures import Task, TaskResult
-from optimize_images.img_aux_processing import make_grayscale
-from optimize_images.img_aux_processing import downsize_img
-from optimize_images.img_dynamic_quality import jpeg_dynamic_quality
-from optimize_images.reporting import show_img_exception
+from .data_structures import Task, TaskResult
+from .img_aux_processing import downsize_img, save_compressed
+from .img_aux_processing import make_grayscale
+from .img_dynamic_quality import jpeg_dynamic_quality
 
 
-def optimize_jpg(t: Task) -> TaskResult:
+def optimize_jpg(task: Task) -> TaskResult:
     """ Try to reduce file size of a JPG image.
 
     Expects a Task object containing all the parameters for the image processing.
@@ -27,25 +21,19 @@ def optimize_jpg(t: Task) -> TaskResult:
     image format, image color mode, original file size, resulting file size,
     and resulting status of the optimization.
 
-    :param t: A Task object containing all the parameters for the image processing.
+    :param task: A Task object containing all the parameters for the image processing.
     :return: A TaskResult object containing information for single file report.
     """
-    img: Image.Image = Image.open(t.src_path)
+    img: Image.Image = Image.open(task.src_path)
     orig_format = img.format
     orig_mode = img.mode
 
-    folder, filename = os.path.split(t.src_path)
-
-    if folder == '':
-        folder = os.getcwd()
-
-    temp_file_path = os.path.join(folder + "/~temp~" + filename)
-    orig_size = os.path.getsize(t.src_path)
+    orig_size = os.path.getsize(task.src_path)
     orig_colors, final_colors = 0, 0
 
     result_format = "JPEG"
     try:
-        had_exif = True if piexif.load(t.src_path)['Exif'] else False
+        had_exif = True if piexif.load(task.src_path)['Exif'] else False
     except piexif.InvalidImageDataError:  # Not a supported format
         had_exif = False
     except ValueError:  # No exif info
@@ -54,25 +42,26 @@ def optimize_jpg(t: Task) -> TaskResult:
     except Exception:
         had_exif = False
 
-    if t.max_w or t.max_h:
-        img, was_downsized = downsize_img(img, t.max_w, t.max_h)
+    if task.max_w or task.max_h:
+        img, was_downsized = downsize_img(img, task.max_w, task.max_h)
     else:
         was_downsized = False
 
-    if t.grayscale:
+    if task.grayscale:
         img = make_grayscale(img)
 
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    if t.fast_mode:
-        quality = t.quality
+    if task.fast_mode:
+        quality = task.quality
     else:
-        quality, jpgdiff = jpeg_dynamic_quality(img)
+        quality, _ = jpeg_dynamic_quality(img)
 
+    tmp_buffer = BytesIO()  # In-memory buffer
     try:
         img.save(
-            temp_file_path,
+            tmp_buffer,
             quality=quality,
             optimize=True,
             progressive=use_progressive_jpg,
@@ -80,16 +69,15 @@ def optimize_jpg(t: Task) -> TaskResult:
     except IOError:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
         img.save(
-            temp_file_path,
+            tmp_buffer,
             quality=quality,
             optimize=True,
             progressive=use_progressive_jpg,
             format=result_format)
 
-    if t.keep_exif and had_exif:
+    if task.keep_exif and had_exif:
         try:
-            piexif.transplant(
-                os.path.expanduser(t.src_path), temp_file_path)
+            piexif.transplant(os.path.expanduser(task.src_path), tmp_buffer)
             has_exif = True
         except ValueError:
             has_exif = False
@@ -100,22 +88,14 @@ def optimize_jpg(t: Task) -> TaskResult:
     else:
         has_exif = False
 
-    # Only replace the original file if compression did save any space
-    final_size = os.path.getsize(temp_file_path)
-    if t.no_size_comparison \
-            or ((orig_size - final_size > 0) and (final_size / orig_size < .99)):
-        shutil.move(temp_file_path, os.path.expanduser(t.src_path))
-        was_optimized = True
-    else:
-        final_size = orig_size
-        was_optimized = False
-        try:
-            os.remove(temp_file_path)
-        except OSError as e:
-            details = 'Error while removing temporary file.'
-            show_img_exception(e, t.src_path, details)
+    img_mode = img.mode
+    img.close()
+    compare_sizes = not task.no_size_comparison
+    was_optimized, final_size = save_compressed(task.src_path,
+                                                tmp_buffer,
+                                                compare_sizes)
 
-    return TaskResult(t.src_path, orig_format, result_format, orig_mode,
-                      img.mode, orig_colors, final_colors, orig_size,
+    return TaskResult(task.src_path, orig_format, result_format, orig_mode,
+                      img_mode, orig_colors, final_colors, orig_size,
                       final_size, was_optimized, was_downsized, had_exif,
                       has_exif)

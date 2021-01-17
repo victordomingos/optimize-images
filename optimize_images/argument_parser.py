@@ -1,8 +1,12 @@
 # encoding: utf-8
 import os
+import platform
 import re
 import sys
 from argparse import ArgumentParser
+
+import PIL  # it exists, was checked on main
+import piexif
 
 from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
@@ -12,14 +16,7 @@ def get_version_info() -> str:
     """ Get a string that displays current application version as well as
         some useful environment info.
     """
-    import PIL  # it exists, was checked on main
-    import platform
-
-    try:
-        import piexif
-        piexif_version = piexif.VERSION
-    except ImportError:
-        piexif_version = "missing (package needed for EXIF support)"
+    piexif_version = piexif.VERSION
 
     try:
         import watchdog.version

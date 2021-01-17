@@ -1,5 +1,6 @@
 import os
 import time
+from typing import List
 
 try:
     from watchdog.events import FileSystemEventHandler
@@ -8,7 +9,7 @@ except ImportError:
     print("Watchdog is not available.")
     exit(1)
 
-from optimize_images.data_structures import Task
+from optimize_images.data_structures import Task, TaskResult
 from optimize_images.do_optimization import do_optimization
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.platforms import adjust_for_platform, IconGenerator
@@ -23,10 +24,10 @@ def is_image(filepath):
 
 
 class OptimizeImageEventHandler(FileSystemEventHandler):
-    def __init__(self, t: Task):
+    def __init__(self, task: Task):
         super().__init__()
-        self.t = t
-        self.paths_to_ignore = []
+        self.task = task
+        self.paths_to_ignore: List[str] = []
         self.new_files = 0
         self.optimized_files = 0
         self.total_bytes_saved = 0
@@ -46,20 +47,20 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
         self.wait_for_write_finish(event.src_path)
         self.new_files += 1
 
-        t = self.t
-        img_task = Task(event.src_path, t.quality, t.remove_transparency,
-                        t.reduce_colors, t.max_colors, t.max_w, t.max_h,
-                        t.keep_exif, t.convert_all, t.conv_big, t.force_del,
-                        t.bg_color, t.grayscale, t.no_size_comparison,
-                        t.fast_mode)
+        task = self.task
+        img_task = Task(event.src_path, task.quality, task.remove_transparency,
+                        task.reduce_colors, task.max_colors, task.max_w,
+                        task.max_h, task.keep_exif, task.convert_all,
+                        task.conv_big, task.force_del, task.bg_color,
+                        task.grayscale, task.no_size_comparison, task.fast_mode)
 
-        r = do_optimization(img_task)
-        self.total_src_size += r.orig_size
-        if r.was_optimized:
+        result: TaskResult = do_optimization(img_task)
+        self.total_src_size += result.orig_size
+        if result.was_optimized:
             self.optimized_files += 1
-            self.total_bytes_saved += r.orig_size - r.final_size
+            self.total_bytes_saved += result.orig_size - result.final_size
 
-        show_file_status(r, self.line_width, self.icons)
+        show_file_status(result, self.line_width, self.icons)
 
     @staticmethod
     def wait_for_write_finish(filename: str) -> None:
@@ -71,11 +72,11 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
             time.sleep(0.01)
 
 
-def watch_for_new_files(t: Task):
-    folder = os.path.abspath(t.src_path)
+def watch_for_new_files(task: Task):
+    folder = os.path.abspath(task.src_path)
     print(f"\nPreparing to watch directory (press CTRL+C to quit):\n {folder}\n")
 
-    event_handler = OptimizeImageEventHandler(t)
+    event_handler = OptimizeImageEventHandler(task)
     observer = Observer()
     observer.schedule(event_handler, folder, recursive=True)
     observer.start()
