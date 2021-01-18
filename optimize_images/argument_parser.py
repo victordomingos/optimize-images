@@ -23,13 +23,18 @@ def get_version_info() -> str:
         wd_version = watchdog.version.VERSION_STRING
     except ImportError:
         wd_version = "missing (package needed for watching folders for changes)"
+        
+    try:
+        pillow_version = PIL.__version__
+    except AttributeError:
+        pillow_version = PIL.PILLOW_VERSION
 
     python_version = f'Python {platform.python_version()} ({sys.executable})'
 
     return f'\nOptimize Images {__version__}' \
            f'\n\nRunning environment:' \
            f'\n  - Location: {sys.argv[0]}' \
-           f'\n  - Pillow {PIL.__version__}' \
+           f'\n  - Pillow {pillow_version}' \
            f'\n  - Piexif {piexif_version}' \
            f'\n  - {python_version}' \
            f'\n\nOptional packages:' \
