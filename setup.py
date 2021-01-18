@@ -5,7 +5,7 @@ import sys
 from setuptools import setup, find_packages
 
 used = sys.version_info
-required = (3, 7)
+required = (3, 6)
 
 # if version of pip that doesn't understand the python_requires classifier,
 # must be pip >= 9.0.0
@@ -15,7 +15,7 @@ required = (3, 7)
 # python -m pip install --upgrade pip setuptools
 if used[:2] < required:
     sys.stderr.write("Unsupported Python version: %s.%s. "
-                     "Python 3.7 or later is required." % (sys.version_info.major,
+                     "Python 3.6 or later is required." % (sys.version_info.major,
                                                            sys.version_info.minor))
     sys.exit(1)
 
@@ -58,6 +58,7 @@ setup(name='optimize-images',
           'Operating System :: Unix',
           'Operating System :: POSIX :: Linux ',
           'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
