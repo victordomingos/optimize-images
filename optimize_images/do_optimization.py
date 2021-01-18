@@ -3,7 +3,7 @@
 import os
 
 import piexif
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 
 from .data_structures import Task, TaskResult
 from .img_optimize_jpg import optimize_jpg
@@ -33,7 +33,7 @@ def do_optimization(task: Task) -> TaskResult:
         if img_format in ('JPEG', 'MPO'):
             return optimize_jpg(task)
 
-    except (OSError, UnidentifiedImageError):
+    except OSError:
         return TaskResult(img=task.src_path,
                           orig_format='',
                           result_format='',
