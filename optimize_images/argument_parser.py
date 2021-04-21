@@ -248,7 +248,7 @@ def get_args():
               "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
         parser.exit(status=0, message=msg)
 
-    return watch_dir, src_path, recursive, quality, args.remove_transparency, \
+    return src_path, watch_dir, recursive, quality, args.remove_transparency, \
            args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
            args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
            bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
