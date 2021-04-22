@@ -18,7 +18,6 @@ and the features depending on them should be treated as optional.
 If you were just looking for the graphical user interface (GUI) version of this application, it's a separate project: [Optimize Images X](https://github.com/victordomingos/optimize-images-x). 
 
 
-![image](https://user-images.githubusercontent.com/18650184/115791454-516bce00-a3c0-11eb-87b6-4bde5cfec3e2.png)
 ## Full Documentation:
  * [English](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_EN.md)
  * [Portugu&ecirc;s](https://github.com/victordomingos/optimize-images/blob/master/docs/docs_PT.md)
