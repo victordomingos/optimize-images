@@ -61,14 +61,15 @@ from optimize_images.watch import watch_for_new_files
 
 
 def main():
+    args = get_args()
+    optimizer(*args)
+
+def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
+     reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all, 
+     conv_big, force_del, bg_color, grayscale,
+     ignore_size_comparison, fast_mode, jobs):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-
-    (watch_dir, src_path, recursive, quality, remove_transparency,
-     reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-     force_del, bg_color, grayscale, ignore_size_comparison, fast_mode, jobs) \
-        = get_args()
-
     if jobs != 0:
         workers = jobs
 
