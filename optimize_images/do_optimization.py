@@ -5,15 +5,15 @@ import os
 import piexif
 from PIL import Image
 
-from .data_structures import Task, TaskResult
-from .img_optimize_jpg import optimize_jpg
-from .img_optimize_png import optimize_png
+from optimize_images.data_structures import Task, TaskResult
+from optimize_images.img_optimize_jpg import optimize_jpg
+from optimize_images.img_optimize_png import optimize_png
 
 
 def do_optimization(task: Task) -> TaskResult:
     """ Try to reduce file size of an image.
 
-    Expects a Task object containing all the parameters for the image processing.
+    Expects a Task object containing all the parameters for the image xprocessing.
 
     The actual processing is done by the corresponding function,
     according to the detected image format.
@@ -23,8 +23,8 @@ def do_optimization(task: Task) -> TaskResult:
     """
     # TODO: Catch exceptions that may occur here.
     try:
+        img: Image.Image
         with Image.open(task.src_path) as img:
-            img: Image.Image
             img_format: str = img.format.upper()
             mode: str = img.mode
 

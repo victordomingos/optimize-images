@@ -32,13 +32,15 @@ import concurrent.futures.process
 import os
 import sys
 
+from optimize_images.exceptions import OIImagesNotFoundError, OIInvalidPathError
+from optimize_images.exceptions import OIKeyboardInterrupt
+
 try:
     from PIL import Image
 except ImportError:
     print('\n    This application requires Pillow to be installed. '
           'Please, install it first.\n')
     sys.exit()
-
 
 try:
     import piexif
@@ -60,14 +62,10 @@ from optimize_images.reporting import (show_file_status,
 from optimize_images.watch import watch_for_new_files
 
 
-def main():
-    args = get_args()
-    optimizer(*args)
-
-def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
-     reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all, 
-     conv_big, force_del, bg_color, grayscale,
-     ignore_size_comparison, fast_mode, jobs):
+def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
+                   reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
+                   conv_big, force_del, bg_color, grayscale,
+                   ignore_size_comparison, fast_mode, jobs):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
     if jobs != 0:
@@ -80,9 +78,8 @@ def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
 
     if watch_dir:
         if not os.path.isdir(os.path.abspath(src_path)):
-            print("\nPlease secify a valid path to an existing folder.")
-            sys.exit(1)
-
+            msg = "\nPlease specify a valid path to an existing folder."
+            raise OIInvalidPathError(msg)
 
         watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
                           max_colors, max_w, max_h, keep_exif, convert_all,
@@ -90,7 +87,7 @@ def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
                           ignore_size_comparison, fast_mode)
 
         watch_for_new_files(watch_task)
-        sys.exit()
+        return
 
     # Optimize all images in a directory
     elif os.path.isdir(src_path):
@@ -119,7 +116,8 @@ def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
             except concurrent.futures.process.BrokenProcessPool as bppex:
                 show_img_exception(bppex, current_img)
             except KeyboardInterrupt:
-                print("\b \n\n  == Operation was interrupted by the user. ==\n")
+                msg = "\b \n\n  == Operation was interrupted by the user. ==\n"
+                raise OIKeyboardInterrupt(msg)
 
     # Optimize a single image
     elif os.path.isfile(src_path) and '~temp~' not in src_path:
@@ -137,17 +135,25 @@ def optimizer(src_path, watch_dir, recursive, quality, remove_transparency,
             total_bytes_saved = result.orig_size - result.final_size
         show_file_status(result, line_width, icons)
     else:
-        print(
-            "\nNo image files were found. Please enter a valid path to the "
-            "image file or the folder containing any images to be processed.")
-        sys.exit()
+        msg = "\nNo image files were found. Please enter a valid path to the " \
+              "image file or the folder containing any images to be processed."
+        raise OIImagesNotFoundError(msg)
 
     if found_files:
         time_passed = timer() - appstart
         show_final_report(found_files, optimized_files, total_src_size,
                           total_bytes_saved, time_passed)
     else:
-        print("\nNo supported image files were found in the specified directory.\n")
+        msg = "\nNo supported image files were found in the specified directory."
+        raise OIImagesNotFoundError(msg)
+
+
+def main():
+    args = get_args()
+    try:
+        optimize_batch(*args)
+    except (OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt) as ex:
+        print(ex.message)
 
 
 if __name__ == "__main__":
