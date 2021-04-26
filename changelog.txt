@@ -16,6 +16,10 @@ v.1.5.0 - 2021-01-??
    if the space saved is at least 1% of the original file size. Contributed by
    varnav@GitHub.
  * Added a check for the presence of the required package Piexif.
+ * Added new methods intended to allow optimize-images to be imported and
+   used as a package. The initial refactoring was kindly contributed by
+   Tharindu N. (truethari@github)
+ * Added custom exceptions to better support the public API.
 
 ---
 v.1.4.0 - 2020-11-01
