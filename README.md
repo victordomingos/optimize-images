@@ -33,7 +33,7 @@ on iOS. At this moment, we require:
 
   - Pillow==8.2.0
   - piexif==1.1.3
-  - watchdog==2.0.2
+  - watchdog==2.1.2
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
