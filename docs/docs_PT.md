@@ -64,7 +64,7 @@ iOS. Neste momento, requer:
 
   - Pillow==8.2.0
   - piexif==1.1.3
-  - watchdog==2.0.2
+  - watchdog==2.1.2
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:
