@@ -31,9 +31,9 @@ Python 3.6+ installation. We try to keep the external dependencies at a minimum,
 in order to keep compatibility with different platforms, including Pythonista
 on iOS. At this moment, we require:
 
-  - Pillow>=8.0.1
-  - piexif>=1.1.3
-  - watchdog>=0.10.3
+  - Pillow==8.2.0
+  - piexif==1.1.3
+  - watchdog==2.0.2
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
