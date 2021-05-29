@@ -48,6 +48,7 @@ como opcionais, tais como as funcionalidades que deles dependam.
    
 * **[Projetos relacionados](#projetos-relacionados)**
    * [Optimize Images Docker](#optimize-images-docker)   
+   * [Optimize Images X](#optimize-images-x)   
 
 - **[Encontrou um bug ou tem uma sugestão?](#encontrou-um-bug-ou-tem-uma-sugestão)**
 
@@ -61,9 +62,9 @@ superior. Procuramos manter no mínimo as dependências externas, de modo a
 manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
 iOS. Neste momento, requer:
 
-  - Pillow>=8.0.1
-  - piexif>=1.1.3
-  - watchdog>=0.10.3
+  - Pillow==8.2.0
+  - piexif==1.1.3
+  - watchdog==2.0.2
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:
@@ -555,6 +556,8 @@ optimize-images --supported
 #### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
 Uma implementação de Optimize Images para docker, da autoria de terceiros. Inclui algumas otimizações interessantes, como por exemplo o uso de uma versão recente da biblioteca [mozjpeg](https://github.com/mozilla/mozjpeg) ou uma versão do Pillow compilada com a [libimagequant](https://github.com/ImageOptim/libimagequant), o que deve resultar numa compressão ainda mais rápida e mais eficiente.
 
+#### [Optimize Images X](https://github.com/victordomingos/optimize-images-x)
+Aplicação com interface de utilizador em modo gráfico que disponibiliza todo o potencial de Optimize Images. Tal como a versão original para linha de comandos, pode processar um ficheiro ou uma pasta de ficheiros de imagens, com opção de incluir ou não de forma recursiva as suas subpastas. As tarefas de processamento são automaticamente distribuidas pelos núcleos do processador. Inclui ainda a funcionalidade "watch folder", que permite monitorizar uma pasta quanto à criação de novos ficheiros, processando-os de imediato.
   
 ## Encontrou um *bug* ou tem uma sugestão?
 
