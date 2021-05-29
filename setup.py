@@ -72,9 +72,9 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=[
-          'piexif>=1.1.3',
-          'Pillow>=8.0.01',
-          'watchdog>=0.10.3',
+          'piexif==1.1.3',
+          'Pillow==8.2.0',
+          'watchdog==2.1.2',
       ],
 
       entry_points={
