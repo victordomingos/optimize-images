@@ -47,6 +47,8 @@ and the features depending on them should be treated as optional.
    
 * **[Related projects](#related-projects)**
    * [Optimize Images Docker](#optimize-images-docker)   
+   * [Optimize Images X](#optimize-images-x)   
+
 
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
@@ -532,6 +534,9 @@ optimize-images --supported
 
 #### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
 A third-party dockerized implementation of Optimize Images. It includes a few  interesting optimizations, like the usage of a recent version of [mozjpeg](https://github.com/mozilla/mozjpeg) library, or a Pillow binary compiled with [libimagequant](https://github.com/ImageOptim/libimagequant), which should result in faster and more efficient compression.
+
+#### [Optimize Images X](https://github.com/victordomingos/optimize-images-x)
+A desktop app written in Python, that exposes and unlocks the full power of Optimize Images in a nice graphical user interface, to help you reduce the file size of images. Just like its CLI companion app, it can process a single file, a folder’s root or all images in a folder, recursively. Multiple image processing tasks are automatically distributed to all available CPU cores. Additionally, it includes a “watch folder” feature that continuously monitors a specified folder for new image files and processes them right after they’re created or placed in that folder.
 
   
 ## Did you find a bug or do you have a suggestion?
