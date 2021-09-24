@@ -97,7 +97,7 @@ def show_final_report(found_files: int,
     report += f"\n   Optimized {optimized_files} files." \
         f"\n   Average savings: {human(average)} per optimized file" \
         f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
-    print(report, end='\r')
+    print(report)
 
 
 def show_img_exception(exception: Exception, image_path: str, details: str = '') -> None:
