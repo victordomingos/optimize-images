@@ -6,6 +6,10 @@ from typing import NamedTuple, Tuple, NewType
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
 TPoolExType = NewType('TPoolExType', concurrent.futures.ThreadPoolExecutor)
 
+class OutputConfiguration(NamedTuple):
+    show_only_summary: bool
+    show_overall_progress: bool
+    quiet_mode: bool
 
 class Task(NamedTuple):
     src_path: str
@@ -23,7 +27,7 @@ class Task(NamedTuple):
     grayscale: bool
     no_size_comparison: bool
     fast_mode: bool
-    only_summary: bool
+    output_config: OutputConfiguration
 
 
 class TaskResult(NamedTuple):
@@ -40,4 +44,4 @@ class TaskResult(NamedTuple):
     was_downsized: bool
     had_exif: bool
     has_exif: bool
-    only_summary: bool
+    output_config: OutputConfiguration

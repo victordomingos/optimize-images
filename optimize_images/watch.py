@@ -9,7 +9,7 @@ except ImportError:
     print("Watchdog is not available.")
     exit(1)
 
-from optimize_images.data_structures import Task, TaskResult
+from optimize_images.data_structures import OutputConfiguration, Task, TaskResult
 from optimize_images.do_optimization import do_optimization
 from optimize_images.reporting import show_file_status, show_final_report
 from optimize_images.platforms import adjust_for_platform, IconGenerator
@@ -53,7 +53,7 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
                         task.max_h, task.keep_exif, task.convert_all,
                         task.conv_big, task.force_del, task.bg_color,
                         task.grayscale, task.no_size_comparison, task.fast_mode,
-                        task.only_summary)
+                        task.output_config)
 
         result: TaskResult = do_optimization(img_task)
         self.total_src_size += result.orig_size
@@ -96,6 +96,7 @@ def watch_for_new_files(task: Task):
                           event_handler.optimized_files,
                           event_handler.total_src_size,
                           event_handler.total_bytes_saved,
-                          -1)
+                          -1,
+                          OutputConfiguration(False, False, False))
     else:
         print("No files were processed.\n")

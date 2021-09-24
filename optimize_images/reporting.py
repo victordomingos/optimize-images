@@ -1,7 +1,7 @@
 # encoding: utf-8
 from functools import lru_cache
 
-from optimize_images.data_structures import TaskResult
+from optimize_images.data_structures import OutputConfiguration, TaskResult
 from optimize_images.platforms import IconGenerator
 
 
@@ -20,9 +20,11 @@ def human(number: int, suffix='B') -> str:
 
 
 def show_file_status(result: TaskResult, line_width: int, icons: IconGenerator):
-    if result.only_summary:
+    output_config = result.output_config
+
+    if output_config.quiet_mode or output_config.show_only_summary or output_config.show_overall_progress:
         return
-    
+
     if result.was_optimized:
         short_img = result.img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (result.final_size / result.orig_size * 100)
@@ -47,8 +49,8 @@ def show_file_status(result: TaskResult, line_width: int, icons: IconGenerator):
         downstr = icons.downsized if result.was_downsized else ''
         line1 = f'\n{icons.optimized}  [OPTIMIZED] {short_img}\n'
         line2 = f'    {exif_str1} {orig_format}/{result.orig_mode}{o_colors}: {h_orig}' \
-                f'  ->  {downstr}{exif_str2}{result_format}/{result.result_mode}{colors}: ' \
-                f'{h_final} {icons.size_is_smaller} {percent:.1f}%'
+            f'  ->  {downstr}{exif_str2}{result_format}/{result.result_mode}{colors}: ' \
+            f'{h_final} {icons.size_is_smaller} {percent:.1f}%'
         img_status = line1 + line2
     else:
         short_img = result.img[-(line_width - 15):].ljust(line_width - 15)
@@ -61,7 +63,8 @@ def show_final_report(found_files: int,
                       optimized_files: int,
                       src_size: int,
                       bytes_saved: int,
-                      time_passed: float):
+                      time_passed: float,
+                      output_config: OutputConfiguration):
     """
     Show a final report with the time spent and filesize savings
 
@@ -71,6 +74,10 @@ def show_final_report(found_files: int,
     :param bytes_saved: savings in file sizes (sum)
     :param time_passed: specify -1 in order to hide this (watch directory)
     """
+    
+    if output_config.quiet_mode:
+        return
+
     fps = found_files / time_passed
 
     if bytes_saved:
@@ -85,11 +92,11 @@ def show_final_report(found_files: int,
         report += f"\n   Processed {found_files} files ({human(src_size)})."
     else:
         report += f"\n   Processed {found_files} files ({human(src_size)}) in " \
-                  f"{time_passed:.1f}s ({fps:.1f} f/s)."
+            f"{time_passed:.1f}s ({fps:.1f} f/s)."
 
     report += f"\n   Optimized {optimized_files} files." \
-              f"\n   Average savings: {human(average)} per optimized file" \
-              f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
+        f"\n   Average savings: {human(average)} per optimized file" \
+        f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
     print(report, end='\r')
 
 

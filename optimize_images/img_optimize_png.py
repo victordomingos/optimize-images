@@ -87,7 +87,7 @@ def optimize_png(task: Task) -> TaskResult:
                           orig_mode, img_mode, orig_colors, final_colors,
                           orig_size, final_size, was_optimized,
                           was_downsized, had_exif, has_exif,
-                          task.only_summary)
+                          task.output_config)
 
     # if PNG and user didn't ask for PNG to JPEG conversion, do this instead.
     else:
@@ -128,4 +128,4 @@ def optimize_png(task: Task) -> TaskResult:
         return TaskResult(task.src_path, orig_format, result_format, orig_mode,
                           img_mode, orig_colors, final_colors, orig_size,
                           final_size, was_optimized, was_downsized, had_exif,
-                          has_exif, task.only_summary)
+                          has_exif, task.output_config)
