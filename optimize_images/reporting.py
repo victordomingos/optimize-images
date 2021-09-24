@@ -20,6 +20,9 @@ def human(number: int, suffix='B') -> str:
 
 
 def show_file_status(result: TaskResult, line_width: int, icons: IconGenerator):
+    if result.only_summary:
+        return
+    
     if result.was_optimized:
         short_img = result.img[-(line_width - 17):].ljust(line_width - 17)
         percent = 100 - (result.final_size / result.orig_size * 100)
@@ -87,7 +90,7 @@ def show_final_report(found_files: int,
     report += f"\n   Optimized {optimized_files} files." \
               f"\n   Average savings: {human(average)} per optimized file" \
               f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
-    print(report)
+    print(report, end='\r')
 
 
 def show_img_exception(exception: Exception, image_path: str, details: str = '') -> None:

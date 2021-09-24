@@ -52,7 +52,8 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
                         task.reduce_colors, task.max_colors, task.max_w,
                         task.max_h, task.keep_exif, task.convert_all,
                         task.conv_big, task.force_del, task.bg_color,
-                        task.grayscale, task.no_size_comparison, task.fast_mode)
+                        task.grayscale, task.no_size_comparison, task.fast_mode,
+                        task.only_summary)
 
         result: TaskResult = do_optimization(img_task)
         self.total_src_size += result.orig_size

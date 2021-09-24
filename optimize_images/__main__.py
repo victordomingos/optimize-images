@@ -50,6 +50,7 @@ except ImportError:
     sys.exit()
 
 from timeit import default_timer as timer
+from math import floor
 
 from optimize_images.file_utils import search_images
 from optimize_images.data_structures import Task
@@ -58,14 +59,18 @@ from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.argument_parser import get_args
 from optimize_images.reporting import (show_file_status,
                                        show_final_report,
-                                       show_img_exception)
+                                       show_img_exception,
+                                       human)
 from optimize_images.watch import watch_for_new_files
 
+def count_gen(gen):
+    l = list(gen)
+    return len(l), l
 
 def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
                    conv_big, force_del, bg_color, grayscale,
-                   ignore_size_comparison, fast_mode, jobs):
+                   ignore_size_comparison, fast_mode, jobs, only_summary):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
     if jobs != 0:
@@ -84,7 +89,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         watch_task = Task(src_path, quality, remove_transparency, reduce_colors,
                           max_colors, max_w, max_h, keep_exif, convert_all,
                           conv_big, force_del, bg_color, grayscale,
-                          ignore_size_comparison, fast_mode)
+                          ignore_size_comparison, fast_mode, only_summary)
 
         watch_for_new_files(watch_task)
         return
@@ -99,9 +104,11 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
 
         tasks = (Task(img_path, quality, remove_transparency, reduce_colors,
                       max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                      force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+                      force_del, bg_color, grayscale, ignore_size_comparison, fast_mode,
+                      only_summary)
                  for img_path in search_images(src_path, recursive=recursive))
 
+        num_images, tasks = count_gen(tasks)
         with our_pool_executor(max_workers=workers) as executor:
             current_img = ''
             try:
@@ -113,6 +120,12 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                         optimized_files += 1
                         total_bytes_saved += result.orig_size - result.final_size
                     show_file_status(result, line_width, icons)
+
+                    cur_time_passed = round(timer() - appstart)
+                    perc_done = found_files / num_images * 100
+                    message = f"[{cur_time_passed:.1f}s {perc_done:.1f}%] {icons.optimized} {optimized_files} images, saved {human(total_bytes_saved)}"
+                    print(message, end='\r')
+                    
             except concurrent.futures.process.BrokenProcessPool as bppex:
                 show_img_exception(bppex, current_img)
             except KeyboardInterrupt:
@@ -126,7 +139,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,
                         max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode)
+                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode, only_summary)
 
         result = do_optimization(img_task)
         total_src_size = result.orig_size

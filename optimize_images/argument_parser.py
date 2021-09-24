@@ -124,6 +124,9 @@ def get_args():
               'finish faster.'
     general_group.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
 
+    only_summary_help = 'Show only the summary'
+    general_group.add_argument('-os', '--only-summary', action='store_false', help=only_summary_help)
+
     jpg_msg = 'The following options apply only to JPEG image files.'
     jpg_group = parser.add_argument_group(
         'JPEG specific options'.upper(), description=jpg_msg)
@@ -252,4 +255,4 @@ def get_args():
            args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
            args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
            bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
-           args.jobs
+           args.jobs, args.only_summary

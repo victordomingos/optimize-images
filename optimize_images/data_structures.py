@@ -23,6 +23,7 @@ class Task(NamedTuple):
     grayscale: bool
     no_size_comparison: bool
     fast_mode: bool
+    only_summary: bool
 
 
 class TaskResult(NamedTuple):
@@ -39,3 +40,4 @@ class TaskResult(NamedTuple):
     was_downsized: bool
     had_exif: bool
     has_exif: bool
+    only_summary: bool
