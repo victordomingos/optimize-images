@@ -46,7 +46,8 @@ def do_optimization(task: Task) -> TaskResult:
                           was_optimized=False,
                           was_downsized=False,
                           had_exif=False,
-                          has_exif=False)
+                          has_exif=False,
+                          output_config=task.output_config)
 
     # TODO: improve method of image format detection (what should happen if the
     #       file extension does not match the image content's format? Maybe we
@@ -72,4 +73,5 @@ def do_optimization(task: Task) -> TaskResult:
                       was_optimized=False,
                       was_downsized=False,
                       had_exif=had_exif,
-                      has_exif=had_exif)
+                      has_exif=had_exif,
+                      output_config=task.output_config)

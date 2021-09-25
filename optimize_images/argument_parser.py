@@ -93,6 +93,15 @@ def get_args():
     parser.add_argument('-jobs', dest="jobs",
                         type=int, default=0, help=jobs_help)
 
+    only_summary_help = 'Show only the summary'
+    parser.add_argument('--only-summary', action='store_true', help=only_summary_help)
+
+    only_progress_help = 'Show only the current progress'
+    parser.add_argument('--only-progress', action='store_true', help=only_progress_help)
+
+    quiet_help = 'Quiet mode, output nothing'
+    parser.add_argument('--quiet', action='store_true', help=quiet_help)
+
     general_msg = 'These options will be applied individually to each ' \
                   'image being processed, independently of its format.'
     general_group = parser.add_argument_group(
@@ -252,4 +261,4 @@ def get_args():
            args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
            args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
            bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
-           args.jobs
+           args.jobs, args.only_summary, args.only_progress, args.quiet

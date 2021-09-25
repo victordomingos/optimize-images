@@ -34,6 +34,7 @@ and the features depending on them should be treated as optional.
        - [Fast mode](#fast-mode)
        - [Watch directory for new files](#watch-directory-for-new-files)
        - [Maximum number of simultaneous jobs](#maximum-number-of-simultaneous-jobs)
+       - [Output configuration](#output-configuration)
    * [Format specific options](#format-specific-options)
        - [JPEG](#jpeg)
           - [Quality](#quality)
@@ -344,6 +345,36 @@ the system.
 optimize-images -jobs 16 ./
 ```
 
+#### Output configuration
+
+In order to specify what to output, you can use these optional flags:
+
+##### Quiet Mode
+
+With the `--quiet` flag, you'll not see any output except form error messages and exceptions during the optimization.
+
+```
+optimize-images --quiet ./
+```
+
+##### Only Summary
+
+With this flag, you will not see any output during the optimization and only see the summary when finished.
+
+```
+optimize-images --only-summary ./
+```
+
+##### Show only the progress
+
+This will only show the overall progress and not the optimization result of every file.
+
+```
+$ optimize-images --only-progress ./
+... 
+[14.0s 57.1%] ✅ 18 🔴 68, saved 44.1 MB
+...
+```
 
 ### Format specific options:
 

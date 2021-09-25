@@ -34,6 +34,7 @@ como opcionais, tais como as funcionalidades que deles dependam.
        - [Modo rápido](#modo-rápido)
        - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros)
        - [Número máximo de tarefas em simultâneo](#número-máximo-de-tarefas-em-simultâneo)
+       - [Configuração de saída](#configuração-de-saída)
    * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
        - [JPEG](#jpeg)
           - [Qualidade](#qualidade)
@@ -371,6 +372,37 @@ presentes no sistema.
 
 ```
 optimize-images -jobs 16 ./
+```
+
+#### Configuração de saída
+
+A fim de especificar o que deve produzir, pode utilizar estas bandeiras opcionais:
+
+##### Modo Silencioso
+
+Com a bandeira `--quiet`, não verá qualquer saída excepto mensagens de erro de forma e excepções durante a optimização.
+
+```
+optimize-images --quiet ./
+```
+
+##### Mostrar apenas o resumo
+
+Com esta bandeira, não verá nenhuma saída durante a optmização e só verá o resumo quando terminar.
+
+```
+optimize-images --only-summary ./
+```
+
+##### Mostrar apenas o progresso
+
+Isto apenas mostrará o progresso geral e não o resultado da optimização de cada ficheiro.
+
+```
+$ optimize-images --only-progress ./
+... 
+[14.0s 57.1%] ✅ 18 🔴 68, saved 44.1 MB
+...
 ```
 
 
