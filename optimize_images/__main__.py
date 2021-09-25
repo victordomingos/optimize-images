@@ -69,10 +69,9 @@ def count_gen(gen):
 def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
                    conv_big, force_del, bg_color, grayscale, ignore_size_comparison, 
-                   fast_mode, jobs, only_summary, only_progress, quiet_mode):
+                   fast_mode, jobs, output_config):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
-    output_config = OutputConfiguration(only_summary, only_progress, quiet_mode)
 
     if jobs != 0:
         workers = jobs

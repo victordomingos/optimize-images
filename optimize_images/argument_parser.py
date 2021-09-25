@@ -10,6 +10,7 @@ import piexif
 
 from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
+from optimize_images.data_structures import OutputConfiguration
 
 
 def get_version_info() -> str:
@@ -257,8 +258,9 @@ def get_args():
               "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
         parser.exit(status=0, message=msg)
 
+    output_config = OutputConfiguration(args.only_summary, args.only_progress, args.quiet)
     return src_path, watch_dir, recursive, quality, args.remove_transparency, \
            args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
            args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
            bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
-           args.jobs, args.only_summary, args.only_progress, args.quiet
+           args.jobs, output_config
