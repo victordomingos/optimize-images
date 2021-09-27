@@ -376,11 +376,11 @@ optimize-images -jobs 16 ./
 
 #### Configuração de saída
 
-A fim de especificar o que deve produzir, pode utilizar estas bandeiras opcionais:
+Para especificar o texto a apresentar, podem ser utilizadas estas opções opcionais:
 
 ##### Modo Silencioso
 
-Com a bandeira `--quiet`, não verá qualquer saída excepto mensagens de erro de forma e excepções durante a optimização.
+Com a opção `--quiet`, não verá qualquer saída de texto, excepto as mensagens de erro e excepções que possam ocorrer durante o processo de otimização.
 
 ```
 optimize-images --quiet ./
@@ -388,7 +388,7 @@ optimize-images --quiet ./
 
 ##### Mostrar apenas o resumo
 
-Com esta bandeira, não verá nenhuma saída durante a optmização e só verá o resumo quando terminar.
+Ao usar esta opção, não haverá nenhuma saída durante de texto durante a otimização. Apenas será apresentado o resumo quando terminar.
 
 ```
 optimize-images --only-summary ./
