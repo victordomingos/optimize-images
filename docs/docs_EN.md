@@ -347,11 +347,11 @@ optimize-images -jobs 16 ./
 
 #### Output configuration
 
-In order to specify what to output, you can use these optional flags:
+In order to specify what text to output, you can use these optional flags:
 
 ##### Quiet Mode
 
-With the `--quiet` flag, you'll not see any output except form error messages and exceptions during the optimization.
+With the `--quiet` flag, you'll not see any output except from error messages and exceptions during the optimization.
 
 ```
 optimize-images --quiet ./
@@ -367,7 +367,7 @@ optimize-images --only-summary ./
 
 ##### Show only the progress
 
-This will only show the overall progress and not the optimization result of every file.
+This will only show the overall progress and not the optimization result of each file.
 
 ```
 $ optimize-images --only-progress ./
