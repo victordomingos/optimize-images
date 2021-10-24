@@ -84,7 +84,7 @@ def optimize_jpg(task: Task) -> TaskResult:
         # TODO: Check if we can provide a more specific treatment
         #       of piexif exceptions.
         except Exception:
-            had_exif = False
+            has_exif = False
     else:
         has_exif = False
 
