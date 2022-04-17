@@ -1,5 +1,6 @@
 # encoding: utf-8
 import os
+import platform
 import sys
 
 from setuptools import setup, find_packages
@@ -27,6 +28,17 @@ def read_readme(file_name):
     with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
         return f.read()
 
+def get_requirements():
+    install_requirements=['piexif>=1.1.3']
+    device = platform.machine() 
+
+    if device.startswith('iPad') or device.startswith('iPhone'):
+        return install_requirements
+
+    install_requirements.append('Pillow>=8.2.0')
+    install_requirements.append('watchdog>=2.1.2')
+    return install_requirements
+        
 
 setup(name='optimize-images',
       version=__import__('optimize_images').__version__,
@@ -62,6 +74,8 @@ setup(name='optimize-images',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
           'Topic :: Utilities',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Graphics Conversion',
@@ -71,11 +85,7 @@ setup(name='optimize-images',
                'image-compression image-optimization image-optimisation seo '
                'seo-optimization website-performance cli recursive non-recursive',
 
-      install_requires=[
-          'piexif==1.1.3',
-          'Pillow==8.2.0',
-          'watchdog==2.1.2',
-      ],
+      install_requires=get_requirements(),
 
       entry_points={
           'console_scripts': ['optimize-images = optimize_images.__main__:main']

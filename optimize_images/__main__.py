@@ -60,7 +60,6 @@ from optimize_images.reporting import (show_file_status,
                                        show_final_report,
                                        show_img_exception,
                                        human)
-from optimize_images.watch import watch_for_new_files
 
 def count_gen(gen):
     l = list(gen)
@@ -92,6 +91,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                           conv_big, force_del, bg_color, grayscale,
                           ignore_size_comparison, fast_mode, output_config)
 
+        from optimize_images.watch import watch_for_new_files
         watch_for_new_files(watch_task)
         return
 
