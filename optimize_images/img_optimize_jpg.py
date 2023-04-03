@@ -77,7 +77,11 @@ def optimize_jpg(task: Task) -> TaskResult:
 
     if task.keep_exif and had_exif:
         try:
-            piexif.transplant(os.path.expanduser(task.src_path), tmp_buffer)
+            tmp_buffer_exif = BytesIO()
+            piexif.transplant(os.path.expanduser(task.src_path),
+                              tmp_buffer.getbuffer(), new_file=tmp_buffer_exif)
+            tmp_buffer.close()
+            tmp_buffer = tmp_buffer_exif
             has_exif = True
         except ValueError:
             has_exif = False
