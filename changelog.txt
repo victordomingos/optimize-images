@@ -5,6 +5,12 @@ Version history:
 
 
 ---
+v.1.5.1 - 2022-04-18
+ * New console output options: --quiet, --only-summary, and --only-progress
+   (kindly contributed by derenix@Github).
+ * Changes in requirements to allow newer versions of Python and dependencies.
+
+---
 v.1.5.0 - 2021-05-29
  * Replaced temporary files with in-memory buffers which, at the expense of a
    bit higher RAM usage, prevents unnecessary I/O and may result in faster
