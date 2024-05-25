@@ -98,7 +98,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
     # Optimize all images in a directory
     elif os.path.isdir(src_path):
 
-        if not output_config.quiet_mode:
+        if not output_config.quiet_mode and not output_config.show_only_summary:
             icons = IconGenerator()
             recursion_txt = 'Recursively searching' if recursive else 'Searching'
             opt_msg = 'and optimizing image files'
@@ -125,7 +125,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                     else:
                         skipped_files += 1
 
-                    if result.output_config.quiet_mode:
+                    if result.output_config.quiet_mode or result.output_config.show_only_summary:
                         continue
 
                     if result.output_config.show_overall_progress:
@@ -157,7 +157,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
             optimized_files = 1
             total_bytes_saved = result.orig_size - result.final_size
         
-        if not result.output_config.quiet_mode:
+        if not result.output_config.quiet_mode and not result.output_config.show_only_summary:
             icons = IconGenerator()
             show_file_status(result, line_width, icons)
     else:
