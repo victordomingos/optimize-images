@@ -32,13 +32,8 @@ def read_readme(file_name):
 
 def get_requirements():
     install_requirements = []  # ['piexif>=1.1.3']
-    device = platform.machine()
-
-    if device.startswith('iPad') or device.startswith('iPhone'):
-        return install_requirements
-
-    install_requirements.append('Pillow>=8.2.0')
-    install_requirements.append('watchdog>=2.1.2')
+    install_requirements.append('Pillow>=9.1.0')
+    install_requirements.append('watchdog>=2.1.8')
     return install_requirements
 
 
