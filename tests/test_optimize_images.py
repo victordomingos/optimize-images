@@ -2,10 +2,11 @@
 import subprocess
 import shutil
 from pathlib import Path
-from PIL import Image
 import os
 import yaml
 import pytest
+
+from PIL import Image
 
 BASE = Path(__file__).parent
 INPUT = BASE / "test-images"
@@ -22,6 +23,24 @@ def run_optimize(args, input_file):
     shutil.copy(input_file, tmp_file)
     _created_tmp_files.add(tmp_file)
     subprocess.run(["optimize-images", str(tmp_file)] + args + ["--quiet"], check=True)
+
+    # If a new file was created with a different extension (-ca), report it.
+    # Example: input.png => output.jpg
+    stem = tmp_file.stem
+    parent = tmp_file.parent
+    candidates = [
+        parent / f"{stem}.jpg",
+        parent / f"{stem}.jpeg",
+        parent / f"{stem}.png",
+        parent / f"{stem}.webp",
+        parent / f"{stem}.avif",
+        parent / f"{stem}.heic",
+    ]
+    for c in candidates:
+        if c.exists() and c != tmp_file:
+            _created_tmp_files.add(c)
+            return c
+
     return tmp_file
 
 
@@ -41,9 +60,32 @@ def file_size(path):
     return os.path.getsize(path)
 
 
+def palette_color_count(path):
+    with Image.open(path) as img:
+        if img.mode != "P" or img.palette is None:
+            return None
+        raw = getattr(img.palette, "palette", None)  # bytes, 3 bytes per color
+        return (len(raw) // 3) if raw else 0
+
+
+def unique_color_count(path, cap=1_000_000):
+    with Image.open(path) as img:
+        rgba = img.convert("RGBA")
+        colors = rgba.getcolors(cap)
+        return len(colors) if colors is not None else len(set(rgba.getdata()))
+
+
+def image_mode(path):
+    with Image.open(path) as img:
+        return img.mode
+
+
 def image_info(path):
     with Image.open(path) as img:
-        return img.format, img.size, img.info
+        fmt = img.format
+        if fmt == "JPG":
+            fmt = "JPEG"
+        return fmt, img.size, img.info
 
 
 def load_tests():
@@ -70,6 +112,9 @@ def test_optimize_case(case):
         "file_size": file_size,
         "image_info": image_info,
         "has_exif": has_exif,
+        "palette_color_count": palette_color_count,
+        "unique_color_count": unique_color_count,
+        "image_mode": image_mode,
     }
 
     try:
@@ -80,12 +125,13 @@ def test_optimize_case(case):
         assert ok, "Check failed"
     finally:
         # Remove only files we created, leave any pre-existing files intact
-        for p in list(_created_tmp_files):
+        for temp_file in list(_created_tmp_files):
             try:
-                if p.exists():
-                    p.unlink()
+                if temp_file.exists():
+                    temp_file.unlink()
             finally:
-                _created_tmp_files.discard(p)
+                pass
+                _created_tmp_files.discard(temp_file)
 
 
 if __name__ == "__main__":

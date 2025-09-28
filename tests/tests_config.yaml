@@ -41,20 +41,32 @@ tests:
     check: "file_size(out) <= file_size(orig)"
     note: ""
 
-  - name: "PNG Reduce colors to 10"
+  - name: "PNG Reduce colors to 10 (palette size)"
     args: ["-rc", "-mc", "10"]
     input: "png_with_transparency.png"
-    check: "file_size(out) <= file_size(orig)"
+    check: "image_info(out)[0] == 'PNG' and image_mode(out) == 'P' and palette_color_count(out) is not None and palette_color_count(out) <= 10"
+    note: ""
+
+  - name: "PNG Reduce colors to 10 (count unique colors used)"
+    args: ["-rc", "-mc", "10"]
+    input: "png_with_transparency.png"
+    check: "unique_color_count(out) <= 10"
+    note: ""
+
+  - name: "PNG Quantize keeps indexed(P) mode"
+    args: ["-rc", "-mc", "16"]
+    input: "png_with_transparency.png"
+    check: "image_info(out)[0] == 'PNG' and image_mode(out) == 'P'"
     note: ""
 
   - name: "PNG Remove Transp/Set black"
     args: ["-rt", "-bg", "0", "0", "0"]
     input: "png_with_transparency.png"
-    check: "file_size(out) <= file_size(orig)"
+    check: "file_size(out) <= file_size(orig) and image_info(out)[0] == 'PNG' and ('transparency' not in image_info(out)[2])"
     note: ""
 
-  - name: "PNG to JPEG conversion (mismatch)"
+  - name: "PNG to JPEG conversion"
     args: ["-ca"]
     input: "png_with_transparency.png"
-    check: "image_info(out)[0] == 'PNG'"
+    check: "image_info(out)[0] == 'JPEG'"
     note: ""
