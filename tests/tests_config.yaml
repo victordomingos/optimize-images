@@ -1,0 +1,60 @@
+tests:
+  - name: "JPEG quality 50"
+    args: ["-q", "50"]
+    input: "jpeg_with_exif.jpg"
+    check: "file_size(out) < file_size(orig)"
+    note: ""
+
+  - name: "JPEG quality 95"
+    args: ["-q", "95"]
+    input: "jpeg_with_exif.jpg"
+    check: "file_size(out) <= file_size(orig)"
+    note: ""
+
+  - name: "JPEG Keep EXIF"
+    args: ["-ke"]
+    input: "jpeg_with_exif.jpg"
+    check: "has_exif(out)"
+    note: ""
+
+  - name: "JPEG Default/Remove EXIF"
+    args: []
+    input: "jpeg_with_exif.jpg"
+    check: "not has_exif(out)"
+    note: ""
+
+  - name: "JPEG Downsize max-width 400"
+    args: ["-mw", "400"]
+    input: "jpeg_with_exif.jpg"
+    check: "image_info(out)[1][0] <= 400"
+    note: ""
+
+  - name: "JPEG Downsize max-height 300"
+    args: ["-mh", "300"]
+    input: "jpeg_with_exif.jpg"
+    check: "image_info(out)[1][1] <= 300"
+    note: ""
+
+  - name: "PNG Default "
+    args: []
+    input: "png_with_transparency.png"
+    check: "file_size(out) <= file_size(orig)"
+    note: ""
+
+  - name: "PNG Reduce colors to 10"
+    args: ["-rc", "-mc", "10"]
+    input: "png_with_transparency.png"
+    check: "file_size(out) <= file_size(orig)"
+    note: ""
+
+  - name: "PNG Remove Transp/Set black"
+    args: ["-rt", "-bg", "0", "0", "0"]
+    input: "png_with_transparency.png"
+    check: "file_size(out) <= file_size(orig)"
+    note: ""
+
+  - name: "PNG to JPEG conversion (mismatch)"
+    args: ["-ca"]
+    input: "png_with_transparency.png"
+    check: "image_info(out)[0] == 'PNG'"
+    note: ""
