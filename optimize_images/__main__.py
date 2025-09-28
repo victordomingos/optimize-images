@@ -15,12 +15,11 @@ source file or folder before using this utility, in order to be able to
 recover any eventual damaged files or any resulting images that don't have the
 desired quality.
 
-This application is intended to be pure Python, with no special dependencies
-besides Pillow, therefore ensuring compatibility with a wide range of systems,
-including iPhones and iPads running Pythonista 3. If you don't have the need
-for such a strict dependency management, you will certainly be better served
-by any several other image optimization utilities that are based on some well
-known external binaries.
+This application itself is intended to be pure Python, with no special
+dependencies besides Pillow, therefore ensuring compatibility with a wide range
+of systems. If you don't have the need for such a strict dependency management,
+you will certainly be better served by any several other image optimization
+utilities that are based on some well known external binaries.
 
 Some aditional features can be added which require the presence of other
 third-party packages that are not written in pure Python, but those packages and
