@@ -1,5 +1,6 @@
 venv*/
-test-images/
+tests/rapid-batch-test/test-images/
+tests/tmp/
 .idea/
 __MACOSX/
 .DS_Store
