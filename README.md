@@ -3,11 +3,10 @@ A command-line interface (CLI) utility written in pure Python to help you
 reduce the file size of images.
 
 This application is intended to be pure Python, with no special dependencies
-besides Pillow, therefore ensuring compatibility with a wide range of systems,
-including iPhones and iPads running Pythonista 3. If you don't have the need
-for such a strict dependency management, you will probably be better served
-by any several other image optimization utilities that are based on some well
-known external binaries.
+besides Pillow, therefore ensuring compatibility with a wide range of systems.
+If you don't have the need for such a strict dependency management, you will 
+probably be better served by any several other image optimization utilities 
+that are based on some well known external binaries.
 
 Some aditional features can be added which require the presence of other 
 third-party packages that are not written in pure Python, but those packages 
@@ -27,13 +26,11 @@ Please refer to the above links if you want to know about all the options availa
 ## Installation and dependencies:
 
 To install and run this application, you need to have a working
-Python 3.6+ installation. We try to keep the external dependencies at a minimum,
-in order to keep compatibility with different platforms, including Pythonista
-on iOS. At this moment, we require:
+Python 3.10+ installation. We try to keep the external dependencies at a minimum,
+in order to keep compatibility with different platforms. At this moment, we require:
 
-  - Pillow==8.2.0
-  - piexif==1.1.3
-  - watchdog==2.1.2
+  - Pillow>=9.1.0
+  - watchdog>=2.1.8
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:

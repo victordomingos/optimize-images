@@ -7,11 +7,10 @@ tamanho de ficheiros de imagens.
 
 Esta aplicação é escrita tanto quanto possível em Python puro, sem requisitos
 técnicos especiais para além do Pillow, assegurando deste modo a
-compatibilidade com um vasto leque de sistemas, incluindo iPhones e iPads com
-a app Pythonista 3. Caso não tenha a necessidade de uma gestão de dependências
-tão rigorosa, encontrará provavelmente várias outras ferramentas de otimização de
-imagem mais robustas e mais avançadas, baseadas em alguns binários executáveis
-externos bem conhecidos.
+compatibilidade com um vasto leque de sistemas. Caso não tenha a necessidade de
+uma gestão de dependências tão rigorosa, encontrará provavelmente várias outras 
+ferramentas de otimização de imagem mais robustas e mais avançadas, baseadas em 
+alguns binários executáveis externos bem conhecidos.
 
 Podem ser adicionadas algumas funcionalidades que requeiram a presença de pacotes 
 de terceiros não escritos em Python puro, sendo que esses pacotes serão tratados 
@@ -22,8 +21,6 @@ como opcionais, tais como as funcionalidades que deles dependam.
 
 ## Conteúdo
 * **[Instalação e dependências](#instalação-e-dependências)**
-   - [Em sistemas operativos de secretária](#em-sistemas-operativos-de-secretária)
-   - [Em iPhone ou iPad (na app Pythonista 3 para iOS)](#em-iphone-ou-ipad-na-app-pythonista-3-para-ios)
    
 * **[Como utilizar](#como-utilizar)**
    * [Advertência](#advertência)
@@ -56,16 +53,12 @@ como opcionais, tais como as funcionalidades que deles dependam.
 
 ## Instalação e dependências:
 
-### Em sistemas operativos de secretária
-
-Para executar esta aplicação é necessária uma instalação do Python 3.6 ou
+Para executar esta aplicação é necessária uma instalação do Python 3.10 ou
 superior. Procuramos manter no mínimo as dependências externas, de modo a
-manter a compatibilidade com diferentes plataformas, incluindo Pythonista em
-iOS. Neste momento, requer:
+manter a compatibilidade com diferentes plataformas. Neste momento, requer:
 
-  - Pillow==8.2.0
-  - piexif==1.1.3
-  - watchdog==2.1.2
+  - Pillow==9.1.0
+  - watchdog==2.1.8
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:
@@ -84,94 +77,17 @@ de compilação e é um processo que não testámos de forma aprofundada, pelo
 que os seus resultados podem variar.
 
 
-### Em iPhone ou iPad (na app Pythonista 3 para iOS)
-
-Primeiro, irá precisar de um ambiente Python e uma consola de linha de comandos
-compatível com Python 3. No momento presente, isto significa que precisa de ter
-instalada uma app chamada [Pythonista 3](http://omz-software.com/pythonista/)
-(que é, entre outras coisas, um excelente ambiente para desenvolvimento e
-execução de aplicações de Python puro em iOS). 
-
-Depois, precisará de instalar a
-[StaSh](https://github.com/ywangd/stash), que é uma consola de linha de
-comandos baseada em Python, concebida especificamente para correr no
-Pythonista. Irá permitir executar comandos bem úteis como `wget`, `git clone`,
-`pip install` e muitos outros. Merece realmente um atalho no ecrã principal do
-seu iPhone ou iPad. 
-
-Depois de seguir as instruções para a instalação da StaSh,
-poderá precisar de a atualizar para uma versão mais recente. Experimente este
-comando:
-
-```
-selfupdate.py -f dev
-```
-
-De seguida, force o encerramento do Pythonista, reiniciando-o de seguida, e
-inicie novamente a StaSh. Deverá estar agora a correr em Python 3. Neste
-momento, pode tentar instalar esta aplicação, diretamente a partir deste
-repositório:
-
-```
-pip install optimize-images
-```
-
-Se tudo correr bem, o comando acima deverá instalar quais quer dependências,
-colocar um pacote chamado `optimize_images` dentro da pasta
-`~/Documents/site-packages-3` e criar um *script* de execução chamado
-`optimize-images.py` em `stash_extensions/bin`.
-
-Neste momento, em Pythonista/iOS esta aplicação requer:
-
-  - piexif==1.0.13
-
-
-No final dos passos anteriores, force o encerramento do Pythonista, reinicie 
-a app e inicie novamente a StaSh. Já deverá conseguir executar esta aplicação 
-diretamente a partir da consola ou criando um atalho no ecrã inicial do iOS, 
-com os argumentos necessários, para o script de entrada, localizado em 
-`~/Documents/stash_extensions/bin/optimize-images.py`, para otimizar quaisquer 
-ficheiros de imagem que tenha no Pythonista.
-
-
 ## Instalar a versão mais recente em desenvolvimento (possivelmente instável):
-
-### Em sistemas operativos de secretária
 
 Depois de clonar este repositório, a versão atual de desenvolvimento pode ser
 facilmente instalada com o comando `pip install -e`, seguido do caminho para
 a pasta principal do projeto (a mesma pasta que contém o ficheiro `setup.py`).
 Em alternativa, poderá criar um ambiente virtual e utilizar de seguida o 
-seguinte comando, substituindo `python3.8` pela versão pretendida do Python 3:
+seguinte comando, substituindo `python3.10` pela versão pretendida do Python 3:
 
 ```
-python3.8 -m pip install git+https://github.com/victordomingos/optimize-images
+python3.10 -m pip install git+https://github.com/victordomingos/optimize-images
 ```
-
-### Em iPhone ou iPad (na app Pythonista 3 para iOS)
-
-Em iOS, depois de seguir os passos necessários à instalação do Pythonista e a
-StaSh, a versão atual de desenvolvimento pode ser instalada diretamente a
-partir deste repositório git:
-
-```
-pip install victordomingos/optimize-images
-```
-
-Se tudo correr bem, o comando acima deverá instalar quais quer dependências,
-colocar um pacote chamado `optimize_images` dentro da pasta
-`~/Documents/site-packages-3` e criar um *script* de execução chamado
-`optimize-images.py` em `stash_extensions/bin`.
-
-
-No final, como habitualmente, force o encerramento do Pythonista, reinicie
-a app e inicie novamente a StaSh. Já deverá conseguir executar esta aplicação
-diretamente a partir da consola ou criando um atalho no ecrã inicial do iOS,
-com os argumentos necessários, para o script de entrada, localizado em
-`~/Documents/stash_extensions/bin/optimize-images.py`, para otimizar quaisquer
-ficheiros de imagem que tenha no Pythonista.
-
-
 
 ## Como utilizar
 
