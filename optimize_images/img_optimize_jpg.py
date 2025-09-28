@@ -2,8 +2,7 @@
 import os
 from io import BytesIO
 
-import piexif
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageOps
 
 from .data_structures import Task, TaskResult
 from .img_aux_processing import downsize_img, save_compressed
@@ -32,13 +31,10 @@ def optimize_jpg(task: Task) -> TaskResult:
     orig_colors, final_colors = 0, 0
 
     result_format = "JPEG"
+    # Detect EXIF presence using Pillow
     try:
-        had_exif = True if piexif.load(task.src_path)['Exif'] else False
-    except piexif.InvalidImageDataError:  # Not a supported format
-        had_exif = False
-    except ValueError:  # No exif info
-        had_exif = False
-    # TODO: Check if we can provide a more specific treatment of piexif exceptions.
+        exif = img.getexif()
+        had_exif = bool(exif and len(exif) > 0)
     except Exception:
         had_exif = False
 
@@ -59,38 +55,24 @@ def optimize_jpg(task: Task) -> TaskResult:
         quality, _ = jpeg_dynamic_quality(img)
 
     tmp_buffer = BytesIO()  # In-memory buffer
+
+    # If keeping EXIF and the source had EXIF, pass it through on save.
+    save_kwargs = dict(
+        quality=quality,
+        optimize=True,
+        progressive=use_progressive_jpg,
+        format=result_format
+    )
+    if task.keep_exif and had_exif and exif:
+        save_kwargs["exif"] = exif
+
     try:
-        img.save(
-            tmp_buffer,
-            quality=quality,
-            optimize=True,
-            progressive=use_progressive_jpg,
-            format=result_format)
+        img.save(tmp_buffer, **save_kwargs)
     except IOError:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(
-            tmp_buffer,
-            quality=quality,
-            optimize=True,
-            progressive=use_progressive_jpg,
-            format=result_format)
+        img.save(tmp_buffer, **save_kwargs)
 
-    if task.keep_exif and had_exif:
-        try:
-            tmp_buffer_exif = BytesIO()
-            piexif.transplant(os.path.expanduser(task.src_path),
-                              tmp_buffer.getbuffer(), new_file=tmp_buffer_exif)
-            tmp_buffer.close()
-            tmp_buffer = tmp_buffer_exif
-            has_exif = True
-        except ValueError:
-            has_exif = False
-        # TODO: Check if we can provide a more specific treatment
-        #       of piexif exceptions.
-        except Exception:
-            has_exif = False
-    else:
-        has_exif = False
+    has_exif = bool(save_kwargs.get("exif"))
 
     img_mode = img.mode
     img.close()

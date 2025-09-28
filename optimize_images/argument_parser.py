@@ -6,7 +6,6 @@ import sys
 from argparse import ArgumentParser
 
 import PIL  # it exists, was checked on main
-import piexif
 
 from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
@@ -17,14 +16,13 @@ def get_version_info() -> str:
     """ Get a string that displays current application version as well as
         some useful environment info.
     """
-    piexif_version = piexif.VERSION
 
     try:
         import watchdog.version
         wd_version = watchdog.version.VERSION_STRING
     except ImportError:
         wd_version = "missing (package needed for watching folders for changes)"
-        
+
     try:
         pillow_version = PIL.__version__
     except AttributeError:
@@ -36,7 +34,6 @@ def get_version_info() -> str:
            f'\n\nRunning environment:' \
            f'\n  - Location: {sys.argv[0]}' \
            f'\n  - Pillow {pillow_version}' \
-           f'\n  - Piexif {piexif_version}' \
            f'\n  - {python_version}' \
            f'\n\nOptional packages:' \
            f'\n  - Watchdog {wd_version}\n\n'
@@ -260,7 +257,7 @@ def get_args():
 
     output_config = OutputConfiguration(args.only_summary, args.only_progress, args.quiet)
     return src_path, watch_dir, recursive, quality, args.remove_transparency, \
-           args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
-           args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
-           bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
-           args.jobs, output_config
+        args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
+        args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
+        bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
+        args.jobs, output_config

@@ -5,6 +5,15 @@ Version history:
 
 
 ---
+v.2.0.0 - 2025-??-??
+ * Removed dependency on piexif, since Pillow supports EXIF metadata (thanks to
+   @varnav for the alert on this).
+ * Changes in requirements to allow newer versions of Python and dependencies.
+ * Removed support for older python versions, keeping only active support
+   versions.
+ * Removed support for Pythonista/iOS, since it is no longer maintained.
+
+---
 v.1.5.1 - 2022-04-18
  * New console output options: --quiet, --only-summary, and --only-progress
    (kindly contributed by derenix@Github).

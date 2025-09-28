@@ -26,7 +26,7 @@ Some aditional features can be added which require the presence of other
 third-party packages that are not written in pure Python, but those packages and
 the features depending on them should be treated as optional.
 
-© 2021 Victor Domingos (MIT License)
+© 2025 Victor Domingos & contributers (MIT License)
 """
 import concurrent.futures.process
 import os
@@ -42,13 +42,6 @@ except ImportError:
           'Please, install it first.\n')
     sys.exit()
 
-try:
-    import piexif
-except ImportError:
-    print('\n    This application requires Piexif to be installed. '
-          'Please, install it first.\n')
-    sys.exit()
-
 from timeit import default_timer as timer
 
 from optimize_images.file_utils import search_images
@@ -61,13 +54,15 @@ from optimize_images.reporting import (show_file_status,
                                        show_img_exception,
                                        human)
 
+
 def count_gen(gen):
     l = list(gen)
     return len(l), l
 
+
 def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
-                   conv_big, force_del, bg_color, grayscale, ignore_size_comparison, 
+                   conv_big, force_del, bg_color, grayscale, ignore_size_comparison,
                    fast_mode, jobs, output_config):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
@@ -135,7 +130,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                         print(message, end='\r')
                     else:
                         show_file_status(result, line_width, icons)
-                    
+
             except concurrent.futures.process.BrokenProcessPool as bppex:
                 show_img_exception(bppex, current_img)
             except KeyboardInterrupt:
@@ -148,7 +143,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
 
         img_task = Task(src_path, quality, remove_transparency, reduce_colors,
                         max_colors, max_w, max_h, keep_exif, convert_all, conv_big,
-                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode, 
+                        force_del, bg_color, grayscale, ignore_size_comparison, fast_mode,
                         output_config)
 
         result = do_optimization(img_task)
@@ -156,7 +151,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         if result.was_optimized:
             optimized_files = 1
             total_bytes_saved = result.orig_size - result.final_size
-        
+
         if not result.output_config.quiet_mode and not result.output_config.show_only_summary:
             icons = IconGenerator()
             show_file_status(result, line_width, icons)

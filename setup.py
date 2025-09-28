@@ -2,11 +2,12 @@
 import os
 import platform
 import sys
+import re
 
 from setuptools import setup, find_packages
 
 used = sys.version_info
-required = (3, 6)
+required = (3, 10)
 
 # if version of pip that doesn't understand the python_requires classifier,
 # must be pip >= 9.0.0
@@ -16,8 +17,8 @@ required = (3, 6)
 # python -m pip install --upgrade pip setuptools
 if used[:2] < required:
     sys.stderr.write("Unsupported Python version: %s.%s. "
-                     "Python 3.6 or later is required." % (sys.version_info.major,
-                                                           sys.version_info.minor))
+                     "Python 3.10 or later is required." % (sys.version_info.major,
+                                                            sys.version_info.minor))
     sys.exit(1)
 
 short_desc = "A command-line interface (CLI) utility written in pure Python " \
@@ -28,9 +29,10 @@ def read_readme(file_name):
     with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
         return f.read()
 
+
 def get_requirements():
-    install_requirements=['piexif>=1.1.3']
-    device = platform.machine() 
+    install_requirements = []  # ['piexif>=1.1.3']
+    device = platform.machine()
 
     if device.startswith('iPad') or device.startswith('iPhone'):
         return install_requirements
@@ -38,10 +40,20 @@ def get_requirements():
     install_requirements.append('Pillow>=8.2.0')
     install_requirements.append('watchdog>=2.1.2')
     return install_requirements
-        
+
+
+def read_version():
+    init_path = os.path.join(os.path.dirname(__file__), "optimize_images", "__init__.py")
+    with open(init_path, encoding="utf-8") as f:
+        content = f.read()
+    m = re.search(r'^__version__\s*=\s*[\'"]([^\'"]+)[\'"]', content, re.M)
+    if not m:
+        raise RuntimeError("Cannot find __version__ in optimize_images/__init__.py")
+    return m.group(1)
+
 
 setup(name='optimize-images',
-      version=__import__('optimize_images').__version__,
+      version=read_version(),
       description=short_desc,
       author="Victor Domingos",
       packages=find_packages(),
@@ -55,7 +67,7 @@ setup(name='optimize-images',
           'Source': 'https://github.com/victordomingos/optimize-images',
           'Bug Reports': 'https://github.com/victordomingos/optimize-images/issues',
       },
-      python_requires='>=3.7',
+      python_requires='>=3.10',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
@@ -70,12 +82,11 @@ setup(name='optimize-images',
           'Operating System :: Unix',
           'Operating System :: POSIX :: Linux ',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.6',
-          'Programming Language :: Python :: 3.7',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
           'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
+          'Programming Language :: Python :: 3.13',
+          'Programming Language :: Python :: 3.14',
           'Topic :: Utilities',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Graphics Conversion',

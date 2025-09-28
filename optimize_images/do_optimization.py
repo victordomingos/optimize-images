@@ -2,8 +2,7 @@
 
 import os
 
-import piexif
-from PIL import Image
+from PIL import Image, ImageOps, ExifTags
 
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_optimize_jpg import optimize_jpg
@@ -55,10 +54,10 @@ def do_optimization(task: Task) -> TaskResult:
 
     # Reporting about unsupported formats:
     try:
-        had_exif = True if piexif.load(task.src_path)['Exif'] else False
-    except piexif.InvalidImageDataError:  # Not a supported format
-        had_exif = False
-    except ValueError:  # No exif info
+        with Image.open(task.src_path) as img:
+            exif = img.getexif()
+            had_exif = bool(exif and len(exif) > 0)
+    except (OSError, ValueError):
         had_exif = False
 
     return TaskResult(img=task.src_path,
