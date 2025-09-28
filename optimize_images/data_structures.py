@@ -1,15 +1,17 @@
 # encoding: utf-8
 import concurrent.futures
-
-from typing import NamedTuple, Tuple, NewType
+from dataclasses import dataclass
+from typing import NamedTuple, Tuple, NewType, Optional, List
 
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
 TPoolExType = NewType('TPoolExType', concurrent.futures.ThreadPoolExecutor)
+
 
 class OutputConfiguration(NamedTuple):
     show_only_summary: bool
     show_overall_progress: bool
     quiet_mode: bool
+
 
 class Task(NamedTuple):
     src_path: str
@@ -45,3 +47,36 @@ class TaskResult(NamedTuple):
     had_exif: bool
     has_exif: bool
     output_config: OutputConfiguration
+
+
+@dataclass
+class BatchOptions:
+    src_path: str
+    recursive: bool = True
+    quality: int = 80
+    remove_transparency: bool = False
+    reduce_colors: bool = False
+    max_colors: int = 256
+    max_w: int = 0
+    max_h: int = 0
+    keep_exif: bool = False
+    convert_all: bool = False
+    conv_big: bool = False
+    force_del: bool = False
+    bg_color: Tuple[int, int, int] = (255, 255, 255)
+    grayscale: bool = False
+    ignore_size_comparison: bool = False
+    fast_mode: bool = False
+    jobs: int = 0
+    output_config: Optional[object] = None
+
+
+@dataclass
+class BatchResult:
+    results: List[TaskResult]
+    found_files: int
+    optimized_files: int
+    skipped_files: int
+    total_src_size: int
+    total_bytes_saved: int
+    elapsed_seconds: float
