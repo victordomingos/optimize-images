@@ -1,5 +1,6 @@
 import os
 import time
+import threading
 from typing import List
 
 try:
@@ -32,6 +33,7 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
         self.optimized_files = 0
         self.total_bytes_saved = 0
         self.total_src_size = 0
+        self._lock = threading.Lock()
 
         self.line_width, pool_ex, default_workers = adjust_for_platform()
         self.icons = IconGenerator()
@@ -39,13 +41,15 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
     def on_created(self, event):
         if (event.is_directory
                 or not is_image(event.src_path)
-                or '~temp~' in event.src_path
-                or event.src_path in self.paths_to_ignore):
+                or '~temp~' in event.src_path):
             return
 
-        self.paths_to_ignore.append(event.src_path)
+        with self._lock:
+            if event.src_path in self.paths_to_ignore:
+                return
+            self.paths_to_ignore.append(event.src_path)
+
         self.wait_for_write_finish(event.src_path)
-        self.new_files += 1
 
         task = self.task
         img_task = Task(event.src_path, task.quality, task.remove_transparency,
@@ -56,10 +60,13 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
                         task.output_config)
 
         result: TaskResult = do_optimization(img_task)
-        self.total_src_size += result.orig_size
-        if result.was_optimized:
-            self.optimized_files += 1
-            self.total_bytes_saved += result.orig_size - result.final_size
+
+        with self._lock:
+            self.new_files += 1
+            self.total_src_size += result.orig_size
+            if result.was_optimized:
+                self.optimized_files += 1
+                self.total_bytes_saved += result.orig_size - result.final_size
 
         show_file_status(result, self.line_width, self.icons)
 

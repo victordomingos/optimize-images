@@ -11,7 +11,8 @@ import os
 from dataclasses import dataclass
 from typing import Tuple
 
-from optimize_images.data_structures import TaskResult as _TaskResult, Task as _Task, BatchOptions as _BatchOptions, BatchResult as _BatchResult
+from optimize_images.data_structures import TaskResult as _TaskResult, \
+    Task as _Task, BatchOptions as _BatchOptions, BatchResult as _BatchResult
 from optimize_images.do_optimization import do_optimization
 from optimize_images.exceptions import OIImagesNotFoundError
 from optimize_images.platforms import adjust_for_platform
@@ -249,31 +250,38 @@ def watch_directory(
             super().__init__()
             self.task = task
             self.paths_to_ignore = []
-            self.symbols_shown = False  # Track if symbols legend has been shown
+            self.symbols_shown = False
+            self._lock = threading.Lock()
 
             self.line_width, pool_ex, default_workers = adjust_for_platform()
 
         def on_created(self, event):
             if (event.is_directory
                     or not is_image(event.src_path)
-                    or '~temp~' in event.src_path
-                    or event.src_path in self.paths_to_ignore):
+                    or '~temp~' in event.src_path):
                 return
 
-            self.paths_to_ignore.append(event.src_path)
+            with self._lock:
+                if event.src_path in self.paths_to_ignore:
+                    return
+                self.paths_to_ignore.append(event.src_path)
+
             self._wait_for_write_finish(event.src_path)
 
-            # Show symbols legend only once
-            if not self.symbols_shown:
+            with self._lock:
+                show_legend = not self.symbols_shown
+                if show_legend:
+                    self.symbols_shown = True
+
+            if show_legend:
                 from optimize_images.platforms import IconGenerator
                 icons = IconGenerator()
                 print("\nUsing these symbols:\n")
                 print(f"  {icons.optimized} Optimized file     {icons.info} EXIF info present")
                 print(
                     f"  {icons.skipped} Skipped file       {icons.downsized} Image was downsized     {icons.size_is_smaller} Size reduction (%)\n")
-                self.symbols_shown = True
 
-            # Create task for this specific file - use ignore_size_comparison as the constructor parameter
+            # Create task for this specific file
             task = self.task
             img_task = _Task(
                 event.src_path,
@@ -289,7 +297,7 @@ def watch_directory(
                 task.force_del,
                 task.bg_color,
                 task.grayscale,
-                internal.ignore_size_comparison,  # Pass the value directly from internal options
+                internal.ignore_size_comparison,
                 task.fast_mode,
                 task.output_config,
             )

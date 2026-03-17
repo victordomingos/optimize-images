@@ -1,24 +1,40 @@
 # encoding: utf-8
-from functools import lru_cache
+import threading
 
 from optimize_images.data_structures import OutputConfiguration, TaskResult
 from optimize_images.platforms import IconGenerator
 
 from typing import Any
 
+_human_cache: dict = {}
+_human_cache_lock = threading.Lock()
 
-@lru_cache(maxsize=None)
+
 def human(number: int, suffix='B') -> str:
     """Return a human readable memory size in a string.
 
     Initially written by Fred Cirera, modified and shared by Sridhar Ratnakumar
     (https://stackoverflow.com/a/1094933/6167478), edited by Victor Domingos.
     """
+    key = (number, suffix)
+    try:
+        return _human_cache[key]
+    except KeyError:
+        pass
+
+    result = number
+    unit_result = ''
     for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
-        if abs(number) < 1024.0:
-            return f"{number:3.1f} {unit}{suffix}"
-        number = number / 1024.0
-    return f"{number:.1f}{'Yi'}{suffix}"
+        if abs(result) < 1024.0:
+            unit_result = f"{result:3.1f} {unit}{suffix}"
+            break
+        result = result / 1024.0
+    else:
+        unit_result = f"{result:.1f}{'Yi'}{suffix}"
+
+    with _human_cache_lock:
+        _human_cache[key] = unit_result
+    return unit_result
 
 
 def _fmt_format(fmt: str) -> str:
@@ -158,6 +174,7 @@ def show_final_report(found_files: int,
     if time_passed == -1:
         report += f"\n   Processed {found_files} files ({human(src_size)})."
     else:
+        fps = found_files / time_passed if time_passed > 0 else 0.0
         report += f"\n   Processed {found_files} files ({human(src_size)}) in " \
                   f"{time_passed:.1f}s ({fps:.1f} f/s)."
 
