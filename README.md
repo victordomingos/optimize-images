@@ -1,4 +1,6 @@
-# Optimize Images [![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images) ![PyPI](https://img.shields.io/pypi/v/optimize-images) ![PyPI - Downloads](https://img.shields.io/pypi/dm/optimize-images)
+# Optimize Images 
+[![Github commits (since latest release)](https://img.shields.io/github/commits-since/victordomingos/optimize-images/latest.svg)](https://github.com/victordomingos/optimize-images) ![PyPI](https://img.shields.io/pypi/v/optimize-images)  [![PyPI Python Versions](https://img.shields.io/pypi/pyversions/optimize-images.svg)](https://pypi.org/project/optimize-images/)  ![https://badgen.net/github/contributors/victordomingos/optimize-images](https://badgen.net/github/contributors/victordomingos/optimize-images) [![PyPI Downloads](https://static.pepy.tech/personalized-badge/optimize-images?period=monthly&units=NONE&left_color=GREY&right_color=ORANGE&left_text=monthly+downloads)](https://pepy.tech/projects/optimize-images) [![GitHub License](https://img.shields.io/github/license/victordomingos/optimize-images.svg)](https://github.com/victordomingos/optimize-images/blob/master/LICENSE) 
+
 A command-line interface (CLI) utility written in pure Python to help you 
 reduce the file size of images.
 
