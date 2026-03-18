@@ -5,7 +5,7 @@ A command-line interface (CLI) utility written in pure Python to help you
 reduce the file size of images.
 
 This application is intended to be pure Python, with no special dependencies
-besides Pillow, therefore ensuring compatibility with a wide range of systems.
+besides Pillow and watchdog, therefore ensuring compatibility with a wide range of systems.
 If you don't have the need for such a strict dependency management, you will 
 probably be better served by any several other image optimization utilities 
 that are based on some well known external binaries.
@@ -40,20 +40,6 @@ by using this command:
 ```
 pip3 install pillow optimize-images
 ```
-
-If you are able to swap Pillow with the faster version 
-[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
-to get a considerably faster speed. For that reason, we provide, as a 
-friendly courtesy, an optional shell script (`replace_pillow__macOS.sh`) to 
-replace Pillow with the faster Pillow-SIMD on macOS. Please notice, however, 
-that it usually requires a compilation step and it was not throughly tested 
-by us, so your mileage may vary.
-
-You can also use this application on iOS, using an called
-[Pythonista 3](http://omz-software.com/pythonista/) (which is, among other
-things, a very nice environment for developing and/or running pure Python
-applications on iOS). Please check the detailed install procedure full in the 
-user documentation.
 
 ## How to use
 

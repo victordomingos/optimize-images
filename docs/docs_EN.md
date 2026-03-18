@@ -7,7 +7,7 @@ A command-line interface (CLI) utility written in pure Python to help you
 reduce the file size of images.
 
 This application is intended to be pure Python, with no special dependencies
-besides Pillow, therefore ensuring compatibility with a wide range of systems.
+besides Pillow and watchdog, therefore ensuring compatibility with a wide range of systems.
 If you don't have the need for such a strict dependency management, you will 
 probably be better served by any several other image optimization utilities 
 that are based on some well known external binaries.
@@ -66,15 +66,6 @@ by using this command:
 ```
 pip3 install pillow watchdog optimize-images
 ```
-
-If you are able to swap Pillow with the faster version 
-[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), you should be able
-to get a considerably faster speed. For that reason, we provide, as a 
-friendly courtesy, an optional shell script (`replace_pillow__macOS.sh`) to 
-replace Pillow with the faster Pillow-SIMD on macOS. Please notice, however, 
-that it usually requires a compilation step and it was not throughly tested 
-by us, so your mileage may vary.
-
 
 
 ## Installing the most recent development version (may be unstable):
@@ -495,7 +486,7 @@ optimize-images --supported
 ### Related projects
 
 #### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
-A third-party dockerized implementation of Optimize Images. It includes a few  interesting optimizations, like the usage of a recent version of [mozjpeg](https://github.com/mozilla/mozjpeg) library, or a Pillow binary compiled with [libimagequant](https://github.com/ImageOptim/libimagequant), which should result in faster and more efficient compression.
+A third-party dockerized implementation of Optimize Images. It includes a few interesting optimizations, like the usage of a recent version of [mozjpeg](https://github.com/mozilla/mozjpeg) library, or a Pillow binary compiled with [libimagequant](https://github.com/ImageOptim/libimagequant), which should result in faster and more efficient compression.
 
 #### [Optimize Images X](https://github.com/victordomingos/optimize-images-x)
 A desktop app written in Python, that exposes and unlocks the full power of Optimize Images in a nice graphical user interface, to help you reduce the file size of images. Just like its CLI companion app, it can process a single file, a folder’s root or all images in a folder, recursively. Multiple image processing tasks are automatically distributed to all available CPU cores. Additionally, it includes a “watch folder” feature that continuously monitors a specified folder for new image files and processes them right after they’re created or placed in that folder.

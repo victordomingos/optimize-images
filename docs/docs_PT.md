@@ -6,7 +6,7 @@ Um utilitário de linha de comandos escrito em Python para ajudar a reduzir o
 tamanho de ficheiros de imagens.
 
 Esta aplicação é escrita tanto quanto possível em Python puro, sem requisitos
-técnicos especiais para além do Pillow, assegurando deste modo a
+técnicos especiais para além do Pillow e do watchdog, assegurando deste modo a
 compatibilidade com um vasto leque de sistemas. Caso não tenha a necessidade de
 uma gestão de dependências tão rigorosa, encontrará provavelmente várias outras 
 ferramentas de otimização de imagem mais robustas e mais avançadas, baseadas em 
@@ -66,16 +66,6 @@ quaisquer requisitos, é através deste comando:
 ```
 pip3 install pillow watchdog optimize-images
 ```
-
-Caso tenha a possibilidade de substituir o Pillow pela versão mais rápida 
-[Pillow-SIMD](https://github.com/uploadcare/pillow-simd), deverá conseguir
-notar um desempenho consideravelmente superior. É por isso que, por cortesia,
-disponibilizamos um pequeno *script* de linha de comandos opcional 
-(`replace_pillow__macOS.sh`) para substituir o Pillow pelo Pillow-SIMD no 
-macOS. Tenha em consideração, contudo, que isso geralmente implica um passo 
-de compilação e é um processo que não testámos de forma aprofundada, pelo 
-que os seus resultados podem variar.
-
 
 ## Instalar a versão mais recente em desenvolvimento (possivelmente instável):
 
