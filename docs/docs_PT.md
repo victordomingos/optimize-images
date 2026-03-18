@@ -57,8 +57,8 @@ Para executar esta aplicação é necessária uma instalação do Python 3.10 ou
 superior. Procuramos manter no mínimo as dependências externas, de modo a
 manter a compatibilidade com diferentes plataformas. Neste momento, requer:
 
-  - Pillow==9.1.0
-  - watchdog==2.1.8
+  - Pillow==12.0.0
+  - watchdog==6.0.0
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo
 quaisquer requisitos, é através deste comando:

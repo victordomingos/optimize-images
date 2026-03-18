@@ -32,8 +32,8 @@ def read_readme(file_name):
 
 def get_requirements():
     install_requirements = []  # ['piexif>=1.1.3']
-    install_requirements.append('Pillow>=9.1.0')
-    install_requirements.append('watchdog>=2.1.8')
+    install_requirements.append('Pillow>=12.0.0')
+    install_requirements.append('watchdog>=6.0.0')
     return install_requirements
 
 
@@ -82,6 +82,8 @@ setup(name='optimize-images',
           'Programming Language :: Python :: 3.12',
           'Programming Language :: Python :: 3.13',
           'Programming Language :: Python :: 3.14',
+          'Programming Language :: Python :: 3.15',
+          'Programming Language :: Python :: Free Threading',
           'Topic :: Utilities',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Graphics Conversion',

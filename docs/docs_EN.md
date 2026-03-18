@@ -57,8 +57,8 @@ Python 3.10+ installation. We try to keep the external dependencies at a minimum
 in order to keep compatibility with different platforms. At this moment, we 
 require:
 
-  - Pillow==9.1.0
-  - watchdog==2.1.8
+  - Pillow==12.0.0
+  - watchdog==6.0.0
 
 The easiest way to install it in a single step, including any dependencies, is 
 by using this command:
