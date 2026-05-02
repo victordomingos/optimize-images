@@ -258,7 +258,7 @@ At this time, multiprocessing is not available when using this feature.
 
 #### Maximum number of simultaneous jobs
 
-You can specify the maximum number of simultaneous jobs that should be alowed 
+You can specify the maximum number of simultaneous jobs that should be allowed 
 to run at a given time. The default value (0), for most platforms, will 
 generate a total of N + 1 processes, where N is the number of CPUs or cores in 
 the system.
