@@ -5,7 +5,7 @@ Version history:
 
 
 ---
-v.2.0.0 - 2025-??-??
+v.2.0.0 - 2026-05-26
  * Removed dependency on piexif, since Pillow supports EXIF metadata (thanks to
    @varnav for the alert on this).
  * Refactored some code to make it easier to import optimize-images as a
