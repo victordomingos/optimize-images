@@ -43,6 +43,13 @@ como opcionais, tais como as funcionalidades que deles dependam.
           - [Mudar a cor de fundo predefinida](#mudar-a-cor-de-fundo-predefinida)
    * [Outras funcionalidades](#outras-funcionalidades)
    
+* **[Utilização programática (como biblioteca)](#utilização-programática-como-biblioteca)**
+   * [Otimizar uma única imagem](#otimizar-uma-única-imagem)
+   * [Otimizar uma pasta (em fluxo)](#otimizar-uma-pasta-em-fluxo)
+   * [Otimizar uma pasta (agregado)](#otimizar-uma-pasta-agregado)
+   * [Monitorizar uma pasta](#monitorizar-uma-pasta)
+   * [Opções e resultados](#opções-e-resultados)
+   * [Notas](#notas)
    
 * **[Projetos relacionados](#projetos-relacionados)**
    * [Optimize Images Docker](#optimize-images-docker)   
@@ -260,10 +267,10 @@ optimize-images -wd ./
 optimize-images --watch-directory ./
 ```
 
-Esta funcionalidade requer o pacote opcional `watchdog`, fornecido por 
-terceiros, bem como as suas respetivas dependências, e está disponível apenas 
-nos sistemas operativos suportados por ele. Não está disponível, por exemplo, 
-em iOS. 
+Esta funcionalidade utiliza o pacote `watchdog` (uma dependência principal),
+fornecido por terceiros, bem como as suas respetivas dependências, e está
+disponível apenas nos sistemas operativos suportados por ele. Não está
+disponível, por exemplo, em iOS. 
 
 Neste momento, ao utilizar esta funcionalidade, não se encontra disponível a 
 execução com multiprocessamento.
@@ -487,6 +494,89 @@ optimize-images -s
 optimize-images --supported
 ```
 
+### Utilização programática (como biblioteca)
+
+Desde a versão 2.0.0, o pacote disponibiliza uma API estável, sem interface
+gráfica, no módulo `optimize_images.api`, para integrar a lógica de otimização
+nas suas próprias aplicações. Dê-lhe preferência em relação aos módulos de mais
+baixo nível, que são internos e podem mudar sem aviso.
+
+#### Otimizar uma única imagem
+
+```python
+from optimize_images.api import optimize_single_image
+
+result = optimize_single_image("photo.jpg", quality=70, max_w=1920)
+print(result.was_optimized, result.orig_size, result.final_size)
+```
+
+As opções são apenas por palavra-chave: `quality`, `max_w`, `max_h`,
+`reduce_colors`, `max_colors`, `remove_transparency`, `bg_color`, `grayscale`,
+`keep_exif`, `convert_all`, `conv_big`, `force_del`, `fast_mode`,
+`ignore_size_comparison`.
+
+#### Otimizar uma pasta (em fluxo)
+
+Devolve cada resultado à medida que é processado — ideal para indicar o
+progresso:
+
+```python
+from optimize_images.api import PublicBatchOptions, optimize_as_batch_stream
+
+options = PublicBatchOptions(src_path="./images", quality=75, jobs=4)
+for r in optimize_as_batch_stream(options):
+    print(r.img, "poupou", r.orig_size - r.final_size, "bytes")
+```
+
+#### Otimizar uma pasta (agregado)
+
+Bloqueia e devolve os totais:
+
+```python
+from optimize_images.api import PublicBatchOptions, optimize_as_batch
+
+summary = optimize_as_batch(PublicBatchOptions(src_path="./images"))
+print(summary.optimized_files, "de", summary.found_files,
+      "-", summary.total_bytes_saved, "bytes poupados")
+```
+
+#### Monitorizar uma pasta
+
+```python
+import threading
+from optimize_images.api import PublicBatchOptions, watch_directory
+
+stop = threading.Event()
+options = PublicBatchOptions(src_path="./incoming", quality=80)
+watch_directory(options, lambda r: print("otimizada:", r.img), stop)
+# chamar stop.set() a partir de outra thread para terminar a monitorização
+```
+
+#### Opções e resultados
+
+`PublicBatchOptions` reúne todas as definições; apenas `src_path` é
+obrigatório (as predefinições incluem `quality=80`, `recursive=True`,
+`jobs=0`, que significa deteção automática). Cada imagem otimizada é reportada
+através de um `PublicTaskResult` com: `img`, `orig_format`/`result_format`,
+`orig_mode`/`result_mode`, `orig_colors`/`final_colors`,
+`orig_size`/`final_size` (em bytes) e os indicadores `was_optimized`,
+`was_downsized`, `had_exif`, `has_exif`. A função `optimize_as_batch` devolve um
+`PublicBatchResult` com a lista de ficheiros, além das contagens agregadas, do
+tamanho total, dos bytes poupados e do tempo decorrido.
+
+#### Notas
+
+- O número de processos de trabalho é determinado automaticamente a partir da
+  plataforma (CPU), exceto se definir `options.jobs` com um valor diferente de
+  zero.
+- `watch_directory` escreve uma legenda e um cabeçalho na saída padrão e
+  utiliza o pacote `watchdog` (uma dependência principal); se este estiver em
+  falta, é lançada a exceção `ImportError`.
+- As funções `optimize_as_batch`, `optimize_as_batch_stream` e
+  `optimize_single_image` lançam
+  `optimize_images.exceptions.OIImagesNotFoundError` quando um caminho não
+  corresponde a nenhuma imagem; `watch_directory` lança a mesma exceção quando o
+  caminho não é uma pasta existente.
 
 
 ### Projetos relacionados

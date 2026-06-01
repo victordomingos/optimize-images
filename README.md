@@ -104,6 +104,25 @@ optimize-images --no-recursion ./
 ```
 
 
+## For developers
+
+Besides the command-line interface, Optimize Images exposes a small, stable,
+UI-free API for use in your own Python applications, in the
+`optimize_images.api` module (since version 2.0.0). It can optimize a single
+image or a whole folder, with no terminal output.
+
+```python
+from optimize_images.api import optimize_single_image
+
+result = optimize_single_image("photo.jpg", quality=70, max_w=1920)
+print(result.orig_size, "->", result.final_size)
+```
+
+For batch processing, directory watching, the full set of options and the
+result fields, see [Programmatic use](./docs/docs_EN.md#programmatic-use-as-a-library)
+in the full documentation.
+
+
 ## Getting help
 
 To check the list of available options and their usage, you just need to use one of the 

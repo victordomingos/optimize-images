@@ -42,7 +42,15 @@ and the features depending on them should be treated as optional.
           - [Automatic conversion of big PNG images to JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
           - [Changing the default background color](#changing-the-default-background-color)
    * [Other features](#other-features)
-   
+
+* **[Programmatic use (as a library)](#programmatic-use-as-a-library)**
+   * [Optimize a single image](#optimize-a-single-image)
+   * [Optimize a folder (streaming)](#optimize-a-folder-streaming)
+   * [Optimize a folder (aggregate)](#optimize-a-folder-aggregate)
+   * [Watch a folder](#watch-a-folder)
+   * [Options and results](#options-and-results)
+   * [Notes](#notes)
+
 * **[Related projects](#related-projects)**
    * [Optimize Images Docker](#optimize-images-docker)   
    * [Optimize Images X](#optimize-images-x)   
@@ -249,9 +257,9 @@ optimize-images -wd ./
 optimize-images --watch-directory ./
 ```
 
-This feature requires the optional third-party `watchdog` package and its 
-dependencies, and is only available on operating systems supported by it. It is
-not available, for instance, on iOS.
+This feature uses the third-party `watchdog` package (a core dependency) and
+its dependencies, and is only available on operating systems supported by it. It
+is not available, for instance, on iOS.
 
 At this time, multiprocessing is not available when using this feature.
 
@@ -483,6 +491,86 @@ optimize-images --supported
 ```
 
 
+## Programmatic use (as a library)
+
+Since version 2.0.0, the package provides a stable, UI-free integration API in
+`optimize_images.api` for embedding the optimization logic in your own apps.
+Prefer it over the lower-level modules, which are internal and may change
+without notice.
+
+### Optimize a single image
+
+```python
+from optimize_images.api import optimize_single_image
+
+result = optimize_single_image("photo.jpg", quality=70, max_w=1920)
+print(result.was_optimized, result.orig_size, result.final_size)
+```
+
+Options are keyword-only: `quality`, `max_w`, `max_h`, `reduce_colors`,
+`max_colors`, `remove_transparency`, `bg_color`, `grayscale`, `keep_exif`,
+`convert_all`, `conv_big`, `force_del`, `fast_mode`, `ignore_size_comparison`.
+
+### Optimize a folder (streaming)
+
+Yields each result as it is processed — ideal for progress reporting:
+
+```python
+from optimize_images.api import PublicBatchOptions, optimize_as_batch_stream
+
+options = PublicBatchOptions(src_path="./images", quality=75, jobs=4)
+for r in optimize_as_batch_stream(options):
+    print(r.img, "saved", r.orig_size - r.final_size, "bytes")
+```
+
+### Optimize a folder (aggregate)
+
+Blocks and returns totals:
+
+```python
+from optimize_images.api import PublicBatchOptions, optimize_as_batch
+
+summary = optimize_as_batch(PublicBatchOptions(src_path="./images"))
+print(summary.optimized_files, "of", summary.found_files,
+      "-", summary.total_bytes_saved, "bytes saved")
+```
+
+### Watch a folder
+
+```python
+import threading
+from optimize_images.api import PublicBatchOptions, watch_directory
+
+stop = threading.Event()
+options = PublicBatchOptions(src_path="./incoming", quality=80)
+watch_directory(options, lambda r: print("optimized:", r.img), stop)
+# call stop.set() from another thread to end watching
+```
+
+### Options and results
+
+`PublicBatchOptions` holds every setting; only `src_path` is required
+(defaults include `quality=80`, `recursive=True`, `jobs=0` meaning
+auto-detect). Each optimized file is reported as a `PublicTaskResult` with:
+`img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`,
+`orig_colors`/`final_colors`, `orig_size`/`final_size` (bytes), and the flags
+`was_optimized`, `was_downsized`, `had_exif`, `has_exif`. `optimize_as_batch`
+returns a `PublicBatchResult` with the file list plus aggregate counts, total
+size, bytes saved and elapsed seconds.
+
+### Notes
+
+- Worker count is auto-detected from the platform (CPU) unless you set
+  `options.jobs` to a non-zero value.
+- `watch_directory` prints a legend and banner to standard output, and uses the
+  `watchdog` package (a core dependency); if it is missing it raises
+  `ImportError`.
+- `optimize_as_batch`, `optimize_as_batch_stream` and `optimize_single_image`
+  raise `optimize_images.exceptions.OIImagesNotFoundError` when a path resolves
+  to no images; `watch_directory` raises the same error when the path is not an
+  existing folder.
+
+  
 ### Related projects
 
 #### [Optimize Images Docker](https://github.com/varnav/optimize-images-docker)
