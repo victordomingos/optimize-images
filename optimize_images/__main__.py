@@ -30,7 +30,7 @@ Note for developers integrating this package:
 For programmatic use in third-party applications, please prefer the high-level
 API in optimize_images.api (optimize_single_image / optimize_as_batch).
 
-© 2025 Victor Domingos & contributers (MIT License)
+© 2026 Victor Domingos & contributers (MIT License)
 """
 import concurrent.futures
 import os
@@ -64,7 +64,8 @@ def main():
 def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
                    conv_big, force_del, bg_color, grayscale, ignore_size_comparison,
-                   fast_mode, jobs, output_config):
+                   fast_mode, jobs, output_config, convert_to='jpeg',
+                   webp_quality=80, webp_lossless=False, webp_method=6):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
 
@@ -96,6 +97,10 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         ignore_size_comparison=ignore_size_comparison,
         fast_mode=fast_mode,
         jobs=jobs,
+        convert_to=convert_to,
+        webp_quality=webp_quality,
+        webp_lossless=webp_lossless,
+        webp_method=webp_method,
     )
 
     if watch_dir:

@@ -39,8 +39,12 @@ and the features depending on them should be treated as optional.
        - [PNG](#png)
           - [Reduce the number of colors](#reduce-the-number-of-colors)
           - [Maximum number of colors](#maximum-number-of-colors)
-          - [Automatic conversion of big PNG images to JPEG](#automatic-conversion-of-big-png-images-to-jpeg)
+          - [Automatic conversion of big PNG images (to JPEG or WebP)](#automatic-conversion-of-big-png-images-to-jpeg-or-webp)
           - [Changing the default background color](#changing-the-default-background-color)
+       - [WebP](#webp)
+          - [WebP quality](#webp-quality)
+          - [Lossless WebP](#lossless-webp)
+          - [WebP method (compression effort)](#webp-method-compression-effort)
    * [Other features](#other-features)
 
 * **[Programmatic use (as a library)](#programmatic-use-as-a-library)**
@@ -118,7 +122,7 @@ first step in the image optimization process.
 
 You may also choose to keep the original EXIF data (if it exists) in the 
 optimized files. Note, however, that this option is currently available only 
-for JPEG files. 
+for JPEG and WebP files. 
 
 In PNG files, you will achieve a more drastic file size reduction if you 
 choose to reduce the number of colors using an adaptive palette. Be aware 
@@ -128,6 +132,11 @@ noticeable way.
 Since version 1.3.5, Optimize Images also offers experimental support for MPO 
 images, which are now treated as single picture JPEG image files (if multiple 
 pictures are present in one MPO file, only the first one will be processed).
+
+Since version 2.1.0, WebP images are also optimized: existing WebP files are
+re-encoded in place to reduce their size (animated WebP files are left
+untouched), and PNG images can optionally be converted to WebP instead of
+JPEG.
 
 
 ### DISCLAIMER
@@ -333,8 +342,8 @@ optimize-images -q 65 ./
 
 ##### Keep EXIF data
 
-Use the `-ke` or `--keep-exif` option to keep existing EXIF data in JPEG 
-images (by default, if you don't add this argument, EXIF data is discarded).
+Use the `-ke` or `--keep-exif` option to keep existing EXIF data in JPEG and 
+WebP images (by default, if you don't add this argument, EXIF data is discarded).
 
 Try to optimize all image files in current working directory and all of its
 subdirectories, applying a quality of 65% to JPEG files and keeping the 
@@ -401,36 +410,47 @@ optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
 ```
 
 
-##### Automatic conversion of big PNG images to JPEG
+##### Automatic conversion of big PNG images (to JPEG or WebP)
 
-*(work in progess)*
+Automatically convert big PNG images that have a large number of colors
+(presumably a photo or photo-like image) to a more efficient format. It uses
+an algorithm to determine whether the conversion is worthwhile and decides
+automatically about it. Use `-cb` (or `--convert-big`) for this automatic
+selection, or `-ca` (or `--convert-all`) to convert every PNG found. By
+default, the original PNG files remain untouched and are kept alongside the
+converted images in their original folders.
 
-Automatically convert to JPEG format any big PNG images that have with a
-large number of colors (presumably a photo or photo-like image). It uses
-an algorithm to determine whether it is a good idea to convert to JPG
-and automatically decide about it. By default, when using this option,
-the original PNG files will remain untouched and will be kept alongside
-the optimized JPG images in their original folders.
+The conversion target is JPEG by default. Add the `-tw` (or `--to-webp`)
+argument to produce WebP files instead - unlike JPEG, WebP keeps any
+transparency.
 
-IMPORTANT: IF A JPEG WITH THE SAME NAME ALREADY EXISTS, IT WILL BE
-REPLACED BY THE JPEG FILE RESULTING FROM THIS CONVERTION.**
-
+**IMPORTANT: IF A FILE WITH THE SAME NAME AND TARGET EXTENSION ALREADY EXISTS,
+IT WILL BE REPLACED BY THE FILE RESULTING FROM THIS CONVERSION.**
 
 ```
-optimize-images -cb
+optimize-images -cb ./
 ```
 
 ```
 optimize-images --convert_big
 ```
 
-
-You may force the deletion of the original PNG files when using
-automatic conversion to JPEG, by adding the `-fd` or `--force-delete`
-argument:
+Convert every PNG to WebP instead of JPEG:
 
 ```
-optimize-images -cb -fd
+optimize-images -ca -tw ./
+```
+
+
+```
+optimize-images --convert-all -to-webp ./
+```
+
+You may force the deletion of the original PNG files when converting, by adding
+the `-fd` or `--force-delete` argument:
+
+```
+optimize-images -cb -fd ./
 ```
 
 ```
@@ -462,6 +482,50 @@ To convert a big PNG image with some transparency applying a pure green
 background:
 ```
 optimize-images -cb -hbg 00FF00 ./image.png
+```
+
+
+#### WebP:
+
+Existing WebP image files are optimized in place, by re-encoding them with the
+settings below. WebP keeps its transparency (alpha channel) unless you also ask
+to remove it with `-rt`. Animated WebP files are detected and left untouched,
+to avoid flattening the animation.
+
+You can also convert PNG images to WebP instead of JPEG - see
+[Automatic conversion of big PNG images (to JPEG or WebP)](#automatic-conversion-of-big-png-images-to-jpeg-or-webp).
+
+##### WebP quality
+
+Set the quality for WebP files (an integer between 1 and 100) using the `-wq`
+argument. It defaults to 80. A lower value reduces both image quality and file
+size. In lossless mode (see below) this value controls the compression effort
+instead.
+
+Try to optimize all WebP files in the current directory with a quality of 75:
+
+```
+optimize-images -wq 75 ./
+```
+
+##### Lossless WebP
+
+Use the `-wl` or `--webp-lossless` argument to encode WebP images in lossless
+mode. This preserves every pixel exactly, but for photographic images it
+usually produces much larger files than lossy mode.
+
+```
+optimize-images -wl ./
+```
+
+##### WebP method (compression effort)
+
+Use the `-wm` argument to set the WebP compression method, an integer between 0
+and 6, where 6 is the slowest but usually gives the best compression. It
+defaults to 6.
+
+```
+optimize-images -wm 4 ./
 ```
 
 
@@ -509,7 +573,10 @@ print(result.was_optimized, result.orig_size, result.final_size)
 
 Options are keyword-only: `quality`, `max_w`, `max_h`, `reduce_colors`,
 `max_colors`, `remove_transparency`, `bg_color`, `grayscale`, `keep_exif`,
-`convert_all`, `conv_big`, `force_del`, `fast_mode`, `ignore_size_comparison`.
+`convert_all`, `conv_big`, `force_del`, `fast_mode`, `ignore_size_comparison`,
+`convert_to`, `webp_quality`, `webp_lossless`, `webp_method`. The conversion
+target is set by `convert_to` (`'jpeg'` by default, or `'webp'`); WebP encoding
+is tuned with `webp_quality`, `webp_lossless` and `webp_method`.
 
 ### Optimize a folder (streaming)
 

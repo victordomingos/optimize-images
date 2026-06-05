@@ -4,19 +4,20 @@ Public integration API for third-party applications.
 This module exposes stable, UI-free entry points to the image optimization
 logic of this package. Prefer using these functions over lower-level modules.
 """
-from timeit import default_timer as timer
-from typing import Iterable, Iterator, List, Callable, Optional
-import threading
 import os
+import threading
 from dataclasses import dataclass
+from timeit import default_timer as timer
+from typing import Iterator, List, Callable, Optional
 from typing import Tuple
 
+from optimize_images.batch_core import build_tasks as _build_tasks
 from optimize_images.data_structures import TaskResult as _TaskResult, \
-    Task as _Task, BatchOptions as _BatchOptions, BatchResult as _BatchResult
+    Task as _Task, BatchOptions as _BatchOptions
 from optimize_images.do_optimization import do_optimization
 from optimize_images.exceptions import OIImagesNotFoundError
 from optimize_images.platforms import adjust_for_platform
-from optimize_images.batch_core import build_tasks as _build_tasks
+
 
 # -----------------------
 # Public API data classes
@@ -41,6 +42,11 @@ class PublicBatchOptions:
     ignore_size_comparison: bool = False
     fast_mode: bool = False
     jobs: int = 0
+    convert_to: str = 'jpeg'
+    webp_quality: int = 80
+    webp_lossless: bool = False
+    webp_method: int = 6
+
 
 @dataclass(frozen=True)
 class PublicTaskResult:
@@ -58,6 +64,7 @@ class PublicTaskResult:
     had_exif: bool
     has_exif: bool
 
+
 @dataclass(frozen=True)
 class PublicBatchResult:
     results: List[PublicTaskResult]
@@ -68,9 +75,30 @@ class PublicBatchResult:
     total_bytes_saved: int
     elapsed_seconds: float
 
+
 # -----------------------
 # Internal conversion
 # -----------------------
+
+_SUPPORTED_CONVERT_TARGETS = ('jpeg', 'webp')
+
+
+def _normalize_convert_to(value: str) -> str:
+    """Validate and normalize the conversion target format.
+
+    Treats None/'' as the default ('jpeg'), is case-insensitive, and accepts
+    'jpg' as an alias for 'jpeg'. Raises ValueError for unsupported targets so
+    that integration mistakes surface early instead of silently falling back.
+    """
+    target = (value or 'jpeg').strip().lower()
+    if target == 'jpg':
+        target = 'jpeg'
+    if target not in _SUPPORTED_CONVERT_TARGETS:
+        allowed = ', '.join(repr(t) for t in _SUPPORTED_CONVERT_TARGETS)
+        raise ValueError(
+            f"Unsupported convert_to target {value!r}. Supported: {allowed}.")
+    return target
+
 
 def _to_internal_options(opts: PublicBatchOptions) -> _BatchOptions:
     return _BatchOptions(
@@ -92,7 +120,12 @@ def _to_internal_options(opts: PublicBatchOptions) -> _BatchOptions:
         fast_mode=opts.fast_mode,
         jobs=opts.jobs,
         output_config=None,
+        convert_to=_normalize_convert_to(opts.convert_to),
+        webp_quality=opts.webp_quality,
+        webp_lossless=opts.webp_lossless,
+        webp_method=opts.webp_method,
     )
+
 
 def _to_public_result(r: _TaskResult) -> PublicTaskResult:
     return PublicTaskResult(
@@ -111,6 +144,7 @@ def _to_public_result(r: _TaskResult) -> PublicTaskResult:
         has_exif=r.has_exif,
     )
 
+
 # -----------------------
 # Public API functions
 # -----------------------
@@ -124,6 +158,7 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
     with our_pool_executor(max_workers=workers) as executor:
         for result in executor.map(do_optimization, tasks):
             yield _to_public_result(result)
+
 
 def optimize_as_batch(options: PublicBatchOptions) -> PublicBatchResult:
     start = timer()
@@ -155,23 +190,28 @@ def optimize_as_batch(options: PublicBatchOptions) -> PublicBatchResult:
         elapsed_seconds=elapsed,
     )
 
+
 def optimize_single_image(
-    src_path: str,
-    *,
-    quality: int = 80,
-    remove_transparency: bool = False,
-    reduce_colors: bool = False,
-    max_colors: int = 256,
-    max_w: int = 0,
-    max_h: int = 0,
-    keep_exif: bool = False,
-    convert_all: bool = False,
-    conv_big: bool = False,
-    force_del: bool = False,
-    bg_color: Tuple[int, int, int] = (255, 255, 255),
-    grayscale: bool = False,
-    ignore_size_comparison: bool = False,
-    fast_mode: bool = False,
+        src_path: str,
+        *,
+        quality: int = 80,
+        remove_transparency: bool = False,
+        reduce_colors: bool = False,
+        max_colors: int = 256,
+        max_w: int = 0,
+        max_h: int = 0,
+        keep_exif: bool = False,
+        convert_all: bool = False,
+        conv_big: bool = False,
+        force_del: bool = False,
+        bg_color: Tuple[int, int, int] = (255, 255, 255),
+        grayscale: bool = False,
+        ignore_size_comparison: bool = False,
+        fast_mode: bool = False,
+        convert_to: str = 'jpeg',
+        webp_quality: int = 80,
+        webp_lossless: bool = False,
+        webp_method: int = 6,
 ) -> PublicTaskResult:
     options = PublicBatchOptions(
         src_path=src_path,
@@ -191,6 +231,10 @@ def optimize_single_image(
         ignore_size_comparison=ignore_size_comparison,
         fast_mode=fast_mode,
         jobs=0,
+        convert_to=convert_to,
+        webp_quality=webp_quality,
+        webp_lossless=webp_lossless,
+        webp_method=webp_method,
     )
     internal = _to_internal_options(options)
     tasks = list(_build_tasks(internal))
@@ -198,6 +242,7 @@ def optimize_single_image(
         raise OIImagesNotFoundError("No image files were found. Provide a valid file path.")
     res = do_optimization(tasks[0])
     return _to_public_result(res)
+
 
 def watch_directory(
         options: PublicBatchOptions,
@@ -234,6 +279,10 @@ def watch_directory(
         internal.ignore_size_comparison,
         internal.fast_mode,
         internal.output_config,
+        internal.convert_to,
+        internal.webp_quality,
+        internal.webp_lossless,
+        internal.webp_method,
     )
 
     # Define a function to check if a file is a supported image
@@ -242,7 +291,7 @@ def watch_directory(
             return False
         else:
             extension = os.path.splitext(filepath)[1][1:]
-            return extension.lower() in ['jpg', 'jpeg', 'png']
+            return extension.lower() in ['jpg', 'jpeg', 'png', 'webp']
 
     # Create our own event handler directly
     class APIOptimizeImageEventHandler(FileSystemEventHandler):
@@ -300,6 +349,10 @@ def watch_directory(
                 internal.ignore_size_comparison,
                 task.fast_mode,
                 task.output_config,
+                task.convert_to,
+                task.webp_quality,
+                task.webp_lossless,
+                task.webp_method,
             )
 
             # Process the image

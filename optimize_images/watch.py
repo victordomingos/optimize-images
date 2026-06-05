@@ -21,7 +21,7 @@ def is_image(filepath):
         return False
     else:
         extension = os.path.splitext(filepath)[1][1:]
-        return extension.lower() in ['jpg', 'jpeg', 'png']
+        return extension.lower() in ['jpg', 'jpeg', 'png', 'webp']
 
 
 class OptimizeImageEventHandler(FileSystemEventHandler):
@@ -57,7 +57,8 @@ class OptimizeImageEventHandler(FileSystemEventHandler):
                         task.max_h, task.keep_exif, task.convert_all,
                         task.conv_big, task.force_del, task.bg_color,
                         task.grayscale, task.no_size_comparison, task.fast_mode,
-                        task.output_config)
+                        task.output_config, task.convert_to, task.webp_quality,
+                        task.webp_lossless, task.webp_method)
 
         result: TaskResult = do_optimization(img_task)
 

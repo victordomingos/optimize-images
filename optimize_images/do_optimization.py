@@ -2,11 +2,11 @@
 
 import os
 
-from PIL import Image, ImageOps, ExifTags
-
+from PIL import Image
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.img_optimize_jpg import optimize_jpg
 from optimize_images.img_optimize_png import optimize_png
+from optimize_images.img_optimize_webp import optimize_webp
 
 
 def do_optimization(task: Task) -> TaskResult:
@@ -31,6 +31,8 @@ def do_optimization(task: Task) -> TaskResult:
             return optimize_png(task)
         if img_format in ('JPEG', 'MPO'):
             return optimize_jpg(task)
+        if img_format == 'WEBP':
+            return optimize_webp(task)
 
     except OSError:
         return TaskResult(img=task.src_path,

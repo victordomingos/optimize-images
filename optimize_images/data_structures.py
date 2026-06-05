@@ -30,6 +30,12 @@ class Task(NamedTuple):
     no_size_comparison: bool
     fast_mode: bool
     output_config: OutputConfiguration
+    # Conversion target and WebP-specific settings (kept last, with defaults,
+    # so that existing positional Task(...) construction stays compatible).
+    convert_to: str = 'jpeg'
+    webp_quality: int = 80
+    webp_lossless: bool = False
+    webp_method: int = 6
 
 
 class TaskResult(NamedTuple):
@@ -69,6 +75,11 @@ class BatchOptions:
     fast_mode: bool = False
     jobs: int = 0
     output_config: Optional[object] = None
+    # Conversion target and WebP-specific settings.
+    convert_to: str = 'jpeg'
+    webp_quality: int = 80
+    webp_lossless: bool = False
+    webp_method: int = 6
 
 
 @dataclass

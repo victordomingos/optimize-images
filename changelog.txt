@@ -5,6 +5,26 @@ Version history:
 
 
 ---
+v.2.1.0 - 2026-06-??
+ * Added WebP support: existing WebP files are now optimized in place, just
+   like PNG and JPEG. Animated WebP files are left untouched.
+ * PNG conversion can now target WebP instead of JPEG. WebP preserves
+   transparency. The default conversion target remains JPEG, so existing
+   behaviour is unchanged unless the new option is used.
+ * New CLI options: -tw/--to-webp (produce WebP when converting PNGs with -ca
+   or -cb), -wq (WebP quality), -wl/--webp-lossless, and -wm (WebP method /
+   compression effort).
+ * Public API (backwards compatible): optimize_single_image() gained four
+   keyword-only arguments - convert_to, webp_quality, webp_lossless and
+   webp_method - all with defaults. PublicBatchOptions gained the matching
+   fields, appended at the end with defaults. Existing calls are unaffected
+   and PublicTaskResult is unchanged.
+ * UPGRADE NOTE: because WebP is now a supported format, running this tool on
+   a folder will also re-encode any WebP files it finds (destructively, in
+   place), where previously those files were ignored. As always, please keep a
+   backup of the originals before processing.
+
+---
 v.2.0.0 - 2026-05-26
  * Removed dependency on piexif, since Pillow supports EXIF metadata (thanks to
    @varnav for the alert on this).

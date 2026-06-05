@@ -6,11 +6,11 @@ import sys
 from argparse import ArgumentParser
 from importlib.metadata import version, PackageNotFoundError
 
-import PIL  # it exists, was checked on main
-
 from optimize_images import __version__
-from optimize_images.constants import DEFAULT_QUALITY, SUPPORTED_FORMATS
+from optimize_images.constants import DEFAULT_QUALITY, DEFAULT_WEBP_QUALITY, \
+    DEFAULT_WEBP_METHOD, SUPPORTED_FORMATS
 from optimize_images.data_structures import OutputConfiguration
+
 
 def get_version_info() -> str:
     """Returns a string with the current application version and environment info."""
@@ -62,6 +62,16 @@ def get_formats() -> str:
           "note that any files without one of these file extensions " \
           "will be ignored):"
     return f"\n{msg} {formats}\n\n"
+
+
+def _tagged(formats: str, text: str) -> str:
+    """Prefix an option's help text with the image formats it affects.
+
+    The bracketed tag (e.g. "[JPEG, WebP]" or "[ALL]") lets users see at a
+    glance which formats each option applies to, now that the options are
+    grouped by function rather than by format.
+    """
+    return f"[{formats}] {text}"
 
 
 def get_args():
@@ -116,14 +126,16 @@ def get_args():
     quiet_help = 'Quiet mode, output nothing'
     parser.add_argument('--quiet', action='store_true', help=quiet_help)
 
-    general_msg = 'These options will be applied individually to each ' \
-                  'image being processed, independently of its format.'
+    proc_msg = 'Image processing options, grouped by function. The bracketed ' \
+               'tag on each option shows which image formats it affects ' \
+               '([ALL] means JPEG, PNG and WebP).'
     general_group = parser.add_argument_group(
-        'General image settings'.upper(), description=general_msg)
+        'Resizing and general options'.upper(), description=proc_msg)
 
     mw_help = 'The maximum width (in pixels).'
     general_group.add_argument('-mw', dest="max_width",
-                               type=int, default=0, help=mw_help)
+                               type=int, default=0,
+                               help=_tagged('ALL', mw_help))
 
     mh_help = "The maximum height (in pixels). Any image that has a dimension " \
               "exceeding a specified value will be downsized as the first " \
@@ -131,89 +143,116 @@ def get_args():
               "after the whole optimization process, the resulting file " \
               "size isn't any smaller than the original."
     general_group.add_argument('-mh', dest="max_height",
-                               type=int, default=0, help=mh_help)
+                               type=int, default=0,
+                               help=_tagged('ALL', mh_help))
 
     general_group.add_argument('-g', '--grayscale', action='store_true',
-                               help="Convert to grayscale.")
+                               help=_tagged('ALL', "Convert to grayscale."))
 
     nc_help = "Don't compare the original and resulting file sizes, and save " \
               "the new image anyway (useful, for instance, if you prefer to " \
               "have all images with the same color, size, or quality settings)."
     general_group.add_argument('-nc', '--no-comparison', action='store_true',
-                               help=nc_help)
+                               help=_tagged('ALL', nc_help))
 
-    fm_help = 'Skip some actions (e.g., the final palete rebuild for indexed ' \
-              'PNG images or variable JPEG quality setting) in order to ' \
+    fm_help = 'Skip some actions (e.g., the final palette rebuild for indexed ' \
+              'PNG images, or the variable JPEG quality setting) in order to ' \
               'finish faster.'
-    general_group.add_argument('-fm', '--fast-mode', action='store_true', help=fm_help)
+    general_group.add_argument('-fm', '--fast-mode', action='store_true',
+                               help=_tagged('JPEG, PNG', fm_help))
 
-    jpg_msg = 'The following options apply only to JPEG image files.'
-    jpg_group = parser.add_argument_group(
-        'JPEG specific options'.upper(), description=jpg_msg)
+    enc_group = parser.add_argument_group(
+        'Quality and encoding options'.upper())
 
     q_help = 'Specify a fixed quality setting for JPEG files (an integer ' \
              'value, between 1 and 100).'
-    jpg_group.add_argument('-q', dest='quality',
-                           type=int, help=q_help)
+    enc_group.add_argument('-q', dest='quality',
+                           type=int, help=_tagged('JPEG', q_help))
 
-    jpg_group.add_argument(
-        '-ke',
-        '--keep-exif',
-        action='store_true',
-        help="Keep image EXIF data (by default, it's discarded).")
+    wq_help = 'Quality setting for WebP files (an integer between 1 and 100). ' \
+              'Defaults to 80. In lossless mode it controls the compression ' \
+              'effort instead.'
+    enc_group.add_argument('-wq', dest='webp_quality',
+                           type=int, default=None,
+                           help=_tagged('WebP', wq_help))
 
-    png_msg = 'The following options apply only to PNG image files.'
-    png_group = parser.add_argument_group(
-        'PNG specific options'.upper(), description=png_msg)
+    wl_help = 'Encode WebP images in lossless mode.'
+    enc_group.add_argument('-wl', '--webp-lossless', action='store_true',
+                           help=_tagged('WebP', wl_help))
+
+    wm_help = 'WebP compression method/effort (an integer between 0 and 6, ' \
+              'where 6 is the slowest but usually gives the best ' \
+              'compression). Defaults to 6.'
+    enc_group.add_argument('-wm', dest='webp_method',
+                           type=int, default=DEFAULT_WEBP_METHOD,
+                           help=_tagged('WebP', wm_help))
+
+    color_group = parser.add_argument_group(
+        'Color, transparency and metadata options'.upper())
 
     rc_help = "Reduce colors using an adaptive color palette. This option " \
               "can have a big impact both on file size and image quality."
-    png_group.add_argument('-rc', "--reduce-colors", dest="reduce_colors",
-                           action='store_true', help=rc_help)
+    color_group.add_argument('-rc', "--reduce-colors", dest="reduce_colors",
+                             action='store_true',
+                             help=_tagged('PNG', rc_help))
 
     mc_help = "The maximum number of colors when reducing colors (-rc) " \
               "(an integer between 0 and 255). Defaults to 255."
-    png_group.add_argument('-mc', dest="max_colors",
-                           type=int, default=256, help=mc_help)
+    color_group.add_argument('-mc', dest="max_colors",
+                             type=int, default=256,
+                             help=_tagged('PNG', mc_help))
 
-    rt_help = "Remove transparency (by default, white background)."
-    png_group.add_argument('-rt',
-                           dest="remove_transparency", action='store_true',
-                           help=rt_help)
+    rt_help = "Remove transparency (replaced with a background color, white " \
+              "by default). WebP keeps its alpha channel unless this is set."
+    color_group.add_argument('-rt', dest="remove_transparency",
+                             action='store_true',
+                             help=_tagged('PNG, WebP', rt_help))
 
     bg_help = "The background color to apply when removing transparency or " \
               "converting to JPEG. Specify 3 integer values (Red, Green and " \
               "Blue), between 0 and 255, separated by spaces. E.g.: " \
               "'255 0 0' for red)."
-    png_group.add_argument(
-        '-bg', dest="val", type=int, nargs=3, help=bg_help)
+    color_group.add_argument('-bg', dest="val", type=int, nargs=3,
+                             help=_tagged('PNG, WebP', bg_help))
 
     hbg_help = "The background color in hexadecimal (HTML style) to use " \
-               "when removing transparency or converting to JPEG. E.g.: '00FF00' " \
-               "for green color."
-    png_group.add_argument('-hbg', dest="hex_color", type=str, help=hbg_help)
+               "when removing transparency or converting to JPEG. E.g.: " \
+               "'00FF00' for green color."
+    color_group.add_argument('-hbg', dest="hex_color", type=str,
+                             help=_tagged('PNG, WebP', hbg_help))
 
-    cb_help = "Convert to JPEG any big PNG images that have " \
-              "a large number of colors. It uses an algorithm " \
-              "to determine whether it is a good idea and automatically decide " \
-              "about it. By default, the original PNG " \
-              "files will remain untouched and will be kept alongside the " \
-              "optimized JPG images in their original folders (existing JPEGs " \
-              "will be replaced)."
-    png_group.add_argument(
-        '-cb', "--convert-big", action='store_true', help=cb_help)
+    ke_help = "Keep image EXIF data (by default, it's discarded)."
+    color_group.add_argument('-ke', '--keep-exif', action='store_true',
+                             help=_tagged('JPEG, WebP', ke_help))
 
-    ca_help = "Convert to JPEG all PNG images found. By default, " \
-              "the original PNG " \
-              "files will remain untouched and will be kept alongside the " \
-              "optimized JPG images in their original folders (existing JPEGs " \
-              "will be replaced)."
-    png_group.add_argument(
-        '-ca', "--convert-all", action='store_true', help=ca_help)
+    conv_group = parser.add_argument_group(
+        'Format conversion options'.upper())
 
-    fd_help = "Delete the original file when converting to JPG."
-    png_group.add_argument(
-        '-fd', "--force-delete", action='store_true', help=fd_help)
+    cb_help = "Convert big PNG images that have a large number of colors to a " \
+              "more efficient format (JPEG by default, or WebP with -tw). It " \
+              "uses an algorithm to automatically decide whether the " \
+              "conversion is worthwhile. The original PNG files are kept " \
+              "alongside the converted images (unless -fd is used); existing " \
+              "files with the target name will be replaced."
+    conv_group.add_argument('-cb', "--convert-big", action='store_true',
+                            help=_tagged('PNG', cb_help))
+
+    ca_help = "Convert all PNG images found to another format (JPEG by " \
+              "default, or WebP with -tw). The original PNG files are kept " \
+              "alongside the converted images (unless -fd is used); existing " \
+              "files with the target name will be replaced."
+    conv_group.add_argument('-ca', "--convert-all", action='store_true',
+                            help=_tagged('PNG', ca_help))
+
+    tw_help = "When converting PNG images (with -ca or -cb), produce WebP " \
+              "files instead of JPEG. Unlike JPEG, WebP preserves " \
+              "transparency."
+    conv_group.add_argument('-tw', '--to-webp', dest='to_webp',
+                            action='store_true', help=_tagged('PNG', tw_help))
+
+    fd_help = "Delete the original PNG file after a successful conversion."
+    conv_group.add_argument('-fd', "--force-delete", action='store_true',
+                            help=_tagged('PNG', fd_help))
 
     parser._positionals.title = parser._positionals.title.upper()
     parser._optionals.title = parser._optionals.title.upper()
@@ -271,9 +310,24 @@ def get_args():
               "bright red you can use: '-bg 255 0 0' or '-hbg #FF0000'.\n\n"
         parser.exit(status=0, message=msg)
 
+    webp_quality = args.webp_quality
+    if webp_quality is None:
+        webp_quality = DEFAULT_WEBP_QUALITY
+    elif webp_quality > 100 or webp_quality < 1:
+        msg = "\nPlease specify an integer WebP quality value between 1 and " \
+              "100.\n\n"
+        parser.exit(status=0, message=msg)
+
+    if args.webp_method < 0 or args.webp_method > 6:
+        msg = "\nPlease specify a WebP method (effort) between 0 and 6.\n\n"
+        parser.exit(status=0, message=msg)
+
+    convert_to = 'webp' if args.to_webp else 'jpeg'
+
     output_config = OutputConfiguration(args.only_summary, args.only_progress, args.quiet)
     return src_path, watch_dir, recursive, quality, args.remove_transparency, \
         args.reduce_colors, args.max_colors, args.max_width, args.max_height, \
         args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
         bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
-        args.jobs, output_config
+        args.jobs, output_config, convert_to, webp_quality, \
+        args.webp_lossless, args.webp_method

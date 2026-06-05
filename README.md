@@ -53,7 +53,8 @@ variable quality setting between 75 and 80 (by Pillow's scale), that is
 dynamically determined for each image according to the amount of change caused
 in its pixels, then it removes any EXIF metadata, tries to optimize each
 encoder's settings for maximum space reduction and applies the maximum ZLIB
-compression on PNG.
+compression on PNG. WebP images are re-encoded to reduce their size while 
+preserving any transparency.
 
 You must explicitly pass it a path to the source image file or to the
 directory containing the image files to be processed. By default, it will scan 
@@ -65,8 +66,8 @@ If no space savings were achieved for a given file, the original version will
 be kept instead.
 
 There are many other features and command-line options, like downsizing, 
-keeping EXIF data, color palete reduction, PNG to JPEG conversion. Please 
-check the docs for further information.
+keeping EXIF data, color palette reduction, WebP optimization, and PNG to JPEG 
+(or WebP) conversion. Please check the docs for further information.
 
 **DISCLAIMER:  
 Please note that the operation is done DESTRUCTIVELY, by replacing the

@@ -39,8 +39,12 @@ como opcionais, tais como as funcionalidades que deles dependam.
        - [PNG](#png)
           - [Reduzir o número de cores](#reduzir-o-número-de-cores)
           - [Número máximo de cores](#número-máximo-de-cores)
-          - [Conversão automática de imagens PNG grandes para JPEG](#conversão-automática-de-imagens-png-grandes-para-jpeg)
+          - [Conversão automática de imagens PNG grandes (para JPEG ou WebP)](#conversão-automática-de-imagens-png-grandes-para-jpeg-ou-webp)
           - [Mudar a cor de fundo predefinida](#mudar-a-cor-de-fundo-predefinida)
+       - [WebP](#webp)
+          - [Qualidade WebP](#qualidade-webp)
+          - [WebP sem perdas](#webp-sem-perdas)
+          - [Método WebP (esforço de compressão)](#método-webp-esforço-de-compressão)
    * [Outras funcionalidades](#outras-funcionalidades)
    
 * **[Utilização programática (como biblioteca)](#utilização-programática-como-biblioteca)**
@@ -120,7 +124,7 @@ otimização de imagem.
 
 Também poderá optar por manter os dados EXIF originais (se existirem) nos 
 ficheiros otimizados. De notar, contudo, que esta opção apenas se encontra 
-disponível para ficheiros JPEG.
+disponível para ficheiros JPEG e WebP.
 
 Nos ficheiros PNG, conseguirá alcançar uma redução mais acentuada no tamanho 
 dos ficheiros se optar por reduzir o número de cores utilizando uma paleta 
@@ -131,6 +135,11 @@ Desde a versão 1.3.5, a aplicação Optimize Images oferece suporte experimenta
 para imagens no formato MPO, as quais são tratadas como ficheiros JPEG de imagem 
 única (caso um ficheiro MPO contenha várias imagens, apenas a primeira será 
 processada).
+
+Desde a versão 2.1.0, as imagens WebP também são otimizadas: os ficheiros WebP
+existentes são recodificados no próprio local para reduzir o seu tamanho (os
+ficheiros WebP animados são deixados intactos) e as imagens PNG podem,
+opcionalmente, ser convertidas para WebP em vez de JPEG.
 
 
 ### ADVERTÊNCIA
@@ -348,7 +357,7 @@ optimize-images -q 65 ./
 ##### Manter dados EXIF
 
 Utilize a opção `-ke` ou `--keep-exif` para manter os dados EXIF existentes
-em imagens JPEG (por defeito, se não acrescentar este argumento, os dados 
+em imagens JPEG e WebP (por defeito, se não acrescentar este argumento, os dados 
 EXIF são apagados.
  
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e
@@ -413,32 +422,39 @@ optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
 ```
 
 
-##### Conversão automática de imagens PNG grandes para JPEG
+##### Conversão automática de imagens PNG grandes (para JPEG ou WebP)
 
-*(trabalho em curso)*
+Converter automaticamente quaisquer imagens PNG grandes que tenham um grande
+número de cores (presumivelmente uma fotografia ou uma imagem semelhante a uma
+fotografia) para um formato mais eficiente. Utiliza um algoritmo para
+determinar se a conversão vale a pena e decide automaticamente sobre isso. Use
+`-cb` (ou `--convert-big`) para esta seleção automática, ou `-ca` (ou
+`--convert-all`) para converter todos os PNG encontrados. Por defeito, os
+ficheiros PNG originais permanecem intactos e são mantidos juntamente com as
+imagens convertidas, nas pastas originais.
 
-Converter automaticamente para o formato JPEG quaisquer imagens PNG 
-grandes que tenham um grande número de cores (presumivelmente uma 
-fotografia ou uma imagem semelhante a uma fotografia. Utiliza um 
-algoritmo para determinar se será uma boa ideia converter para JPG e 
-decide automaticamente sobre isso. Por defeito, ao usar esta opção,
-os ficheiros PNG originais permanecerão intactos e serão mantidos 
-juntamente com as imagens JPG otimizadas.
+O formato de destino da conversão é JPEG por defeito. Adicione o argumento
+`-tw` (ou `--to-webp`) para produzir antes ficheiros WebP - ao contrário do
+JPEG, o WebP mantém qualquer transparência.
 
-**IMPORTANTE: SE JÁ EXISTIR NA MESMA PASTA UM FICHEIRO JPEG COM O 
-MESMO NOME, SERÁ SUBSTITUÍDO PELO FICHEIRO JPEG RESULTANTE DESTA
-CONVERSÃO.**
-
-
-```
-optimize-images -cb
-```
-
-Para forçar o apagamento desses ficheiros PNG originais ao usar a conversão 
-automática para JPEG, adicione o argumento `-fd` ou `--force-delete`:
+**IMPORTANTE: SE JÁ EXISTIR UM FICHEIRO COM O MESMO NOME E EXTENSÃO DE DESTINO,
+SERÁ SUBSTITUÍDO PELO FICHEIRO RESULTANTE DESTA CONVERSÃO.**
 
 ```
-optimize-images -cb -fd
+optimize-images -cb ./
+```
+
+Converter todos os PNG para WebP em vez de JPEG:
+
+```
+optimize-images -ca -tw ./
+```
+
+Para forçar o apagamento dos ficheiros PNG originais ao converter, adicione o
+argumento `-fd` ou `--force-delete`:
+
+```
+optimize-images -cb -fd ./
 ```
 
 
@@ -468,6 +484,52 @@ fundo verde puro:
 ```
 optimize-images -cb -hbg 00FF00 ./image.png
 ```
+
+#### WebP:
+
+Os ficheiros de imagem WebP existentes são otimizados alterando os ficheiros 
+originais, recodificando-os com as definições abaixo. O WebP mantém a 
+transparência (canal alfa), exceto se também pedir para a remover com `-rt`.
+Os ficheiros WebP animados são detetados e deixados intactos, para evitar 
+perder a animação.
+
+Também pode converter imagens PNG para WebP em vez de JPEG - consulte
+[Conversão automática de imagens PNG grandes (para JPEG ou WebP)](#conversão-automática-de-imagens-png-grandes-para-jpeg-ou-webp).
+
+##### Qualidade WebP
+
+Defina a qualidade para ficheiros WebP (um número inteiro entre 1 e 100) usando
+o argumento `-wq`. O valor predefinido é 80. Um valor mais baixo reduz tanto a
+qualidade de imagem como o tamanho do ficheiro. No modo sem perdas (ver abaixo),
+este valor controla antes o esforço de compressão.
+
+Tentar otimizar todos os ficheiros WebP na pasta atual com uma qualidade de 75:
+
+```
+optimize-images -wq 75 ./
+```
+
+##### WebP sem perdas
+
+Utilize o argumento `-wl` ou `--webp-lossless` para codificar imagens WebP em
+modo sem perdas. Isto preserva exatamente todos os pixels, mas para imagens
+fotográficas resulta normalmente em ficheiros muito maiores do que o modo com
+perdas.
+
+```
+optimize-images -wl ./
+```
+
+##### Método WebP (esforço de compressão)
+
+Utilize o argumento `-wm` para definir o método de compressão WebP, um número
+inteiro entre 0 e 6, em que 6 é o mais lento mas costuma dar a melhor
+compressão. O valor predefinido é 6.
+
+```
+optimize-images -wm 4 ./
+```
+
 
 ### Outras funcionalidades
 
@@ -513,7 +575,10 @@ print(result.was_optimized, result.orig_size, result.final_size)
 As opções são apenas por palavra-chave: `quality`, `max_w`, `max_h`,
 `reduce_colors`, `max_colors`, `remove_transparency`, `bg_color`, `grayscale`,
 `keep_exif`, `convert_all`, `conv_big`, `force_del`, `fast_mode`,
-`ignore_size_comparison`.
+`ignore_size_comparison`, `convert_to`, `webp_quality`, `webp_lossless`,
+`webp_method`. O formato de destino da conversão é definido por `convert_to`
+(`'jpeg'` por defeito, ou `'webp'`); a codificação WebP é ajustada com
+`webp_quality`, `webp_lossless` e `webp_method`.
 
 #### Otimizar uma pasta (em fluxo)
 
@@ -524,6 +589,7 @@ progresso:
 from optimize_images.api import PublicBatchOptions, optimize_as_batch_stream
 
 options = PublicBatchOptions(src_path="./images", quality=75, jobs=4)
+
 for r in optimize_as_batch_stream(options):
     print(r.img, "poupou", r.orig_size - r.final_size, "bytes")
 ```
@@ -536,6 +602,7 @@ Bloqueia e devolve os totais:
 from optimize_images.api import PublicBatchOptions, optimize_as_batch
 
 summary = optimize_as_batch(PublicBatchOptions(src_path="./images"))
+
 print(summary.optimized_files, "de", summary.found_files,
       "-", summary.total_bytes_saved, "bytes poupados")
 ```
