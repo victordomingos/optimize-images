@@ -6,6 +6,7 @@ logic of this package. Prefer using these functions over lower-level modules.
 """
 import os
 import threading
+from concurrent.futures import as_completed
 from dataclasses import dataclass
 from timeit import default_timer as timer
 from typing import Iterator, List, Callable, Optional
@@ -156,8 +157,9 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
         workers = internal.jobs
     tasks = _build_tasks(internal)
     with our_pool_executor(max_workers=workers) as executor:
-        for result in executor.map(do_optimization, tasks):
-            yield _to_public_result(result)
+        futures = [executor.submit(do_optimization, task) for task in tasks]
+        for future in as_completed(futures):
+            yield _to_public_result(future.result())
 
 
 def optimize_as_batch(options: PublicBatchOptions) -> PublicBatchResult:
