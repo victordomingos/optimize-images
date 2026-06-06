@@ -8,21 +8,32 @@ Version history:
 v.2.1.0 - 2026-06-??
  * Added WebP support: existing WebP files are now optimized in place, just
    like PNG and JPEG. Animated WebP files are left untouched.
- * PNG conversion can now target WebP instead of JPEG. WebP preserves
-   transparency. The default conversion target remains JPEG, so existing
-   behaviour is unchanged unless the new option is used.
- * New CLI options: -tw/--to-webp (produce WebP when converting PNGs with -ca
-   or -cb), -wq (WebP quality), -wl/--webp-lossless, and -wm (WebP method /
-   compression effort).
- * Public API (backwards compatible): optimize_single_image() gained four
-   keyword-only arguments - convert_to, webp_quality, webp_lossless and
-   webp_method - all with defaults. PublicBatchOptions gained the matching
-   fields, appended at the end with defaults. Existing calls are unaffected
-   and PublicTaskResult is unchanged.
- * UPGRADE NOTE: because WebP is now a supported format, running this tool on
-   a folder will also re-encode any WebP files it finds (destructively, in
-   place), where previously those files were ignored. As always, please keep a
-   backup of the originals before processing.
+ * Format conversion was generalized. The new -cf/--convert-to FORMAT option
+   chooses the output format; the available targets depend on the codecs
+   compiled into the Pillow build in use (typically jpeg, png, webp, avif and
+   jpeg2000). The default target remains JPEG, so existing behaviour is kept
+   unless the option is used.
+ * -ca/--convert-all now converts images of any source format (not only PNG)
+   to the chosen target. -cb/--convert-big stays specific to big photographic
+   PNGs.
+ * Conversion now honours the size comparison just like in-place optimization:
+   the converted file is kept only when it actually turns out smaller, unless
+   the comparison is disabled with -nc. (Previously, converting forced the
+   write regardless of size.)
+ * New WebP encoding options: -wq (quality), -wl/--webp-lossless, and -wm
+   (method / compression effort).
+ * Public API (backwards compatible): optimize_single_image() gained
+   keyword-only arguments convert_to, webp_quality, webp_lossless and
+   webp_method, all with defaults; PublicBatchOptions gained the matching
+   fields. New discovery helpers - available_input_formats(),
+   available_output_formats() and format_capabilities() - report what the
+   running Pillow build can read, write and convert to, so third-party apps can
+   populate their own menus. PublicTaskResult is unchanged.
+ * UPGRADE NOTE: because WebP is now a supported format, running this tool on a
+   folder will also re-encode any WebP files it finds (destructively, in
+   place), where previously those files were ignored. Note also the conversion
+   size-comparison change described above. As always, keep a backup of the
+   originals before processing.
 
 ---
 v.2.0.0 - 2026-05-26

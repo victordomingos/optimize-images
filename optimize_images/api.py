@@ -17,6 +17,9 @@ from optimize_images.data_structures import TaskResult as _TaskResult, \
     Task as _Task, BatchOptions as _BatchOptions
 from optimize_images.do_optimization import do_optimization
 from optimize_images.exceptions import OIImagesNotFoundError
+from optimize_images.formats import (
+    normalize_target as _normalize_convert_to,
+)
 from optimize_images.platforms import adjust_for_platform
 
 
@@ -81,24 +84,9 @@ class PublicBatchResult:
 # Internal conversion
 # -----------------------
 
-_SUPPORTED_CONVERT_TARGETS = ('jpeg', 'webp')
-
-
-def _normalize_convert_to(value: str) -> str:
-    """Validate and normalize the conversion target format.
-
-    Treats None/'' as the default ('jpeg'), is case-insensitive, and accepts
-    'jpg' as an alias for 'jpeg'. Raises ValueError for unsupported targets so
-    that integration mistakes surface early instead of silently falling back.
-    """
-    target = (value or 'jpeg').strip().lower()
-    if target == 'jpg':
-        target = 'jpeg'
-    if target not in _SUPPORTED_CONVERT_TARGETS:
-        allowed = ', '.join(repr(t) for t in _SUPPORTED_CONVERT_TARGETS)
-        raise ValueError(
-            f"Unsupported convert_to target {value!r}. Supported: {allowed}.")
-    return target
+# Conversion-target validation and the format discovery helpers live in
+# optimize_images.formats; _normalize_convert_to is imported from there and
+# the discovery functions are re-exported as part of the public API.
 
 
 def _to_internal_options(opts: PublicBatchOptions) -> _BatchOptions:
@@ -157,6 +145,9 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
         workers = internal.jobs
     tasks = _build_tasks(internal)
     with our_pool_executor(max_workers=workers) as executor:
+        # Submit every task and yield each result as soon as it finishes
+        # (completion order), so the report streams continuously instead of
+        # stalling on a slow image that happens to be early in the list.
         futures = [executor.submit(do_optimization, task) for task in tasks]
         for future in as_completed(futures):
             yield _to_public_result(future.result())

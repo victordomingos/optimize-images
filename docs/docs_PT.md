@@ -428,26 +428,35 @@ Converter automaticamente quaisquer imagens PNG grandes que tenham um grande
 número de cores (presumivelmente uma fotografia ou uma imagem semelhante a uma
 fotografia) para um formato mais eficiente. Utiliza um algoritmo para
 determinar se a conversão vale a pena e decide automaticamente sobre isso. Use
-`-cb` (ou `--convert-big`) para esta seleção automática, ou `-ca` (ou
-`--convert-all`) para converter todos os PNG encontrados. Por defeito, os
-ficheiros PNG originais permanecem intactos e são mantidos juntamente com as
+`-cb` (ou `--convert-big`) para esta seleção automática (específica de PNG
+fotográficos grandes), ou `-ca` (ou `--convert-all`) para converter todas as
+imagens encontradas, independentemente do formato de origem. Por defeito, os
+ficheiros originais permanecem intactos e são mantidos juntamente com as
 imagens convertidas, nas pastas originais.
 
-O formato de destino da conversão é JPEG por defeito. Adicione o argumento
-`-tw` (ou `--to-webp`) para produzir antes ficheiros WebP - ao contrário do
-JPEG, o WebP mantém qualquer transparência.
+O formato de destino da conversão é JPEG por defeito. Use `-cf` (ou
+`--convert-to FORMATO`) para escolher outro formato de saída. Os destinos
+disponíveis dependem dos codecs compilados na build do Pillow em uso
+(tipicamente `jpeg`, `png`, `webp`, `avif` e `jpeg2000`); corra com `-h` para
+ver as opções no seu sistema. Ao contrário do JPEG, formatos como WebP, AVIF e
+PNG mantêm qualquer transparência.
 
-**IMPORTANTE: SE JÁ EXISTIR UM FICHEIRO COM O MESMO NOME E EXTENSÃO DE DESTINO,
-SERÁ SUBSTITUÍDO PELO FICHEIRO RESULTANTE DESTA CONVERSÃO.**
+A conversão respeita a comparação de tamanhos tal como a otimização normal: o
+ficheiro convertido só é mantido quando fica de facto mais pequeno do que o
+original, a menos que desative a comparação com `-nc`. É isto que torna seguro
+pedir qualquer destino - se não poupar espaço, é simplesmente ignorado.
+
+**IMPORTANTE: SE JÁ EXISTIR UM FICHEIRO COM O MESMO NOME E A EXTENSÃO DE
+DESTINO, SERÁ SUBSTITUÍDO PELO FICHEIRO RESULTANTE DESTA CONVERSÃO.**
 
 ```
 optimize-images -cb ./
 ```
 
-Converter todos os PNG para WebP em vez de JPEG:
+Converter todas as imagens para WebP em vez de JPEG:
 
 ```
-optimize-images -ca -tw ./
+optimize-images -ca --convert-to webp ./
 ```
 
 Para forçar o apagamento dos ficheiros PNG originais ao converter, adicione o
@@ -589,7 +598,6 @@ progresso:
 from optimize_images.api import PublicBatchOptions, optimize_as_batch_stream
 
 options = PublicBatchOptions(src_path="./images", quality=75, jobs=4)
-
 for r in optimize_as_batch_stream(options):
     print(r.img, "poupou", r.orig_size - r.final_size, "bytes")
 ```
@@ -602,7 +610,6 @@ Bloqueia e devolve os totais:
 from optimize_images.api import PublicBatchOptions, optimize_as_batch
 
 summary = optimize_as_batch(PublicBatchOptions(src_path="./images"))
-
 print(summary.optimized_files, "de", summary.found_files,
       "-", summary.total_bytes_saved, "bytes poupados")
 ```

@@ -29,7 +29,7 @@ class Task(NamedTuple):
     grayscale: bool
     no_size_comparison: bool
     fast_mode: bool
-    output_config: OutputConfiguration
+    output_config: Optional[OutputConfiguration]
     # Conversion target and WebP-specific settings (kept last, with defaults,
     # so that existing positional Task(...) construction stays compatible).
     convert_to: str = 'jpeg'
@@ -52,7 +52,7 @@ class TaskResult(NamedTuple):
     was_downsized: bool
     had_exif: bool
     has_exif: bool
-    output_config: OutputConfiguration
+    output_config: Optional[OutputConfiguration]
 
 
 @dataclass
@@ -74,7 +74,7 @@ class BatchOptions:
     ignore_size_comparison: bool = False
     fast_mode: bool = False
     jobs: int = 0
-    output_config: Optional[object] = None
+    output_config: Optional[OutputConfiguration] = None
     # Conversion target and WebP-specific settings.
     convert_to: str = 'jpeg'
     webp_quality: int = 80

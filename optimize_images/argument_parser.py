@@ -10,6 +10,7 @@ from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, DEFAULT_WEBP_QUALITY, \
     DEFAULT_WEBP_METHOD, SUPPORTED_FORMATS
 from optimize_images.data_structures import OutputConfiguration
+from optimize_images.formats import available_output_formats
 
 
 def get_version_info() -> str:
@@ -228,27 +229,30 @@ def get_args():
     conv_group = parser.add_argument_group(
         'Format conversion options'.upper())
 
-    cb_help = "Convert big PNG images that have a large number of colors to a " \
-              "more efficient format (JPEG by default, or WebP with -tw). It " \
-              "uses an algorithm to automatically decide whether the " \
-              "conversion is worthwhile. The original PNG files are kept " \
-              "alongside the converted images (unless -fd is used); existing " \
-              "files with the target name will be replaced."
+    cb_help = "Convert big photographic PNG images (with a large number of " \
+              "colors) to the output format set with --convert-to (JPEG by " \
+              "default). An algorithm decides automatically whether the " \
+              "conversion is worthwhile. Original files are kept alongside the " \
+              "converted ones (unless -fd is used); existing files with the " \
+              "target name will be replaced."
     conv_group.add_argument('-cb', "--convert-big", action='store_true',
                             help=_tagged('PNG', cb_help))
 
-    ca_help = "Convert all PNG images found to another format (JPEG by " \
-              "default, or WebP with -tw). The original PNG files are kept " \
-              "alongside the converted images (unless -fd is used); existing " \
-              "files with the target name will be replaced."
+    ca_help = "Convert every image found, regardless of its source format, to " \
+              "the output format set with --convert-to (JPEG by default). " \
+              "Unless the size comparison is disabled (-nc), the converted " \
+              "file is kept only when it turns out smaller. Original files are " \
+              "kept alongside the converted ones (unless -fd is used)."
     conv_group.add_argument('-ca', "--convert-all", action='store_true',
-                            help=_tagged('PNG', ca_help))
+                            help=_tagged('ALL', ca_help))
 
-    tw_help = "When converting PNG images (with -ca or -cb), produce WebP " \
-              "files instead of JPEG. Unlike JPEG, WebP preserves " \
-              "transparency."
-    conv_group.add_argument('-tw', '--to-webp', dest='to_webp',
-                            action='store_true', help=_tagged('PNG', tw_help))
+    ct_help = "Output format to convert to when -ca or -cb is used. The " \
+              "available choices depend on the codecs compiled into the Pillow " \
+              "build in use. Defaults to jpeg."
+    conv_group.add_argument('-cf', '--convert-to', dest='convert_to',
+                            choices=available_output_formats(),
+                            default='jpeg',
+                            help=_tagged('ALL', ct_help))
 
     fd_help = "Delete the original PNG file after a successful conversion."
     conv_group.add_argument('-fd', "--force-delete", action='store_true',
@@ -322,7 +326,9 @@ def get_args():
         msg = "\nPlease specify a WebP method (effort) between 0 and 6.\n\n"
         parser.exit(status=0, message=msg)
 
-    convert_to = 'webp' if args.to_webp else 'jpeg'
+    # argparse already validates --convert-to against the formats available in
+    # this Pillow build, so no extra codec check is needed here.
+    convert_to = args.convert_to
 
     output_config = OutputConfiguration(args.only_summary, args.only_progress, args.quiet)
     return src_path, watch_dir, recursive, quality, args.remove_transparency, \

@@ -32,20 +32,7 @@ API in optimize_images.api (optimize_single_image / optimize_as_batch).
 
 © 2026 Victor Domingos & contributers (MIT License)
 """
-import concurrent.futures
-import os
-import sys
 from timeit import default_timer as timer
-
-from optimize_images.data_structures import Task
-from optimize_images.do_optimization import do_optimization
-
-from optimize_images.exceptions import OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt
-from optimize_images.exceptions import OIKeyboardInterrupt
-from optimize_images.file_utils import search_images
-from optimize_images.platforms import adjust_for_platform, IconGenerator
-from optimize_images.reporting import human, show_file_status, show_final_report
-from optimize_images.argument_parser import get_args
 
 # Use only public API types
 from optimize_images.api import (
@@ -53,6 +40,12 @@ from optimize_images.api import (
     watch_directory,
     PublicBatchOptions,
 )
+from optimize_images.argument_parser import get_args
+from optimize_images.exceptions import OIImagesNotFoundError, OIInvalidPathError
+from optimize_images.exceptions import OIKeyboardInterrupt
+from optimize_images.platforms import adjust_for_platform, IconGenerator
+from optimize_images.reporting import human, show_file_status, show_final_report
+
 
 def main():
     args = get_args()
@@ -60,6 +53,7 @@ def main():
         optimize_batch(*args)
     except (OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt) as ex:
         print(ex.message)
+
 
 def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
@@ -180,6 +174,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
     else:
         msg = "\nNo supported image files were found in the specified directory."
         raise OIImagesNotFoundError(msg)
+
 
 if __name__ == "__main__":
     main()

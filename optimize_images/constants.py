@@ -18,9 +18,12 @@ def _webp_supported() -> bool:
 WEBP_SUPPORTED = _webp_supported()
 
 # ============================[ General settings ]============================
-# WebP is only included when the codec is actually available, so that image
-# discovery and the --supported listing reflect reality.
-SUPPORTED_FORMATS = ['png', 'jpg', 'jpeg'] + (['webp'] if WEBP_SUPPORTED else [])
+# The list of input formats reflects the codecs actually present in the Pillow
+# build in use (see optimize_images.formats), so discovery and the --supported
+# listing never advertise something that cannot be handled.
+from optimize_images.formats import available_input_formats  # noqa: E402
+
+SUPPORTED_FORMATS = available_input_formats()
 DEFAULT_QUALITY = 80
 DEFAULT_WEBP_QUALITY = 80
 DEFAULT_WEBP_METHOD = 6

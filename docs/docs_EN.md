@@ -10,9 +10,9 @@ This application is intended to be pure Python, with no special dependencies
 besides Pillow and watchdog, therefore ensuring compatibility with a wide range of systems.
 If you don't have the need for such a strict dependency management, you will 
 probably be better served by any several other image optimization utilities 
-that are based on some well known external binaries.
+that are based on some well-known external binaries.
 
-Some aditional features can be added which require the presence of other 
+Some additional features can be added which require the presence of other 
 third-party packages that are not written in pure Python, but those packages 
 and the features depending on them should be treated as optional.
 
@@ -416,13 +416,21 @@ Automatically convert big PNG images that have a large number of colors
 (presumably a photo or photo-like image) to a more efficient format. It uses
 an algorithm to determine whether the conversion is worthwhile and decides
 automatically about it. Use `-cb` (or `--convert-big`) for this automatic
-selection, or `-ca` (or `--convert-all`) to convert every PNG found. By
-default, the original PNG files remain untouched and are kept alongside the
-converted images in their original folders.
+selection (specific to big photographic PNGs), or `-ca` (or `--convert-all`)
+to convert every image found, regardless of its source format. By default, 
+the original files remain untouched and are kept alongside the converted 
+images in their original folders.
 
-The conversion target is JPEG by default. Add the `-tw` (or `--to-webp`)
-argument to produce WebP files instead - unlike JPEG, WebP keeps any
-transparency.
+The conversion target is JPEG by default. Use `-cf` (or `--convert-to FORMAT`)
+to choose another output format. The available targets depend on the codecs
+compiled into the Pillow build in use (typically `jpeg`, `png`, `webp`, `avif`
+and `jpeg2000`); run with `-h` to see the choices on your system. Unlike JPEG,
+formats such as WebP, AVIF and PNG keep any transparency.
+
+Conversion honours the size comparison just like in-place optimization: the
+converted file is kept only when it actually turns out smaller than the
+original, unless you disable the comparison with `-nc`. This is what makes it
+safe to request any target - if it would not save space, it is simply skipped.
 
 **IMPORTANT: IF A FILE WITH THE SAME NAME AND TARGET EXTENSION ALREADY EXISTS,
 IT WILL BE REPLACED BY THE FILE RESULTING FROM THIS CONVERSION.**
@@ -431,19 +439,10 @@ IT WILL BE REPLACED BY THE FILE RESULTING FROM THIS CONVERSION.**
 optimize-images -cb ./
 ```
 
-```
-optimize-images --convert_big
-```
-
-Convert every PNG to WebP instead of JPEG:
+Convert every image to WebP instead of JPEG:
 
 ```
-optimize-images -ca -tw ./
-```
-
-
-```
-optimize-images --convert-all -to-webp ./
+optimize-images -ca --convert-to webp ./
 ```
 
 You may force the deletion of the original PNG files when converting, by adding
