@@ -19,8 +19,27 @@ from optimize_images.do_optimization import do_optimization
 from optimize_images.exceptions import OIImagesNotFoundError
 from optimize_images.formats import (
     normalize_target as _normalize_convert_to,
+    available_input_formats,
+    available_output_formats,
+    format_capabilities,
 )
 from optimize_images.platforms import adjust_for_platform
+
+# Public API surface. Declaring __all__ documents what third-party code may
+# import and marks the re-exported discovery helpers as exported, so linters
+# do not report them as unused imports.
+__all__ = [
+    "PublicBatchOptions",
+    "PublicTaskResult",
+    "PublicBatchResult",
+    "optimize_single_image",
+    "optimize_as_batch",
+    "optimize_as_batch_stream",
+    "watch_directory",
+    "available_input_formats",
+    "available_output_formats",
+    "format_capabilities",
+]
 
 
 # -----------------------
