@@ -124,7 +124,8 @@ def _format_metadata(meta) -> str:
         row("Frames", f"{meta.n_frames} (animated)")
     if meta.dpi is not None:
         row("DPI", f"{meta.dpi[0]:g} x {meta.dpi[1]:g}")
-    row("ICC profile", "yes" if meta.has_icc_profile else "no")
+    row("ICC profile", meta.icc_profile_description
+        or ("yes" if meta.has_icc_profile else "no"))
 
     lines.append("")
     formatted = format_exif(meta.exif)
