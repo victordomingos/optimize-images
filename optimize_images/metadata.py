@@ -34,6 +34,7 @@ class ImageMetadata:
     n_frames: int = 1
     dpi: Optional[Tuple[float, float]] = None
     has_icc_profile: bool = False
+    icc_profile_description: Optional[str] = None
     exif: Dict[str, Dict[str, object]] = field(default_factory=dict)
 
     @property
@@ -78,6 +79,7 @@ def _inspect(path: str, img) -> ImageMetadata:
         except (TypeError, IndexError, ValueError):
             dpi = None
 
+    icc_data = img.info.get('icc_profile')
     return ImageMetadata(
         path=path,
         image_format=image_format,
@@ -90,9 +92,26 @@ def _inspect(path: str, img) -> ImageMetadata:
         is_interlaced=is_interlaced,
         n_frames=getattr(img, 'n_frames', 1),
         dpi=dpi,
-        has_icc_profile=bool(img.info.get('icc_profile')),
+        has_icc_profile=bool(icc_data),
+        icc_profile_description=_read_icc_description(icc_data),
         exif=_read_exif(img),
     )
+
+
+def _read_icc_description(icc_data) -> Optional[str]:
+    """Return the embedded ICC profile's description (e.g. the profile name
+    shown by color-managed apps, such as 'sRGB IEC61966-2.1'), if readable.
+    """
+    if not icc_data:
+        return None
+    try:
+        import io
+        from PIL import ImageCms
+        profile = ImageCms.ImageCmsProfile(io.BytesIO(icc_data))
+        description = ImageCms.getProfileDescription(profile).strip()
+        return description or None
+    except Exception:
+        return None
 
 
 # Tags that merely point to sub-IFDs (not real data): ExifOffset, GPSInfo,
