@@ -565,6 +565,19 @@ optimize-images -s
 optimize-images --supported
 ```
 
+Para inspecionar uma única imagem e imprimir os seus metadados — formato, modo,
+dimensões, transparência, tamanho da paleta, indicadores progressivo/entrelaçado,
+número de fotogramas, DPI, perfil ICC e EXIF — use a opção `-i`/`--info`:
+
+```
+optimize-images -i foto.jpg
+```
+
+```
+optimize-images --info foto.jpg
+```
+
+
 ### Utilização programática (como biblioteca)
 
 Desde a versão 2.0.0, o pacote disponibiliza uma API estável, sem interface
@@ -624,6 +637,27 @@ stop = threading.Event()
 options = PublicBatchOptions(src_path="./incoming", quality=80)
 watch_directory(options, lambda r: print("otimizada:", r.img), stop)
 # chamar stop.set() a partir de outra thread para terminar a monitorização
+```
+
+#### Inspecionar os metadados de uma imagem
+
+`inspect_image(caminho)` devolve um objeto `ImageMetadata` com as propriedades
+intrínsecas da imagem e o respetivo EXIF agrupado por secção de IFD (`image`,
+`camera`, `gps`), com valores crus. `format_exif(metadata.exif)` é um ajudante
+opcional que converte esses valores crus em texto pronto a mostrar, usando a
+semântica padronizada do EXIF (unidades como `f/1.8` e `50 mm`, enumerados como
+`Orientation` e coordenadas de GPS combinadas).
+
+```python
+from optimize_images.api import inspect_image, format_exif
+
+meta = inspect_image("foto.jpg")
+print(meta.image_format, meta.width, meta.height, meta.has_alpha)
+
+for seccao, tags in format_exif(meta.exif).items():
+    print(seccao)
+    for nome, valor in tags.items():
+        print(f"  {nome}: {valor}")
 ```
 
 #### Opções e resultados

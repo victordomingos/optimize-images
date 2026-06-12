@@ -1,5 +1,3 @@
-
-
 Version history:
 ================
 
@@ -31,8 +29,14 @@ v.2.1.0 - 2026-06-??
    populate their own menus. PublicTaskResult is unchanged.
  * Public API: new inspect_image(path) returns an ImageMetadata object with the
    image's intrinsic properties (format, mode, dimensions, alpha, palette size,
-   progressive/interlaced flags, frame count, DPI, ICC profile presence and raw
-   EXIF keyed by tag name).
+   progressive/interlaced flags, frame count, DPI, ICC profile presence and
+   EXIF). EXIF comes grouped by its standardized IFD sections - image (main
+   IFD), camera (Exif sub-IFD) and gps - with raw values. A companion helper,
+   format_exif(), optionally renders those values for display using standardized
+   EXIF semantics (units like f/1.8 and 50 mm, enumerations like Orientation,
+   and combined GPS coordinates). A new -i/--info CLI option prints this report
+   for a single image and exits; it must be used on its own, with only the image
+   path.
  * UPGRADE NOTE: because WebP is now a supported format, running this tool on a
    folder will also re-encode any WebP files it finds (destructively, in
    place), where previously those files were ignored. Note also the conversion
@@ -200,4 +204,3 @@ v.1.0 - 2018-06-20 (First public release)
    images (by default, 256 colors).
  * Option for manually setting a different maximum number of colors while
    reducing colors.
-

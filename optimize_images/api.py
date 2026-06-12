@@ -24,6 +24,7 @@ from optimize_images.formats import (
     format_capabilities,
 )
 from optimize_images.metadata import ImageMetadata, inspect_image
+from optimize_images.exif_format import format_exif
 from optimize_images.platforms import adjust_for_platform
 
 # Public API surface. Declaring __all__ documents what third-party code may
@@ -42,6 +43,7 @@ __all__ = [
     "format_capabilities",
     "ImageMetadata",
     "inspect_image",
+    "format_exif",
 ]
 
 
