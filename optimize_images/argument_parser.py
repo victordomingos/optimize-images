@@ -11,6 +11,8 @@ from optimize_images.constants import DEFAULT_QUALITY, DEFAULT_WEBP_QUALITY, \
     DEFAULT_WEBP_METHOD, SUPPORTED_FORMATS
 from optimize_images.data_structures import OutputConfiguration
 from optimize_images.formats import available_output_formats
+from optimize_images.metadata import inspect_image
+from optimize_images.exif_format import format_exif
 
 
 def get_version_info() -> str:
@@ -75,6 +77,70 @@ def _tagged(formats: str, text: str) -> str:
     return f"[{formats}] {text}"
 
 
+def _handle_info(args, parser) -> None:
+    """Print metadata for a single image and exit.
+
+    Info mode is exclusive: only the image path may accompany it, so any other
+    option is rejected.
+    """
+    allowed = {'-i', '--info'}
+    extras = [a for a in sys.argv[1:] if a.startswith('-') and a not in allowed]
+    if extras:
+        parser.exit(status=2, message="\nThe --info option must be used on its "
+                    "own, with only the path of the image to inspect.\n\n")
+    if not args.path:
+        parser.exit(status=2,
+                    message="\nPlease specify the path of the image to "
+                            "inspect.\n\n")
+
+    path = os.path.expanduser(args.path)
+    try:
+        meta = inspect_image(path)
+    except FileNotFoundError:
+        parser.exit(status=2, message=f"\nFile not found: {path}\n\n")
+    except (OSError, ValueError) as ex:
+        parser.exit(status=2, message=f"\nCould not read image: {ex}\n\n")
+    print(_format_metadata(meta))
+    parser.exit(status=0)
+
+
+def _format_metadata(meta) -> str:
+    lines = [f"\nImage: {meta.path}"]
+
+    def row(label, value):
+        lines.append(f"  {label + ':':<14}{value}")
+
+    row("Format", meta.image_format or "unknown")
+    row("Mode", meta.mode)
+    row("Dimensions", f"{meta.width} x {meta.height} px")
+    if meta.palette_colors is not None:
+        row("Palette", f"{meta.palette_colors} colors")
+    row("Alpha", "yes" if meta.has_alpha else "no")
+    if meta.is_progressive is not None:
+        row("Progressive", "yes" if meta.is_progressive else "no")
+    if meta.is_interlaced is not None:
+        row("Interlaced", "yes" if meta.is_interlaced else "no")
+    if meta.n_frames > 1:
+        row("Frames", f"{meta.n_frames} (animated)")
+    if meta.dpi is not None:
+        row("DPI", f"{meta.dpi[0]:g} x {meta.dpi[1]:g}")
+    row("ICC profile", "yes" if meta.has_icc_profile else "no")
+
+    lines.append("")
+    formatted = format_exif(meta.exif)
+    if formatted:
+        titles = {'image': 'Image', 'camera': 'Camera', 'gps': 'GPS'}
+        for section, tags in formatted.items():
+            lines.append(f"EXIF / {titles.get(section, section.title())}:")
+            for name, value in tags.items():
+                lines.append(f"  {name + ':':<22}{value}")
+            lines.append("")
+    else:
+        lines.append("EXIF: (none)")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def get_args():
     desc = 'A command-line utility written in pure Python to reduce the file ' \
            'size of images. You must explicitly pass it a path to the image ' \
@@ -100,6 +166,13 @@ def get_args():
     sf_help = 'Display the list of image formats currently supported.'
     parser.add_argument('-s', '--supported', dest="supported_formats",
                         action='store_true', help=sf_help)
+
+    info_help = 'Show metadata for a single image (format, mode, dimensions, ' \
+                'alpha, palette, progressive/interlaced, frames, DPI, ICC ' \
+                'profile and EXIF) and exit. Must be used on its own, with ' \
+                'only the image path; it cannot be combined with any other ' \
+                'option.'
+    parser.add_argument('-i', '--info', action='store_true', help=info_help)
 
     parser.add_argument('-nr', '--no-recursion', action='store_true',
                         help="Don't recurse through subdirectories.")
@@ -262,6 +335,10 @@ def get_args():
     parser._optionals.title = parser._optionals.title.upper()
 
     args = parser.parse_args()
+
+    if args.info:
+        _handle_info(args, parser)  # prints metadata and exits
+
     recursive = not args.no_recursion
     quality = args.quality
     watch_dir = args.watch_directory

@@ -29,6 +29,10 @@ v.2.1.0 - 2026-06-??
    available_output_formats() and format_capabilities() - report what the
    running Pillow build can read, write and convert to, so third-party apps can
    populate their own menus. PublicTaskResult is unchanged.
+ * Public API: new inspect_image(path) returns an ImageMetadata object with the
+   image's intrinsic properties (format, mode, dimensions, alpha, palette size,
+   progressive/interlaced flags, frame count, DPI, ICC profile presence and raw
+   EXIF keyed by tag name).
  * UPGRADE NOTE: because WebP is now a supported format, running this tool on a
    folder will also re-encode any WebP files it finds (destructively, in
    place), where previously those files were ignored. Note also the conversion

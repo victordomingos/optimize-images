@@ -23,6 +23,7 @@ from optimize_images.formats import (
     available_output_formats,
     format_capabilities,
 )
+from optimize_images.metadata import ImageMetadata, inspect_image
 from optimize_images.platforms import adjust_for_platform
 
 # Public API surface. Declaring __all__ documents what third-party code may
@@ -39,6 +40,8 @@ __all__ = [
     "available_input_formats",
     "available_output_formats",
     "format_capabilities",
+    "ImageMetadata",
+    "inspect_image",
 ]
 
 
