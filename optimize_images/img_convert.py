@@ -9,13 +9,19 @@ than the original, unless the user disabled the comparison.
 """
 import os
 from io import BytesIO
+from typing import Optional
 
 from PIL import ImageFile
-from optimize_images.data_structures import Task, TaskResult
+from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.formats import FORMATS
 from optimize_images.img_aux_processing import (downsize_img, make_grayscale,
                                                 remove_transparency,
                                                 save_compressed)
+
+
+def _normalize_target(task: Task) -> str:
+    target = (task.convert_to or 'jpeg').strip().lower()
+    return 'jpeg' if target == 'jpg' else target
 
 
 def _target_save_kwargs(target: str, task: Task) -> dict:
@@ -36,32 +42,23 @@ def _target_save_kwargs(target: str, task: Task) -> dict:
     return kwargs
 
 
-def convert_image(task: Task, img, orig_format: str, orig_mode: str,
-                  orig_size: int, had_exif: bool = False, exif=None) -> TaskResult:
-    """Convert an already-open image to ``task.convert_to``.
+def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
+                      had_exif: bool = False,
+                      exif=None) -> Optional[OptimizedImage]:
+    """Convert an already-open image to ``task.convert_to``, in memory.
 
-    Multi-frame sources (animation/multipage) are skipped and kept as-is. The
-    converted file is saved next to the original with the target extension; it
-    replaces the original only if ``force_del`` is set.
+    Pure: applies the common options (resize, transparency/alpha, grayscale,
+    keep EXIF when the target supports it) and encodes to an in-memory buffer,
+    without touching the filesystem and without closing ``img``. Returns None
+    for multi-frame sources (animation/multipage), which are left as-is to
+    avoid silently flattening them. Shared by the file-based converter and the
+    in-memory API.
     """
-    target = (task.convert_to or 'jpeg').strip().lower()
-    if target == 'jpg':
-        target = 'jpeg'
+    target = _normalize_target(task)
     info = FORMATS[target]
 
-    # Skip multi-frame sources to avoid silently flattening animations.
     if getattr(img, 'n_frames', 1) > 1:
-        img_mode = img.mode
-        img.close()
-        return TaskResult(task.src_path, orig_format, orig_format, orig_mode,
-                          img_mode, 0, 0, orig_size, orig_size, False, False,
-                          had_exif, had_exif, task.output_config)
-
-    folder, base = os.path.split(task.src_path)
-    if folder == '':
-        folder = os.getcwd()
-    name = os.path.splitext(base)[0]
-    output_path = os.path.join(folder, name + '.' + info.extensions[0])
+        return None
 
     if task.max_w or task.max_h:
         img, was_downsized = downsize_img(img, task.max_w, task.max_h)
@@ -88,18 +85,48 @@ def convert_image(task: Task, img, orig_format: str, orig_mode: str,
         img.save(tmp_buffer, **save_kwargs)
 
     has_exif = bool(save_kwargs.get('exif'))
-    img_mode = img.mode
+    return OptimizedImage(tmp_buffer, orig_format, info.pil, orig_mode,
+                          img.mode, 0, 0, was_downsized, had_exif, has_exif)
+
+
+def convert_image(task: Task, img, orig_format: str, orig_mode: str,
+                  orig_size: int, had_exif: bool = False, exif=None) -> TaskResult:
+    """Convert an already-open image to ``task.convert_to``.
+
+    Multi-frame sources (animation/multipage) are skipped and kept as-is. The
+    converted file is saved next to the original with the target extension; it
+    replaces the original only if ``force_del`` is set.
+    """
+    opt = transform_convert(task, img, orig_format, orig_mode, had_exif, exif)
+
+    # Skip multi-frame sources to avoid silently flattening animations.
+    if opt is None:
+        img_mode = img.mode
+        img.close()
+        return TaskResult(task.src_path, orig_format, orig_format, orig_mode,
+                          img_mode, 0, 0, orig_size, orig_size, False, False,
+                          had_exif, had_exif, task.output_config)
+
+    target = _normalize_target(task)
+    info = FORMATS[target]
+    folder, base = os.path.split(task.src_path)
+    if folder == '':
+        folder = os.getcwd()
+    name = os.path.splitext(base)[0]
+    output_path = os.path.join(folder, name + '.' + info.extensions[0])
+
     img.close()
 
     # Same rule as in-place optimization: keep only if smaller, unless the
     # user disabled the comparison.
     compare_sizes = not task.no_size_comparison
     was_optimized, final_size = save_compressed(task.src_path,
-                                                tmp_buffer,
+                                                opt.buffer,
                                                 force_delete=task.force_del,
                                                 compare_sizes=compare_sizes,
                                                 output_path=output_path)
 
-    return TaskResult(task.src_path, orig_format, info.pil, orig_mode,
-                      img_mode, 0, 0, orig_size, final_size, was_optimized,
-                      was_downsized, had_exif, has_exif, task.output_config)
+    return TaskResult(task.src_path, orig_format, opt.result_format, orig_mode,
+                      opt.result_mode, 0, 0, orig_size, final_size,
+                      was_optimized, opt.was_downsized, had_exif, opt.has_exif,
+                      task.output_config)

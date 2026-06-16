@@ -16,6 +16,8 @@ from optimize_images.batch_core import build_tasks as _build_tasks
 from optimize_images.data_structures import TaskResult as _TaskResult, \
     Task as _Task, BatchOptions as _BatchOptions
 from optimize_images.do_optimization import do_optimization
+from optimize_images.inmemory import optimize_image_data as _optimize_image_data
+from optimize_images.inmemory import convert_image_data as _convert_image_data
 from optimize_images.exceptions import OIImagesNotFoundError
 from optimize_images.formats import (
     normalize_target as _normalize_convert_to,
@@ -35,6 +37,8 @@ __all__ = [
     "PublicTaskResult",
     "PublicBatchResult",
     "optimize_single_image",
+    "optimize_image_data",
+    "convert_image_data",
     "optimize_as_batch",
     "optimize_as_batch_stream",
     "watch_directory",
@@ -259,6 +263,108 @@ def optimize_single_image(
         raise OIImagesNotFoundError("No image files were found. Provide a valid file path.")
     res = do_optimization(tasks[0])
     return _to_public_result(res)
+
+
+def optimize_image_data(
+        data: bytes,
+        *,
+        name: str = '',
+        quality: int = 80,
+        remove_transparency: bool = False,
+        reduce_colors: bool = False,
+        max_colors: int = 256,
+        max_w: int = 0,
+        max_h: int = 0,
+        keep_exif: bool = False,
+        bg_color: Tuple[int, int, int] = (255, 255, 255),
+        grayscale: bool = False,
+        ignore_size_comparison: bool = False,
+        fast_mode: bool = False,
+        webp_quality: int = 80,
+        webp_lossless: bool = False,
+        webp_method: int = 6,
+) -> Tuple[bytes, PublicTaskResult]:
+    """Optimize an in-memory image: bytes in, bytes out.
+
+    For callers that store images as binary data instead of files (CMS, object
+    storage, databases). Keeps the original format and returns the optimized
+    bytes together with a PublicTaskResult; when optimizing does not help (and
+    the size comparison is not disabled) the original bytes are returned
+    unchanged. ``name`` is only a label echoed back in the result.
+
+    Raises OSError if ``data`` is not a readable image.
+    """
+    out_bytes, result = _optimize_image_data(
+        data,
+        name=name,
+        quality=quality,
+        remove_transparency=remove_transparency,
+        reduce_colors=reduce_colors,
+        max_colors=max_colors,
+        max_w=max_w,
+        max_h=max_h,
+        keep_exif=keep_exif,
+        bg_color=bg_color,
+        grayscale=grayscale,
+        ignore_size_comparison=ignore_size_comparison,
+        fast_mode=fast_mode,
+        webp_quality=webp_quality,
+        webp_lossless=webp_lossless,
+        webp_method=webp_method,
+    )
+    return out_bytes, _to_public_result(result)
+
+
+def convert_image_data(
+        data: bytes,
+        *,
+        to: str = 'jpeg',
+        name: str = '',
+        quality: int = 80,
+        remove_transparency: bool = False,
+        max_w: int = 0,
+        max_h: int = 0,
+        keep_exif: bool = False,
+        bg_color: Tuple[int, int, int] = (255, 255, 255),
+        grayscale: bool = False,
+        ignore_size_comparison: bool = False,
+        webp_quality: int = 80,
+        webp_lossless: bool = False,
+        webp_method: int = 6,
+) -> Tuple[bytes, PublicTaskResult]:
+    """Convert an in-memory image to another format: bytes in, bytes out.
+
+    The counterpart of optimize_image_data for callers that store images as
+    binary data and want to change the format (e.g. PNG to WebP) without a file
+    path. ``to`` is the target format ('jpeg', 'png', 'webp', and 'avif' or
+    'jpeg2000' when the Pillow build supports them); it is validated against the
+    codecs actually available. Returns the converted bytes and a
+    PublicTaskResult - read ``result_format`` to know the format of the bytes
+    and store them accordingly.
+
+    When converting would not shrink the image (and the size comparison is not
+    disabled), the original bytes and format are returned unchanged; converting
+    to the source's own format optimizes it in place; multi-frame sources are
+    returned unchanged. Raises ValueError for an unknown/unavailable target and
+    OSError if ``data`` is not a readable image.
+    """
+    out_bytes, result = _convert_image_data(
+        data,
+        to=to,
+        name=name,
+        quality=quality,
+        remove_transparency=remove_transparency,
+        max_w=max_w,
+        max_h=max_h,
+        keep_exif=keep_exif,
+        bg_color=bg_color,
+        grayscale=grayscale,
+        ignore_size_comparison=ignore_size_comparison,
+        webp_quality=webp_quality,
+        webp_lossless=webp_lossless,
+        webp_method=webp_method,
+    )
+    return out_bytes, _to_public_result(result)
 
 
 def watch_directory(

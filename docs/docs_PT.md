@@ -602,6 +602,56 @@ As opções são apenas por palavra-chave: `quality`, `max_w`, `max_h`,
 (`'jpeg'` por defeito, ou `'webp'`); a codificação WebP é ajustada com
 `webp_quality`, `webp_lossless` e `webp_method`.
 
+#### Otimizar uma imagem em memória (bytes a entrar, bytes a sair)
+
+Quando as imagens estão guardadas como dados binários em vez de ficheiros — por
+exemplo num sistema de gestão de conteúdos, num object store ou numa base de
+dados — e não há um caminho de ficheiro disponível, use `optimize_image_data`.
+Recebe os bytes da imagem e devolve os bytes otimizados juntamente com um
+objeto de resultado:
+
+```python
+from optimize_images.api import optimize_image_data
+
+otimizada, resultado = optimize_image_data(bytes_originais, quality=70, max_w=1920)
+if resultado.was_optimized:
+    guardar(otimizada)   # imagem mais pequena; caso contrário é a original
+```
+
+Mantém o formato original e aceita as mesmas opções de processamento que o
+`optimize_single_image`, exceto as específicas de ficheiro/conversão: `quality`,
+`max_w`, `max_h`, `reduce_colors`, `max_colors`, `remove_transparency`,
+`bg_color`, `grayscale`, `keep_exif`, `fast_mode`, `ignore_size_comparison`,
+`webp_quality`, `webp_lossless`, `webp_method`, e ainda um `name` opcional que é
+devolvido no resultado. Quando otimizar não compensa (e a comparação de tamanho
+não foi desativada), os bytes originais são devolvidos inalterados. A conversão
+de formato não é suportada por este ponto de entrada.
+
+#### Converter uma imagem em memória (bytes a entrar, bytes a sair)
+
+O equivalente em memória da conversão de formato, para os mesmos casos de quem
+só tem dados binários. A `convert_image_data` converte os bytes para outro
+formato e devolve os bytes convertidos mais o formato resultante:
+
+```python
+from optimize_images.api import convert_image_data
+
+bytes_webp, resultado = convert_image_data(bytes_png, to="webp", webp_quality=80)
+if resultado.was_optimized:
+    guardar(bytes_webp, content_type="image/" + resultado.result_format.lower())
+```
+
+`to` é o formato de destino (`'jpeg'`, `'png'`, `'webp'`, e `'avif'` ou
+`'jpeg2000'` quando o Pillow os suportar), validado contra os codecs realmente
+disponíveis. Verifique sempre `resultado.result_format` para saber o formato dos
+bytes devolvidos: quando converter não reduz o tamanho (e a comparação não foi
+desativada), são devolvidos os bytes e o formato **originais** inalterados;
+converter para o próprio formato da origem otimiza-a no lugar; e fontes
+multi-fotograma (animações) são devolvidas inalteradas. Aceita as opções comuns
+`quality`, `max_w`, `max_h`, `remove_transparency`, `bg_color`, `grayscale`,
+`keep_exif`, `ignore_size_comparison`, `webp_quality`, `webp_lossless`,
+`webp_method`, e um `name` opcional.
+
 #### Otimizar uma pasta (em fluxo)
 
 Devolve cada resultado à medida que é processado — ideal para indicar o

@@ -1,6 +1,7 @@
 # encoding: utf-8
 import concurrent.futures
 from dataclasses import dataclass
+from io import BytesIO
 from typing import NamedTuple, Tuple, NewType, Optional, List
 
 PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
@@ -53,6 +54,23 @@ class TaskResult(NamedTuple):
     had_exif: bool
     has_exif: bool
     output_config: Optional[OutputConfiguration]
+
+
+class OptimizedImage(NamedTuple):
+    """Result of optimizing an image in memory, before deciding whether to
+    keep it. Shared by the file-based optimizers and the in-memory API, so
+    the actual image processing lives in a single place.
+    """
+    buffer: BytesIO
+    orig_format: str
+    result_format: str
+    orig_mode: str
+    result_mode: str
+    orig_colors: int
+    final_colors: int
+    was_downsized: bool
+    had_exif: bool
+    has_exif: bool
 
 
 @dataclass

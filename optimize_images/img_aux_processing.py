@@ -194,6 +194,17 @@ def rebuild_palette(img: Image.Image) -> Tuple[Image.Image, int]:
     return img, len(img.getcolors())
 
 
+def is_worth_keeping(final_size: int, orig_size: int,
+                     compare_sizes: bool) -> bool:
+    """Whether an optimized result should replace the original.
+
+    The rule (shared by the file-based optimizers and the in-memory API): keep
+    it if the size comparison is disabled, or if it is at least ~1% smaller.
+    """
+    return (not compare_sizes) or (orig_size > 0
+                                   and final_size / orig_size < .99)
+
+
 def save_compressed(src_path: str,
                     tmp_buffer: BytesIO,
                     compare_sizes: bool,
@@ -209,7 +220,7 @@ def save_compressed(src_path: str,
 
     target_path = output_path if output_path else src_path
 
-    if not compare_sizes or (final_size / orig_size < .99):
+    if is_worth_keeping(final_size, orig_size, compare_sizes):
         tmp_buffer.seek(0)
         with open(target_path, 'wb') as file:
             file.write(tmp_buffer.getbuffer())

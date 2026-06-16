@@ -37,6 +37,21 @@ v.2.1.0 - 2026-06-??
    enumerations like Orientation, and combined GPS coordinates). A new
    -i/--info CLI option prints this report for a single image and exits;
    it must be used on its own, with only the image path.
+ * Public API: new optimize_image_data(data) optimizes an image given as bytes
+   and returns the optimized bytes plus a PublicTaskResult, for callers that
+   hold images as binary data rather than files (CMS, object storage,
+   databases) and cannot provide a file path. It keeps the original format and
+   reuses the same per-format processing as the file-based optimizer, so the
+   behaviour (resizing, transparency, EXIF, dynamic quality and the size
+   comparison) is identical; format conversion is out of scope for this entry
+   point.
+ * Public API: new convert_image_data(data, to=...) is the in-memory
+   counterpart of format conversion: it converts image bytes to another
+   available format (e.g. PNG to WebP) and returns the converted bytes plus the
+   resulting format, reusing the same converter as the file-based workflow. As
+   with the file conversion, the result is kept only when it is actually
+   smaller (unless the comparison is disabled); converting to the source format
+   optimizes it in place; multi-frame sources are left unchanged.
  * UPGRADE NOTE: because WebP is now a supported format, running this tool on a
    folder will also re-encode any WebP files it finds (destructively, in
    place), where previously those files were ignored. Note also the conversion

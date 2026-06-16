@@ -590,6 +590,55 @@ Options are keyword-only: `quality`, `max_w`, `max_h`, `reduce_colors`,
 target is set by `convert_to` (`'jpeg'` by default, or `'webp'`); WebP encoding
 is tuned with `webp_quality`, `webp_lossless` and `webp_method`.
 
+### Optimize an image in memory (bytes in, bytes out)
+
+When images are stored as binary data rather than files — for example inside a
+content management system, an object store or a database — and no file path is
+available, use `optimize_image_data`. It takes the image bytes and returns the
+optimized bytes together with a result object:
+
+```python
+from optimize_images.api import optimize_image_data
+
+optimized, result = optimize_image_data(original_bytes, quality=70, max_w=1920)
+if result.was_optimized:
+    store(optimized)   # smaller image; otherwise `optimized` is the original
+```
+
+It keeps the original format and accepts the same processing options as
+`optimize_single_image` except the file/conversion-specific ones: `quality`,
+`max_w`, `max_h`, `reduce_colors`, `max_colors`, `remove_transparency`,
+`bg_color`, `grayscale`, `keep_exif`, `fast_mode`, `ignore_size_comparison`,
+`webp_quality`, `webp_lossless`, `webp_method`, plus an optional `name` echoed
+back in the result. When optimizing does not help (and the size comparison is
+not disabled) the original bytes are returned unchanged. Format conversion is
+not supported through this entry point.
+
+### Convert an image in memory (bytes in, bytes out)
+
+The in-memory counterpart of format conversion, for the same binary-only
+callers. `convert_image_data` converts the bytes to another format and returns
+the converted bytes plus the resulting format:
+
+```python
+from optimize_images.api import convert_image_data
+
+webp_bytes, result = convert_image_data(png_bytes, to="webp", webp_quality=80)
+if result.was_optimized:
+    store(webp_bytes, content_type="image/" + result.result_format.lower())
+```
+
+`to` is the target format (`'jpeg'`, `'png'`, `'webp'`, and `'avif'` or
+`'jpeg2000'` when the Pillow build supports them), validated against the
+codecs actually available. Always check `result.result_format` to know the
+format of the returned bytes: when converting would not shrink the image (and
+the size comparison is not disabled) the **original** bytes and format are
+returned unchanged; converting to the source's own format optimizes it in
+place; multi-frame sources (animations) are returned unchanged. It accepts the
+common options `quality`, `max_w`, `max_h`, `remove_transparency`, `bg_color`,
+`grayscale`, `keep_exif`, `ignore_size_comparison`, `webp_quality`,
+`webp_lossless`, `webp_method`, and an optional `name`.
+
 ### Optimize a folder (streaming)
 
 Yields each result as it is processed — ideal for progress reporting:
