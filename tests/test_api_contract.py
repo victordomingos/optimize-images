@@ -17,7 +17,6 @@ import inspect
 
 import pytest
 from PIL import Image
-
 from optimize_images.api import optimize_single_image, PublicTaskResult
 from optimize_images.data_structures import Task
 
