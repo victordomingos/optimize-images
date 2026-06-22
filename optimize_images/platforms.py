@@ -71,6 +71,28 @@ def get_cpu_count() -> int:
         return 4
 
 
+def select_executor(free_threaded: bool, os_name: str, system: str,
+                    num_cpus: int) -> tuple[ExecutorClassType, int]:
+    """Pure executor-selection policy: choose the pool class and default worker
+    count from the platform indicators, with no environment access.
+
+    Kept separate from adjust_for_platform() so it can be tested directly with
+    explicit values, instead of mutating the process-global ``os.name`` (which
+    also drives path semantics and corrupts unrelated machinery).
+    """
+    if free_threaded:
+        # Free-threaded Python: threads are truly parallel.
+        return ThreadPoolExecutor, num_cpus
+    if os_name == "nt":
+        # Windows: ThreadPoolExecutor to avoid ProcessPoolExecutor overhead.
+        return ThreadPoolExecutor, min(num_cpus * 2, 32)
+    if system == "Darwin":
+        # macOS: ThreadPoolExecutor for better resource handling.
+        return ThreadPoolExecutor, min(num_cpus * 4, 64)
+    # Unix/Linux: ProcessPoolExecutor to bypass the GIL for CPU-intensive work.
+    return ProcessPoolExecutor, num_cpus + 1
+
+
 @lru_cache(maxsize=1)
 def adjust_for_platform() -> tuple[int, ExecutorClassType, int]:
     """
@@ -89,21 +111,7 @@ def adjust_for_platform() -> tuple[int, ExecutorClassType, int]:
     except (OSError, ValueError):
         line_width = 80
 
-    if is_free_threaded():
-        # Free-threaded Python: threads are truly parallel
-        executor_class = ThreadPoolExecutor
-        default_workers = num_cpus
-    elif os.name == "nt":
-        # Windows: ThreadPoolExecutor to avoid ProcessPoolExecutor overhead
-        executor_class = ThreadPoolExecutor
-        default_workers = min(num_cpus * 2, 32)
-    elif platform.system() == "Darwin":
-        # macOS: ThreadPoolExecutor for better resource handling
-        executor_class = ThreadPoolExecutor
-        default_workers = min(num_cpus * 4, 64)
-    else:
-        # Unix/Linux: ProcessPoolExecutor to bypass GIL for CPU-intensive work
-        executor_class = ProcessPoolExecutor
-        default_workers = num_cpus + 1
+    executor_class, default_workers = select_executor(
+        is_free_threaded(), os.name, platform.system(), num_cpus)
 
     return line_width, executor_class, default_workers
