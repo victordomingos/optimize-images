@@ -1,7 +1,7 @@
 # encoding: utf-8
 import os
 from io import BytesIO
-from typing import Tuple
+from typing import Optional, Tuple
 
 from PIL import Image
 
@@ -194,33 +194,74 @@ def rebuild_palette(img: Image.Image) -> Tuple[Image.Image, int]:
     return img, len(img.getcolors())
 
 
+def is_at_least_1pct_smaller(final_size: int, orig_size: int) -> bool:
+    """Whether the result is at least ~1% smaller than the original.
+
+    Single home of the 1% size rule: it decides the size part of
+    is_worth_keeping and the SSIM-skip decision in the transforms, so the
+    two cannot drift apart.
+    """
+    return orig_size > 0 and final_size / orig_size < .99
+
+
 def is_worth_keeping(final_size: int, orig_size: int,
-                     compare_sizes: bool) -> bool:
+                     compare_sizes: bool,
+                     ssim: Optional[float] = None,
+                     ssim_min: Optional[float] = None) -> bool:
     """Whether an optimized result should replace the original.
 
-    The rule (shared by the file-based optimizers and the in-memory API): keep
+    The rule (shared by the file-based optimizers and the in-memory API): a
+    minimum SSIM threshold is an independent quality gate - reject when it is
+    set and the result's score is below it (or missing) - and otherwise keep
     it if the size comparison is disabled, or if it is at least ~1% smaller.
     """
-    return (not compare_sizes) or (orig_size > 0
-                                   and final_size / orig_size < .99)
+    if ssim_min is not None and (ssim is None or ssim < ssim_min):
+        return False
+    return (not compare_sizes) or is_at_least_1pct_smaller(final_size,
+                                                           orig_size)
+
+
+def ssim_needs_computing(ssim_min: Optional[float], show_ssim: bool,
+                         compare_sizes: bool, final_size: int,
+                         orig_size: int) -> bool:
+    """Whether the (expensive) SSIM must be computed for an encoded result.
+
+    The score is computed whenever it is requested (a minimum threshold
+    and/or --show-ssim), except one safe case: with a minimum threshold set
+    but no --show-ssim, the score exists only to gate the keep/reject
+    decision - and that decision is already a rejection when the size
+    comparison is enabled and the result is not at least ~1% smaller. There
+    the score is skipped and stays None, which the gate treats as a
+    rejection (it fails closed), so the decision is unchanged; with
+    --show-ssim, or when the size comparison is disabled, the score is
+    always computed.
+    """
+    if ssim_min is None and not show_ssim:
+        return False
+    return not (ssim_min is not None and not show_ssim and compare_sizes
+                and not is_at_least_1pct_smaller(final_size, orig_size))
 
 
 def save_compressed(src_path: str,
                     tmp_buffer: BytesIO,
                     compare_sizes: bool,
                     force_delete: bool = False,
-                    output_path: str = '') -> Tuple[bool, int]:
+                    output_path: str = '',
+                    ssim: Optional[float] = None,
+                    ssim_min: Optional[float] = None) -> Tuple[bool, int]:
     """ Check if there were any savings and save or discard temporary file.
 
         If the user used the option to ignore the file comparison, go ahead
-        and replace the original file anyway.
+        and replace the original file anyway. A minimum SSIM threshold, when
+        given, acts as an independent quality gate on top of the size rule.
     """
     final_size = tmp_buffer.getbuffer().nbytes
     orig_size: int = os.path.getsize(src_path)
 
     target_path = output_path if output_path else src_path
 
-    if is_worth_keeping(final_size, orig_size, compare_sizes):
+    if is_worth_keeping(final_size, orig_size, compare_sizes,
+                        ssim=ssim, ssim_min=ssim_min):
         tmp_buffer.seek(0)
         with open(target_path, 'wb') as file:
             file.write(tmp_buffer.getbuffer())

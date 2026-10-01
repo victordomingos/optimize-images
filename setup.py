@@ -94,6 +94,7 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=get_requirements(),
+      extras_require={'ssim': ['scikit-image>=0.24']},
 
       entry_points={
           'console_scripts': ['optimize-images = optimize_images.__main__:main']

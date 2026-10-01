@@ -8,26 +8,29 @@ import os
 import threading
 from concurrent.futures import as_completed
 from dataclasses import dataclass
-from timeit import default_timer as timer
-from typing import Iterator, List, Callable, Optional
-from typing import Tuple
-
 from optimize_images.batch_core import build_tasks as _build_tasks
 from optimize_images.data_structures import TaskResult as _TaskResult, \
     Task as _Task, BatchOptions as _BatchOptions
 from optimize_images.do_optimization import do_optimization
-from optimize_images.inmemory import optimize_image_data as _optimize_image_data
-from optimize_images.inmemory import convert_image_data as _convert_image_data
 from optimize_images.exceptions import OIImagesNotFoundError
+from optimize_images.exif_format import format_exif
 from optimize_images.formats import (
     normalize_target as _normalize_convert_to,
     available_input_formats,
     available_output_formats,
     format_capabilities,
 )
+from optimize_images.img_ssim import (
+    ensure_ssim_available,
+    validate_ssim_min,
+)
+from optimize_images.inmemory import convert_image_data as _convert_image_data
+from optimize_images.inmemory import optimize_image_data as _optimize_image_data
 from optimize_images.metadata import ImageMetadata, inspect_image
-from optimize_images.exif_format import format_exif
 from optimize_images.platforms import adjust_for_platform
+from timeit import default_timer as timer
+from typing import Iterator, List, Callable, Optional
+from typing import Tuple
 
 # Public API surface. Declaring __all__ documents what third-party code may
 # import and marks the re-exported discovery helpers as exported, so linters
@@ -78,6 +81,8 @@ class PublicBatchOptions:
     webp_quality: int = 80
     webp_lossless: bool = False
     webp_method: int = 6
+    ssim_min: Optional[float] = None
+    show_ssim: bool = False
 
 
 @dataclass(frozen=True)
@@ -95,6 +100,7 @@ class PublicTaskResult:
     was_downsized: bool
     had_exif: bool
     has_exif: bool
+    ssim: Optional[float] = None
 
 
 @dataclass(frozen=True)
@@ -141,6 +147,8 @@ def _to_internal_options(opts: PublicBatchOptions) -> _BatchOptions:
         webp_quality=opts.webp_quality,
         webp_lossless=opts.webp_lossless,
         webp_method=opts.webp_method,
+        ssim_min=opts.ssim_min,
+        show_ssim=opts.show_ssim,
     )
 
 
@@ -159,6 +167,7 @@ def _to_public_result(r: _TaskResult) -> PublicTaskResult:
         was_downsized=r.was_downsized,
         had_exif=r.had_exif,
         has_exif=r.has_exif,
+        ssim=r.ssim,
     )
 
 
@@ -167,6 +176,9 @@ def _to_public_result(r: _TaskResult) -> PublicTaskResult:
 # -----------------------
 
 def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTaskResult]:
+    if options.ssim_min is not None:
+        validate_ssim_min(options.ssim_min)
+        ensure_ssim_available()
     internal = _to_internal_options(options)
     line_width, our_pool_executor, workers = adjust_for_platform()
     if internal.jobs != 0:
@@ -233,7 +245,12 @@ def optimize_single_image(
         webp_quality: int = 80,
         webp_lossless: bool = False,
         webp_method: int = 6,
+        ssim_min: Optional[float] = None,
+        show_ssim: bool = False,
 ) -> PublicTaskResult:
+    if ssim_min is not None:
+        validate_ssim_min(ssim_min)
+        ensure_ssim_available()
     options = PublicBatchOptions(
         src_path=src_path,
         recursive=False,
@@ -256,6 +273,8 @@ def optimize_single_image(
         webp_quality=webp_quality,
         webp_lossless=webp_lossless,
         webp_method=webp_method,
+        ssim_min=ssim_min,
+        show_ssim=show_ssim,
     )
     internal = _to_internal_options(options)
     tasks = list(_build_tasks(internal))
@@ -283,6 +302,8 @@ def optimize_image_data(
         webp_quality: int = 80,
         webp_lossless: bool = False,
         webp_method: int = 6,
+        ssim_min: Optional[float] = None,
+        show_ssim: bool = False,
 ) -> Tuple[bytes, PublicTaskResult]:
     """Optimize an in-memory image: bytes in, bytes out.
 
@@ -294,6 +315,9 @@ def optimize_image_data(
 
     Raises OSError if ``data`` is not a readable image.
     """
+    if ssim_min is not None:
+        validate_ssim_min(ssim_min)
+        ensure_ssim_available()
     out_bytes, result = _optimize_image_data(
         data,
         name=name,
@@ -311,6 +335,8 @@ def optimize_image_data(
         webp_quality=webp_quality,
         webp_lossless=webp_lossless,
         webp_method=webp_method,
+        ssim_min=ssim_min,
+        show_ssim=show_ssim,
     )
     return out_bytes, _to_public_result(result)
 
@@ -331,6 +357,8 @@ def convert_image_data(
         webp_quality: int = 80,
         webp_lossless: bool = False,
         webp_method: int = 6,
+        ssim_min: Optional[float] = None,
+        show_ssim: bool = False,
 ) -> Tuple[bytes, PublicTaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 
@@ -348,6 +376,9 @@ def convert_image_data(
     returned unchanged. Raises ValueError for an unknown/unavailable target and
     OSError if ``data`` is not a readable image.
     """
+    if ssim_min is not None:
+        validate_ssim_min(ssim_min)
+        ensure_ssim_available()
     out_bytes, result = _convert_image_data(
         data,
         to=to,
@@ -363,6 +394,8 @@ def convert_image_data(
         webp_quality=webp_quality,
         webp_lossless=webp_lossless,
         webp_method=webp_method,
+        ssim_min=ssim_min,
+        show_ssim=show_ssim,
     )
     return out_bytes, _to_public_result(result)
 
@@ -373,6 +406,9 @@ def watch_directory(
         stop_event: Optional[threading.Event] = None,
 ) -> None:
     """Watch a directory for new image files and optimize them as they appear."""
+    if options.ssim_min is not None:
+        validate_ssim_min(options.ssim_min)
+        ensure_ssim_available()
     internal = _to_internal_options(options)
     if not internal.src_path or not os.path.isdir(os.path.abspath(internal.src_path)):
         raise OIImagesNotFoundError("Please specify a valid path to an existing folder.")
@@ -406,6 +442,8 @@ def watch_directory(
         internal.webp_quality,
         internal.webp_lossless,
         internal.webp_method,
+        internal.ssim_min,
+        internal.show_ssim,
     )
 
     # Define a function to check if a file is a supported image
@@ -476,6 +514,8 @@ def watch_directory(
                 task.webp_quality,
                 task.webp_lossless,
                 task.webp_method,
+                task.ssim_min,
+                task.show_ssim,
             )
 
             # Process the image

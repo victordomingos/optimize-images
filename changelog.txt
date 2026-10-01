@@ -3,6 +3,62 @@ Version history:
 
 
 ---
+v.2.2.0 - 2026-09-21
+ * New SSIM quality control: the -ssm/--ssim-min THRESHOLD option (JPEG,
+   WebP, conversion; value between 0.0 and 1.0) computes the structural
+   similarity between the image as it was just before the final lossy
+   encoding (after all transforms) and the optimized or converted result,
+   and keeps the original file whenever the score falls below the threshold.
+   The check is independent of the size comparison, so it also applies when
+   the comparison is disabled with -nc.
+ * New --show-ssim / --no-show-ssim options (JPEG, WebP, conversion)
+   control the SSIM score in the per-file report. The score is shown
+   automatically whenever --ssim-min is used; with --no-show-ssim it is
+   hidden for optimized files, but a file rejected because its score fell
+   below the threshold is still reported with the score and the threshold.
+ * SSIM computation relies on the optional scikit-image package (install it
+   with: pip install scikit-image, or use the new [ssim] extra: pip install
+   optimize-images[ssim]). Without it, --ssim-min stops the run early with a
+   clear error message, and --show-ssim prints a warning once and shows no
+   scores.
+ * Files rejected by the SSIM threshold are reported with their score and the
+   threshold, so they stay distinguishable from files skipped because they
+   were not smaller.
+ * Measured across 224 photographs with the default encoder, scores range
+   0.929-1.0 (median 0.981): 0.92 keeps everything a default run produces,
+   while 0.95 rejects about 2% of the files (roughly 2.5% of the space
+   savings). Computing the score can dominate the run time on very large
+   images, and it is inert for PNG files that are not converted (their
+   in-place encoding is lossless, score always 1.0000).
+ * For images with transparency, the score is computed over the background
+   color (-bg/-hbg, white by default), so invisible RGB under transparent
+   pixels no longer lowers it.
+ * The score uses scikit-image's structural_similarity with its default
+   uniform 7x7 window (the parameters are pinned explicitly, so the scores do
+   not change if scikit-image changes its defaults). Scores are slightly
+   higher (about +0.004) than tools using the Gaussian window of the original
+   paper; the recommended thresholds were calibrated with this implementation.
+ * Public API (backwards compatible): optimize_single_image(),
+   optimize_image_data() and convert_image_data() gained keyword-only ssim_min
+   and show_ssim arguments; PublicBatchOptions gained the matching ssim_min and
+   show_ssim fields; PublicTaskResult reports the computed score in a new ssim
+   field (None when SSIM was not computed; with ssim_min alone, files rejected
+   by the size check are not scored; show_ssim always returns the score). The
+   public entry points raise ValueError for an ssim_min outside 0.0-1.0.
+ * Removed the unused optimize_images/watch.py module. Directory watching
+   has been served by the public API (optimize_images.api.watch_directory)
+   since v1.4; the -wd/--watch-directory option is unaffected.
+ * Animated PNG files (APNG) are now left untouched, like animated WebP
+   files, instead of being flattened to their first frame. (Camera MPO files
+   are still optimized as their primary image, as before.)
+ * Converting a 16-bit grayscale PNG (Pillow modes I;16, I;16B, I;16L and I)
+   to another format now scales the samples to 8 bits (each value divided by
+   256) instead of clipping every value above 255 to white.
+ * Converting a CMYK image (typically a JPEG) to a format that does not
+   support CMYK, such as PNG or WebP, now converts it to RGB first instead of
+   failing with an error.
+
+---
 v.2.1.0 - 2026-06-26
  * Added WebP support: existing WebP files are now optimized in place, just
    like PNG and JPEG. Animated WebP files are left untouched.

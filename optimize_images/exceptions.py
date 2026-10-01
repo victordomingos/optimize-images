@@ -32,3 +32,16 @@ class OIInvalidPathError(ValueError):
 
     def __init__(self, message=""):
         self.message = message
+
+
+class OISSIMNotAvailableError(ImportError):
+    """Exception raised when the SSIM feature is requested but its optional
+    dependency (scikit-image) is not installed.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message=""):
+        self.message = message
+        super().__init__(self.message)

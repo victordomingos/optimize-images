@@ -13,10 +13,8 @@ of the filesystem.
 changes it to another format (e.g. PNG to WebP); since there is no output file,
 it returns the converted bytes and the resulting format in the result.
 """
-from io import BytesIO
-from typing import Tuple
-
 from PIL import Image
+from io import BytesIO
 from optimize_images.data_structures import Task, TaskResult
 from optimize_images.formats import normalize_target
 from optimize_images.img_aux_processing import is_worth_keeping
@@ -24,6 +22,7 @@ from optimize_images.img_convert import transform_convert
 from optimize_images.img_optimize_jpg import transform_jpg
 from optimize_images.img_optimize_png import transform_png
 from optimize_images.img_optimize_webp import transform_webp
+from typing import Optional, Tuple
 
 _SUPPORTED = {'JPEG', 'MPO', 'PNG', 'WEBP'}
 
@@ -37,7 +36,8 @@ def _build_task(name: str, quality: int, remove_transparency: bool,
                 keep_exif: bool, bg_color: Tuple[int, int, int],
                 grayscale: bool, ignore_size_comparison: bool,
                 fast_mode: bool, webp_quality: int, webp_lossless: bool,
-                webp_method: int) -> Task:
+                webp_method: int, ssim_min: Optional[float],
+                show_ssim: bool = False) -> Task:
     return Task(
         src_path=name,
         quality=quality,
@@ -59,12 +59,14 @@ def _build_task(name: str, quality: int, remove_transparency: bool,
         webp_quality=webp_quality,
         webp_lossless=webp_lossless,
         webp_method=webp_method,
+        ssim_min=ssim_min,
+        show_ssim=show_ssim,
     )
 
 
 def _skipped(name: str, fmt: str, mode: str, orig_size: int) -> TaskResult:
     return TaskResult(name, fmt, fmt, mode, mode, 0, 0, orig_size, orig_size,
-                      False, False, False, False, None)
+                      False, False, False, False, None, None)
 
 
 def optimize_image_data(
@@ -85,19 +87,23 @@ def optimize_image_data(
         webp_quality: int = 80,
         webp_lossless: bool = False,
         webp_method: int = 6,
+        ssim_min: Optional[float] = None,
+        show_ssim: bool = False,
 ) -> Tuple[bytes, TaskResult]:
     """Optimize an image given as bytes and return ``(optimized_bytes, result)``.
 
     The original format is kept. ``optimized_bytes`` is the smaller image, or
     the original ``data`` unchanged when optimizing did not help (and the size
-    comparison was not disabled). ``name`` is only a label for the result.
-    Raises ``OSError`` if ``data`` is not a readable image.
+    comparison was not disabled). Multi-frame sources (animated WebP or PNG)
+    are returned unchanged. ``name`` is only a label for the result. Raises
+    ``OSError`` if ``data`` is not a readable image.
     """
     orig_size = len(data)
     task = _build_task(name, quality, remove_transparency, reduce_colors,
                        max_colors, max_w, max_h, keep_exif, bg_color,
                        grayscale, ignore_size_comparison, fast_mode,
-                       webp_quality, webp_lossless, webp_method)
+                       webp_quality, webp_lossless, webp_method, ssim_min,
+                       show_ssim)
 
     with Image.open(BytesIO(data)) as img:
         fmt = (img.format or '').upper()
@@ -108,15 +114,17 @@ def optimize_image_data(
         if fmt in ('JPEG', 'MPO'):
             opt = transform_jpg(img, task, orig_size)
         elif fmt == 'PNG':
-            opt = transform_png(img, task)
+            opt = transform_png(img, task, orig_size)
         else:  # WEBP
-            opt = transform_webp(img, task)
-            if opt is None:  # animated WebP: leave untouched
-                return data, _skipped(name, fmt, mode, orig_size)
+            opt = transform_webp(img, task, orig_size)
+
+        if opt is None:  # animated WebP or PNG: leave untouched
+            return data, _skipped(name, fmt, mode, orig_size)
 
     final_size = opt.buffer.getbuffer().nbytes
     compare_sizes = not ignore_size_comparison
-    if is_worth_keeping(final_size, orig_size, compare_sizes):
+    if is_worth_keeping(final_size, orig_size, compare_sizes,
+                        ssim=opt.ssim, ssim_min=ssim_min):
         out_bytes = opt.buffer.getvalue()
         was_optimized = True
     else:
@@ -127,7 +135,8 @@ def optimize_image_data(
     result = TaskResult(name, opt.orig_format, opt.result_format,
                         opt.orig_mode, opt.result_mode, opt.orig_colors,
                         opt.final_colors, orig_size, final_size, was_optimized,
-                        opt.was_downsized, opt.had_exif, opt.has_exif, None)
+                        opt.was_downsized, opt.had_exif, opt.has_exif, None,
+                        opt.ssim)
     return out_bytes, result
 
 
@@ -147,6 +156,8 @@ def convert_image_data(
         webp_quality: int = 80,
         webp_lossless: bool = False,
         webp_method: int = 6,
+        ssim_min: Optional[float] = None,
+        show_ssim: bool = False,
 ) -> Tuple[bytes, TaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 
@@ -178,12 +189,13 @@ def convert_image_data(
                 grayscale=grayscale,
                 ignore_size_comparison=ignore_size_comparison,
                 webp_quality=webp_quality, webp_lossless=webp_lossless,
-                webp_method=webp_method)
+                webp_method=webp_method, ssim_min=ssim_min,
+                show_ssim=show_ssim)
 
         task = _build_task(name, quality, remove_transparency, False, 256,
                            max_w, max_h, keep_exif, bg_color, grayscale,
                            ignore_size_comparison, False, webp_quality,
-                           webp_lossless, webp_method)
+                           webp_lossless, webp_method, ssim_min, show_ssim)
         task = task._replace(convert_to=target, convert_all=True)
 
         try:
@@ -192,21 +204,24 @@ def convert_image_data(
         except Exception:
             exif, had_exif = None, False
 
-        opt = transform_convert(task, img, src_format, mode, had_exif, exif)
+        opt = transform_convert(task, img, src_format, mode, had_exif, exif,
+                                orig_size=orig_size)
         if opt is None:  # multi-frame: leave untouched
             return data, _skipped(name, src_format, mode, orig_size)
 
     final_size = opt.buffer.getbuffer().nbytes
     compare_sizes = not ignore_size_comparison
-    if is_worth_keeping(final_size, orig_size, compare_sizes):
+    if is_worth_keeping(final_size, orig_size, compare_sizes,
+                        ssim=opt.ssim, ssim_min=ssim_min):
         out_bytes = opt.buffer.getvalue()
         result = TaskResult(name, opt.orig_format, opt.result_format, mode,
                             opt.result_mode, 0, 0, orig_size, final_size, True,
-                            opt.was_downsized, had_exif, opt.has_exif, None)
+                            opt.was_downsized, had_exif, opt.has_exif, None,
+                            opt.ssim)
     else:
         # Not worth it: keep the original bytes (and the original format).
         out_bytes = data
         result = TaskResult(name, src_format, src_format, mode, mode, 0, 0,
                             orig_size, orig_size, False, opt.was_downsized,
-                            had_exif, had_exif, None)
+                            had_exif, had_exif, None, opt.ssim)
     return out_bytes, result

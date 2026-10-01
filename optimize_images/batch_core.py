@@ -4,10 +4,9 @@ Internal batch orchestration helpers shared by CLI and API.
 This module is internal-only and may change without notice.
 """
 import os
-from typing import Iterable
-
 from optimize_images.data_structures import Task, BatchOptions
 from optimize_images.file_utils import search_images
+from typing import Iterable
 
 
 def build_tasks(options: BatchOptions) -> Iterable[Task]:
@@ -22,7 +21,8 @@ def build_tasks(options: BatchOptions) -> Iterable[Task]:
                  options.grayscale, options.ignore_size_comparison,
                  options.fast_mode, options.output_config,
                  options.convert_to, options.webp_quality,
-                 options.webp_lossless, options.webp_method)
+                 options.webp_lossless, options.webp_method,
+                 options.ssim_min, options.show_ssim)
             for img_path in search_images(options.src_path, recursive=options.recursive)
         )
     elif os.path.isfile(options.src_path) and '~temp~' not in options.src_path:
@@ -34,6 +34,7 @@ def build_tasks(options: BatchOptions) -> Iterable[Task]:
                  options.grayscale, options.ignore_size_comparison,
                  options.fast_mode, options.output_config,
                  options.convert_to, options.webp_quality,
-                 options.webp_lossless, options.webp_method)
+                 options.webp_lossless, options.webp_method,
+                 options.ssim_min, options.show_ssim)
         ]
     return []

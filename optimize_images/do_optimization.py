@@ -91,7 +91,8 @@ def do_optimization(task: Task) -> TaskResult:
                           was_downsized=False,
                           had_exif=False,
                           has_exif=False,
-                          output_config=task.output_config)
+                          output_config=task.output_config,
+                          ssim=None)
 
     # Readable but unsupported format: report it as skipped.
     try:
@@ -114,4 +115,5 @@ def do_optimization(task: Task) -> TaskResult:
                       was_downsized=False,
                       had_exif=had_exif,
                       has_exif=had_exif,
-                      output_config=task.output_config)
+                      output_config=task.output_config,
+                      ssim=None)

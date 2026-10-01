@@ -31,12 +31,14 @@ class Task(NamedTuple):
     no_size_comparison: bool
     fast_mode: bool
     output_config: Optional[OutputConfiguration]
-    # Conversion target and WebP-specific settings (kept last, with defaults,
-    # so that existing positional Task(...) construction stays compatible).
+    # Conversion target, WebP-specific, and SSIM settings (kept last so
+    # existing positional Task(...) construction stays compatible).
     convert_to: str = 'jpeg'
     webp_quality: int = 80
     webp_lossless: bool = False
     webp_method: int = 6
+    ssim_min: Optional[float] = None
+    show_ssim: bool = False
 
 
 class TaskResult(NamedTuple):
@@ -54,6 +56,7 @@ class TaskResult(NamedTuple):
     had_exif: bool
     has_exif: bool
     output_config: Optional[OutputConfiguration]
+    ssim: Optional[float] = None
 
 
 class OptimizedImage(NamedTuple):
@@ -71,6 +74,7 @@ class OptimizedImage(NamedTuple):
     was_downsized: bool
     had_exif: bool
     has_exif: bool
+    ssim: Optional[float] = None
 
 
 @dataclass
@@ -93,11 +97,13 @@ class BatchOptions:
     fast_mode: bool = False
     jobs: int = 0
     output_config: Optional[OutputConfiguration] = None
-    # Conversion target and WebP-specific settings.
+    # Conversion target, WebP-specific, and SSIM settings.
     convert_to: str = 'jpeg'
     webp_quality: int = 80
     webp_lossless: bool = False
     webp_method: int = 6
+    ssim_min: Optional[float] = None
+    show_ssim: bool = False
 
 
 @dataclass

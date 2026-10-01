@@ -5,14 +5,13 @@ import re
 import sys
 from argparse import ArgumentParser
 from importlib.metadata import version, PackageNotFoundError
-
 from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, DEFAULT_WEBP_QUALITY, \
     DEFAULT_WEBP_METHOD, SUPPORTED_FORMATS
 from optimize_images.data_structures import OutputConfiguration
+from optimize_images.exif_format import format_exif
 from optimize_images.formats import available_output_formats
 from optimize_images.metadata import inspect_image
-from optimize_images.exif_format import format_exif
 
 
 def get_version_info() -> str:
@@ -25,6 +24,10 @@ def get_version_info() -> str:
     watchdog_version = _get_package_version(
         "watchdog",
         fallback="missing (package needed for watching folders for changes)"
+    )
+    skimage_version = _get_package_version(
+        "scikit-image",
+        fallback="missing (needed for SSIM features)"
     )
     python_version = (
         f"Python {platform.python_version()}"
@@ -39,7 +42,8 @@ def get_version_info() -> str:
         f"\n  - Pillow {pillow_version}"
         f"\n  - {python_version}"
         f"\n\nOptional packages:"
-        f"\n  - Watchdog {watchdog_version}\n\n"
+        f"\n  - Watchdog {watchdog_version}"
+        f"\n  - scikit-image {skimage_version}\n\n"
     )
 
 
@@ -87,7 +91,7 @@ def _handle_info(args, parser) -> None:
     extras = [a for a in sys.argv[1:] if a.startswith('-') and a not in allowed]
     if extras:
         parser.exit(status=2, message="\nThe --info option must be used on its "
-                    "own, with only the path of the image to inspect.\n\n")
+                                      "own, with only the path of the image to inspect.\n\n")
     if not args.path:
         parser.exit(status=2,
                     message="\nPlease specify the path of the image to "
@@ -262,6 +266,43 @@ def get_args():
                            type=int, default=DEFAULT_WEBP_METHOD,
                            help=_tagged('WebP', wm_help))
 
+    ssim_help = 'Minimum acceptable SSIM (Structural Similarity Index) value ' \
+                'between 0.0 and 1.0. If the optimized image scores below ' \
+                'this threshold, it will be discarded and the original kept. ' \
+                'The score measures the loss of the final encoding only: ' \
+                'transforms (resizing, color reduction, grayscale) are ' \
+                'applied before it is computed, so they do not lower it, ' \
+                'and the threshold never changes the selected quality. ' \
+                'Inert for PNG files that are not converted (their ' \
+                'encoding is lossless, score always 1.0000). ' \
+                'Recommended: 0.93-0.97 for in-place optimization ' \
+                '(measured across 224 photos with the default encoder: ' \
+                'scores 0.929-1.0, median 0.981; 0.95 rejects ~2%% of the ' \
+                'files, 0.96 ~6%%, 0.97 ~18%%); 0.85-0.93 for conversion ' \
+                '(0.95 rejects 16.6%% with -ca, 32.3%% with -ca -cc webp). ' \
+                'For images with transparency, the score is computed over ' \
+                'the background color (-bg/-hbg, white by default). ' \
+                'Computing the score is slow on very large images.'
+    enc_group.add_argument('-ssm', '--ssim-min', dest='ssim_min',
+                           type=float, default=None,
+                           help=_tagged('JPEG, WebP, convert', ssim_help))
+
+    ssim_show_help = 'Show the SSIM score of each processed image in the ' \
+                     'report. Requires scikit-image (without it, a warning ' \
+                     'is shown once and no scores are displayed); the score ' \
+                     'is shown automatically when --ssim-min is used.'
+    enc_group.add_argument('--show-ssim', dest='show_ssim',
+                           action='store_true', default=None,
+                           help=_tagged('JPEG, WebP, convert', ssim_show_help))
+    no_ssim_show_help = 'Do not show the SSIM score of optimized files in the ' \
+                        'report. Files rejected because their score fell below ' \
+                        'the --ssim-min threshold are still reported with the ' \
+                        'score and the threshold, so they stay distinguishable ' \
+                        'from files skipped for not being smaller.'
+    enc_group.add_argument('--no-show-ssim', dest='show_ssim',
+                           action='store_false',
+                           help=_tagged('JPEG, WebP, convert', no_ssim_show_help))
+
     color_group = parser.add_argument_group(
         'Color, transparency and metadata options'.upper())
 
@@ -283,16 +324,16 @@ def get_args():
                              action='store_true',
                              help=_tagged('PNG, WebP', rt_help))
 
-    bg_help = "The background color to apply when removing transparency or " \
-              "converting to JPEG. Specify 3 integer values (Red, Green and " \
-              "Blue), between 0 and 255, separated by spaces. E.g.: " \
-              "'255 0 0' for red)."
+    bg_help = "The background color to apply when removing transparency, " \
+              "converting to JPEG, or computing SSIM. Specify 3 integer " \
+              "values (Red, Green and Blue), between 0 and 255, separated by " \
+              "spaces. (E.g.: '255 0 0' for red)."
     color_group.add_argument('-bg', dest="val", type=int, nargs=3,
                              help=_tagged('PNG, WebP', bg_help))
 
     hbg_help = "The background color in hexadecimal (HTML style) to use " \
-               "when removing transparency or converting to JPEG. E.g.: " \
-               "'00FF00' for green color."
+               "when removing transparency, converting to JPEG, or computing " \
+               "SSIM. E.g.: '00FF00' for green color."
     color_group.add_argument('-hbg', dest="hex_color", type=str,
                              help=_tagged('PNG, WebP', hbg_help))
 
@@ -404,6 +445,13 @@ def get_args():
         msg = "\nPlease specify a WebP method (effort) between 0 and 6.\n\n"
         parser.exit(status=0, message=msg)
 
+    if args.ssim_min is not None and (
+            args.ssim_min != args.ssim_min  # NaN: it fails every comparison
+            or args.ssim_min < 0.0 or args.ssim_min > 1.0):
+        msg = ("\nPlease specify an SSIM threshold between 0.0 and 1.0 "
+               f"(got {args.ssim_min}).\n\n")
+        parser.exit(status=0, message=msg)
+
     # argparse already validates --convert-to against the formats available in
     # this Pillow build, so no extra codec check is needed here.
     convert_to = args.convert_to
@@ -414,4 +462,4 @@ def get_args():
         args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
         bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
         args.jobs, output_config, convert_to, webp_quality, \
-        args.webp_lossless, args.webp_method
+        args.webp_lossless, args.webp_method, args.ssim_min, args.show_ssim

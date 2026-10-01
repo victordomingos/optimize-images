@@ -32,8 +32,7 @@ API in optimize_images.api (optimize_single_image / optimize_as_batch).
 
 © 2026 Victor Domingos & contributers (MIT License)
 """
-from timeit import default_timer as timer
-
+import sys
 # Use only public API types
 from optimize_images.api import (
     optimize_as_batch_stream,
@@ -41,17 +40,22 @@ from optimize_images.api import (
     PublicBatchOptions,
 )
 from optimize_images.argument_parser import get_args
-from optimize_images.exceptions import OIImagesNotFoundError, OIInvalidPathError
+from optimize_images.exceptions import (OIImagesNotFoundError,
+                                        OIInvalidPathError,
+                                        OISSIMNotAvailableError)
 from optimize_images.exceptions import OIKeyboardInterrupt
+from optimize_images.img_ssim import ensure_ssim_available, ssim_available
 from optimize_images.platforms import adjust_for_platform, IconGenerator
 from optimize_images.reporting import human, show_file_status, show_final_report
+from timeit import default_timer as timer
 
 
 def main():
     args = get_args()
     try:
         optimize_batch(*args)
-    except (OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt) as ex:
+    except (OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt,
+            OISSIMNotAvailableError) as ex:
         print(ex.message)
 
 
@@ -59,9 +63,28 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    reduce_colors, max_colors, max_w, max_h, keep_exif, convert_all,
                    conv_big, force_del, bg_color, grayscale, ignore_size_comparison,
                    fast_mode, jobs, output_config, convert_to='jpeg',
-                   webp_quality=80, webp_lossless=False, webp_method=6):
+                   webp_quality=80, webp_lossless=False, webp_method=6,
+                   ssim_min=None, show_ssim=None):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
+
+    if ssim_min is not None:
+        ensure_ssim_available()
+
+    # The API must only be told to show the score when the user asked for it
+    # explicitly: when -ssm is given without --show-ssim/--no-show-ssim we
+    # turn on the display in the report, but the gate already computes the
+    # score wherever the decision depends on it, and forcing it (e.g. for a
+    # result rejected by the size check) is wasted work.
+    api_show_ssim = show_ssim is True
+
+    if show_ssim is None:
+        show_ssim = ssim_min is not None
+
+    if show_ssim and not ssim_available():
+        print("\nWarning: --show-ssim was requested but scikit-image is not "
+              "installed, so SSIM scores will not be shown. Install it with: "
+              "pip install scikit-image", file=sys.stderr)
 
     if jobs != 0:
         workers = jobs
@@ -95,6 +118,8 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         webp_quality=webp_quality,
         webp_lossless=webp_lossless,
         webp_method=webp_method,
+        ssim_min=ssim_min,
+        show_ssim=api_show_ssim,
     )
 
     if watch_dir:
@@ -120,7 +145,8 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                 message = f"[{cur_time_passed:.1f}s] {IconGenerator().optimized} {optimized_files} {IconGenerator().skipped} {skipped_files}, saved {human(total_bytes_saved)}"
                 print(message, end='\r')
             else:
-                show_file_status(public_result, line_width, IconGenerator())
+                show_file_status(public_result, line_width, IconGenerator(),
+                                 show_ssim, ssim_min=ssim_min)
 
         try:
             watch_directory(options, on_result=on_result, stop_event=stop_event)
@@ -162,7 +188,9 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                 message = f"[{cur_time_passed:.1f}s] {icons.optimized if icons else ''} {optimized_files} {icons.skipped if icons else ''} {skipped_files}, saved {human(total_bytes_saved)}"
                 print(message, end='\r')
             else:
-                show_file_status(result, line_width, icons if icons else IconGenerator())
+                show_file_status(result, line_width,
+                                 icons if icons else IconGenerator(), show_ssim,
+                                 ssim_min=ssim_min)
     except KeyboardInterrupt:
         msg = "\b \n\n  == Operation was interrupted by the user. ==\n"
         raise OIKeyboardInterrupt(msg)

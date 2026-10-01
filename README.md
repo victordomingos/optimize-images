@@ -40,6 +40,11 @@ by using this command:
 ```
 pip3 install pillow optimize-images
 ```
+The SSIM quality control options (`--ssim-min`, `--show-ssim`) additionally
+require the optional scikit-image package (`pip install scikit-image`, or
+`pip install optimize-images[ssim]` for the `[ssim]` extra); without it,
+`--show-ssim` prints a warning once and shows no scores, and `--ssim-min`
+stops the run with an error.
 
 ## How to use
 

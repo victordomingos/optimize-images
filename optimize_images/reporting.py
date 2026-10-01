@@ -54,9 +54,12 @@ def _fmt_mode(mode: str, colors: int) -> str:
     return m
 
 
-def show_file_status(result: Any, line_width: int, icons: IconGenerator) -> None:
+def show_file_status(result: Any, line_width: int, icons: IconGenerator,
+                     show_ssim: bool = False,
+                     ssim_min=None) -> None:
     """
-    Two-line output for optimized files; one-line output for skipped files.
+    Two-line output for optimized files; one line for skipped files, plus a
+    second SSIM line when the threshold rejected a skipped file.
     Compatible with PublicTaskResult and TaskResult.
     """
     img = getattr(result, "img", "")
@@ -133,12 +136,25 @@ def show_file_status(result: Any, line_width: int, icons: IconGenerator) -> None
         prefix2 = f"    {icons.info}  " if had_exif else "     "
         downsized_text = icons.downsized if was_downsized else ""
 
+        # Append SSIM score when available and display is enabled.
+        ssim = getattr(result, "ssim", None)
+        ssim_text = (f" SSIM: {ssim:.4f}"
+                     if show_ssim and ssim is not None else "")
+
         line2 = (
             f"{prefix2}{left}  {icons.arrow}  {downsized_text}"
-            f"{right} {icons.size_is_smaller} {percent:.1f}%"
+            f"{right} {icons.size_is_smaller} {percent:.1f}%{ssim_text}"
         )
 
         print(clamp(line2))
+    else:
+        # Skipped files: show the SSIM score only when the threshold
+        # rejected the file, so it stays distinguishable from a file
+        # that was skipped merely for not being smaller.
+        ssim = getattr(result, "ssim", None)
+        if ssim is not None and ssim_min is not None and ssim < ssim_min:
+            print(clamp(
+                f"     SSIM: {ssim:.4f} below threshold {ssim_min:g}"))
 
 
 def show_final_report(found_files: int,
