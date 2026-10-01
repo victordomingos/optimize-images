@@ -57,6 +57,8 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
     * [Optimize Images Docker](#optimize-images-docker)
     * [Optimize Images X](#optimize-images-x)
 
+* **[Executar os testes](#executar-os-testes)**
+
 - **[Encontrou um bug ou tem uma sugestão?](#encontrou-um-bug-ou-tem-uma-sugestão)**
 
 ## Instalação e dependências:
@@ -585,9 +587,9 @@ conteúdos, num object store ou numa base de dados — e não há um caminho de 
 ```python
 from optimize_images.api import optimize_image_data
 
-otimizada, resultado = optimize_image_data(bytes_originais, quality=70, max_w=1920)
-if resultado.was_optimized:
-    guardar(otimizada)   # imagem mais pequena; caso contrário é a original
+optimized, result = optimize_image_data(original_bytes, quality=70, max_w=1920)
+if result.was_optimized:
+    store(optimized)   # imagem mais pequena; caso contrário, `optimized` é a original
 ```
 
 Mantém o formato original e aceita as mesmas opções de processamento que o
@@ -606,9 +608,9 @@ O equivalente em memória da conversão de formato, para os mesmos casos de quem
 ```python
 from optimize_images.api import convert_image_data
 
-bytes_webp, resultado = convert_image_data(bytes_png, to="webp", webp_quality=80)
-if resultado.was_optimized:
-    guardar(bytes_webp, content_type="image/" + resultado.result_format.lower())
+webp_bytes, result = convert_image_data(png_bytes, to="webp", webp_quality=80)
+if result.was_optimized:
+    store(webp_bytes, content_type="image/" + result.result_format.lower())
 ```
 
 `to` é o formato de destino (`'jpeg'`, `'png'`, `'webp'`, e `'avif'` ou
@@ -668,13 +670,13 @@ em texto pronto a mostrar, usando a semântica padronizada do EXIF (unidades com
 ```python
 from optimize_images.api import inspect_image, format_exif
 
-meta = inspect_image("foto.jpg")
+meta = inspect_image("photo.jpg")
 print(meta.image_format, meta.width, meta.height, meta.has_alpha)
 
-for seccao, tags in format_exif(meta.exif).items():
-    print(seccao)
-    for nome, valor in tags.items():
-        print(f"  {nome}: {valor}")
+for section, tags in format_exif(meta.exif).items():
+    print(section)
+    for name, value in tags.items():
+        print(f"  {name}: {value}")
 ```
 
 #### Opções e resultados
@@ -720,6 +722,47 @@ versão original para linha de comandos, pode processar um ficheiro ou uma pasta
 incluir ou não de forma recursiva as suas subpastas. As tarefas de processamento são automaticamente distribuidas pelos
 núcleos do processador. Inclui ainda a funcionalidade "watch folder", que permite monitorizar uma pasta quanto à criação
 de novos ficheiros, processando-os de imediato.
+
+## Executar os testes
+
+Os testes usam o pytest. A partir de uma cópia do repositório, num ambiente virtual:
+
+```
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Execute os comandos na raiz do repositório (o `pytest.ini` indica ao pytest a pasta `tests` e o código-fonte), pelo que
+não é necessário instalar o pacote com `pip install -e .`. O `requirements-dev.txt` inclui o scikit-image; sem ele, os
+testes de SSIM são ignorados. Se algum pacote ainda não tiver *wheel* para a sua versão do Python, instale os restantes
+requisitos um a um, ou deixe o `scripts/test_matrix.py --install` fazê-lo. Variantes úteis:
+
+```
+python -m pytest -m "not slow"             # ignora as matrizes longas de regressão do SSIM
+python -m pytest tests/test_webp.py        # um único ficheiro
+python -m pytest --cov=optimize_images     # com relatório de cobertura
+```
+
+Para testar todas as versões de Python suportadas, com e sem *free-threading*, use o `scripts/test_matrix.py`. Este
+executa os testes num ambiente virtual por versão, guardado na raiz do repositório e com o nome da versão (`venv311`,
+`venv312`, `venv313`, `venv313t`, ... `venv315t`, em que `t` indica a versão *free-threaded*), e mostra uma tabela com
+os resultados:
+
+```
+python scripts/test_matrix.py --create              # cria os ambientes em falta e testa todos
+python scripts/test_matrix.py                       # testa os ambientes existentes
+python scripts/test_matrix.py --install             # atualiza antes os requisitos
+python scripts/test_matrix.py --only 3.14t,3.13 --fast
+python scripts/test_matrix.py -- -k watch           # os argumentos depois de -- vão para o pytest
+```
+
+O `--create` precisa dos interpretadores correspondentes no `PATH` (`python3.11`, ..., `python3.13t`, ...; no Windows,
+crie os ambientes à mão com o lançador `py`); o `--recreate` volta a criar os ambientes selecionados, por exemplo depois
+de uma nova versão do Python. O `--install` e o `--create` instalam os requisitos um a um e preferem pacotes já
+compilados (*wheels*), pelo que um pacote que ainda não tenha *wheel* para uma nova versão do Python (por exemplo, o
+scikit-image no 3.15) apenas faz ignorar os respetivos testes, o que fica indicado na tabela. O `--jobs` define quantos
+ambientes são testados ao mesmo tempo. O script usa apenas a biblioteca padrão. As imagens de teste em
+`tests/test-images/` nunca devem ser alteradas: os testes trabalham sobre cópias.
 
 ## Encontrou um *bug* ou tem uma sugestão?
 

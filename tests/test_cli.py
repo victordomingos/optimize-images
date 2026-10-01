@@ -1,47 +1,30 @@
 #!/usr/bin/env python3
-import subprocess
-import shutil
 from pathlib import Path
 import os
-import yaml
 import pytest
+
+yaml = pytest.importorskip("yaml")  # dev requirement; may lack a wheel on new Pythons
 
 from PIL import Image
 
-BASE = Path(__file__).parent
-INPUT = BASE / "test-images"
-TMP = BASE / "tmp"
-TMP.mkdir(exist_ok=True)
+from helpers import TEST_IMAGES, run_cli
 
-_created_tmp_files = set()
+BASE = Path(__file__).parent
 
 
 def run_optimize(args, input_file):
-    tmp_file = TMP / input_file.name
-    if tmp_file.exists():
-        tmp_file.unlink()
-    shutil.copy(input_file, tmp_file)
-    _created_tmp_files.add(tmp_file)
-    subprocess.run(["optimize-images", str(tmp_file)] + args + ["--quiet"], check=True)
+    """Optimize input_file (a copy in tmp_path) and return the output path.
 
-    # If a new file was created with a different extension (-ca), report it.
-    # Example: input.png => output.jpg
-    stem = tmp_file.stem
-    parent = tmp_file.parent
-    candidates = [
-        parent / f"{stem}.jpg",
-        parent / f"{stem}.jpeg",
-        parent / f"{stem}.png",
-        parent / f"{stem}.webp",
-        parent / f"{stem}.avif",
-        parent / f"{stem}.heic",
-    ]
-    for c in candidates:
-        if c.exists() and c != tmp_file:
-            _created_tmp_files.add(c)
-            return c
-
-    return tmp_file
+    A conversion (-ca) writes a file with another extension next to it
+    (e.g. input.png => input.jpg); that file is returned when it exists.
+    """
+    proc = run_cli(input_file, *args, "--quiet")
+    assert proc.returncode == 0, proc.stderr
+    for ext in ("jpg", "jpeg", "png", "webp", "avif", "heic"):
+        candidate = input_file.with_suffix(f".{ext}")
+        if candidate.exists() and candidate != input_file:
+            return candidate
+    return input_file
 
 
 def has_exif(path):
@@ -100,14 +83,14 @@ def case_id(t):
 
 
 @pytest.mark.parametrize("case", load_tests(), ids=case_id)
-def test_optimize_case(case):
-    input_file = INPUT / case["input"]
-    assert input_file.exists(), f"MISSING input: {case['input']}"
+def test_optimize_case(case, image_copy):
+    orig = TEST_IMAGES / case["input"]
+    assert orig.exists(), f"MISSING input: {case['input']}"
 
-    out_file = run_optimize(case["args"], input_file)
+    out_file = run_optimize(case["args"], image_copy(case["input"]))
 
     context = {
-        "orig": input_file,
+        "orig": orig,
         "out": out_file,
         "file_size": file_size,
         "image_info": image_info,
@@ -123,14 +106,6 @@ def test_optimize_case(case):
         pytest.fail(f"Exception in check: {e}")
     else:
         assert ok, "Check failed"
-    finally:
-        # Remove only files we created, leave any pre-existing files intact
-        for temp_file in list(_created_tmp_files):
-            try:
-                if temp_file.exists():
-                    temp_file.unlink()
-            finally:
-                _created_tmp_files.discard(temp_file)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 Self-contained: tests that run a batch generate their own images under pytest's
 ``tmp_path`` instead of operating on the versioned ``tests/test-images`` folder,
 which they would otherwise optimize in place and leave modified in the working
-tree. Runs with the rest of the suite via ``pytest tests/``.
+tree. Runs with the rest of the suite.
 
 The parallel tests only run on a free-threaded interpreter (otherwise skipped);
 the executor-selection test runs on any Python.

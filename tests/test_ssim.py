@@ -614,3 +614,21 @@ def _option_help(option):
 def test_no_show_ssim_help_mentions_rejection_line():
     text = _option_help('--no-show-ssim')
     assert 'threshold' in text.lower()
+
+
+# --- orig_size must be passed explicitly to every transform (plan 5.3) ---
+# A default of 0 would make every result look "not smaller": with ssim_min
+# the score would be skipped and every file silently rejected.
+
+@pytest.mark.parametrize("module, name", [
+    ('img_optimize_jpg', 'transform_jpg'),
+    ('img_optimize_png', 'transform_png'),
+    ('img_optimize_webp', 'transform_webp'),
+    ('img_convert', 'transform_convert'),
+])
+def test_transforms_require_orig_size(module, name):
+    import importlib
+    import inspect
+    func = getattr(importlib.import_module(f'optimize_images.{module}'), name)
+    param = inspect.signature(func).parameters['orig_size']
+    assert param.default is inspect.Parameter.empty

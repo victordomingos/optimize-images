@@ -1,15 +1,9 @@
 tests:
-  - name: "JPEG quality 50"
-    args: ["-q", "50"]
+  - name: "JPEG fixed quality 50 (fast mode)"
+    args: ["-fm", "-q", "50"]
     input: "jpeg_with_exif.jpg"
     check: "file_size(out) < file_size(orig)"
-    note: ""
-
-  - name: "JPEG quality 95"
-    args: ["-q", "95"]
-    input: "jpeg_with_exif.jpg"
-    check: "file_size(out) <= file_size(orig)"
-    note: ""
+    note: "-q only applies with -fm until plan F3"
 
   - name: "JPEG Keep EXIF"
     args: ["-ke"]

@@ -57,6 +57,7 @@ pure Python, but those packages and the features depending on them should be tre
     * [Optimize Images Docker](#optimize-images-docker)
     * [Optimize Images X](#optimize-images-x)
 
+* **[Running the tests](#running-the-tests)**
 
 * **[Did you find a bug or do you have a suggestion?](#did-you-find-a-bug-or-do-you-have-a-suggestion)**
 
@@ -715,6 +716,46 @@ interface, to help you reduce the file size of images. Just like its CLI compani
 folder’s root or all images in a folder, recursively. Multiple image processing tasks are automatically distributed to
 all available CPU cores. Additionally, it includes a “watch folder” feature that continuously monitors a specified
 folder for new image files and processes them right after they’re created or placed in that folder.
+
+## Running the tests
+
+The test suite uses pytest. From a clone of the repository, in a virtual environment:
+
+```
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Run the commands from the repository root (`pytest.ini` points pytest to the `tests` folder and to the source code), so
+installing the package with `pip install -e .` is not needed. `requirements-dev.txt` includes scikit-image; without it,
+the SSIM tests are skipped. If a package has no wheel yet for your Python version, install the other requirements one by
+one, or let `scripts/test_matrix.py --install` do it. Useful variations:
+
+```
+python -m pytest -m "not slow"             # skip the long SSIM regression matrices
+python -m pytest tests/test_webp.py        # one file
+python -m pytest --cov=optimize_images     # with a coverage report
+```
+
+To test every supported Python version, with and without free-threading, use `scripts/test_matrix.py`. It runs the
+suite in one virtual environment per version, kept at the repository root and named after the version (`venv311`,
+`venv312`, `venv313`, `venv313t`, ... `venv315t`, where `t` is the free-threaded build), and prints a table with the
+results:
+
+```
+python scripts/test_matrix.py --create              # create missing venvs, then test them all
+python scripts/test_matrix.py                       # test the existing venvs
+python scripts/test_matrix.py --install             # update their requirements first
+python scripts/test_matrix.py --only 3.14t,3.13 --fast
+python scripts/test_matrix.py -- -k watch           # arguments after -- go to pytest
+```
+
+`--create` needs the matching interpreters on the `PATH` (`python3.11`, ..., `python3.13t`, ...; on Windows, create the
+venvs by hand with the `py` launcher); `--recreate` rebuilds the selected venvs, for instance after a new Python
+release. `--install` and `--create` install the requirements one by one and prefer released wheels, so a package that
+has no wheel yet for a new Python (e.g. scikit-image on 3.15) only skips its tests, which the table reports. `--jobs`
+sets how many venvs are tested at the same time. The script uses only the standard library. The test images in
+`tests/test-images/` must never be modified: the tests work on copies.
 
 ## Did you find a bug or do you have a suggestion?
 

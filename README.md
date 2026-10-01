@@ -128,6 +128,10 @@ For batch processing, directory watching, the full set of options and the
 result fields, see [Programmatic use](./docs/docs_EN.md#programmatic-use-as-a-library)
 in the full documentation.
 
+To run the tests (`python -m pytest`, or `python scripts/test_matrix.py` for
+every supported Python version), see
+[Running the tests](./docs/docs_EN.md#running-the-tests).
+
 
 ## Getting help
 

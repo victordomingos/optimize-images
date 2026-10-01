@@ -14,6 +14,7 @@ tests:
   - name: "Watch ignore non-image"
     input: "not_image.txt"
     args: []
+    expect_change: false
     check: "file_size(out) == file_size(orig)"
     note: "Watcher should ignore non-image files"
 
