@@ -17,6 +17,7 @@ Examples (from the repository root):
 Standard library only.
 """
 import argparse
+import contextlib
 import os
 import shutil
 import subprocess
@@ -51,7 +52,7 @@ PROBE = (
 class Result:
     version: str
     venv: Path
-    status: str = "ok"            # ok | missing | broken | failed
+    status: str = "ok"            # ok | missing | broken | busy | failed
     python: str = ""
     free_threaded: Optional[bool] = None
     passed: int = 0
@@ -197,7 +198,39 @@ def parse_junit(path: Path, result: Result) -> None:
                 result.passed += 1
 
 
+@contextlib.contextmanager
+def venv_lock(venv: Path):
+    """Hold an exclusive lock on venv for this process, or yield False when
+    another test_matrix run holds it (e.g. one that is recreating it).
+
+    The lock file lives in the temporary folder, so it survives --recreate;
+    the OS releases it when the process ends. No locking on Windows.
+    """
+    try:
+        import fcntl
+    except ImportError:
+        yield True
+        return
+    path = Path(tempfile.gettempdir()) / f"optimize-images-{venv.name}.lock"
+    with open(path, "w") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            yield False
+            return
+        yield True
+
+
 def run_venv(version: str, args, log_dir: Path) -> Result:
+    with venv_lock(venv_dir(version)) as locked:
+        if not locked:
+            result = Result(version, venv_dir(version), status="busy")
+            result.notes.append("another test_matrix run is using this venv")
+            return result
+        return _run_venv(version, args, log_dir)
+
+
+def _run_venv(version: str, args, log_dir: Path) -> Result:
     venv = venv_dir(version)
     result = Result(version, venv)
     python = venv_python(venv)
@@ -363,7 +396,8 @@ def main(argv=None) -> int:
                                 versions))
     print_report(results, log_dir)
 
-    bad = {"failed", "broken"} | ({"missing"} if args.strict else set())
+    bad = {"failed", "broken", "busy"} | (
+        {"missing"} if args.strict else set())
     return 1 if any(r.status in bad for r in results) else 0
 
 
