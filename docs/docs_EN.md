@@ -750,12 +750,12 @@ python scripts/test_matrix.py --only 3.14t,3.13 --fast
 python scripts/test_matrix.py -- -k watch           # arguments after -- go to pytest
 ```
 
-`--create` needs the matching interpreters on the `PATH` (`python3.11`, ..., `python3.13t`, ...; on Windows, create the
-venvs by hand with the `py` launcher); `--recreate` rebuilds the selected venvs, for instance after a new Python
-release. `--install` and `--create` install the requirements one by one and prefer released wheels, so a package that
-has no wheel yet for a new Python (e.g. scikit-image on 3.15) only skips its tests, which the table reports. `--jobs`
-sets how many venvs are tested at the same time. The script uses only the standard library. The test images in
-`tests/test-images/` must never be modified: the tests work on copies.
+`--create` needs the matching interpreters on the `PATH` (`python3.11`, ..., `python3.13t`, ...; when there are several,
+the newest patch release is used; on Windows, create the venvs by hand with the `py` launcher); `--recreate` rebuilds
+the selected venvs, for instance after a new Python release. `--install` and `--create` install the requirements one by
+one and prefer released wheels, so a package that has no wheel yet for a new Python (e.g. scikit-image on 3.15) only
+skips its tests, which the table reports. `--jobs` sets how many venvs are tested at the same time. The script uses only
+the standard library. The test images in `tests/test-images/` must never be modified: the tests work on copies.
 
 ## Did you find a bug or do you have a suggestion?
 

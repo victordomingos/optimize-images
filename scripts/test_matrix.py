@@ -91,6 +91,38 @@ def dev_requirement_lines() -> List[str]:
     return lines
 
 
+def find_interpreter(version: str) -> Optional[str]:
+    """Return the newest python<version> on PATH with the matching build.
+
+    Several installations of the same minor version may be on PATH (e.g.
+    python.org, Homebrew, uv); the one with the highest patch release wins,
+    whatever the PATH order.
+    """
+    name = f"python{version}" + (".exe" if os.name == "nt" else "")
+    want_free_threaded = version.endswith("t")
+    best, best_version = None, None
+    for folder in os.environ.get("PATH", "").split(os.pathsep):
+        candidate = Path(folder) / name
+        if not (candidate.is_file() and os.access(candidate, os.X_OK)):
+            continue
+        try:
+            proc = run([candidate, "-c",
+                        "import sys, sysconfig; print(*sys.version_info[:3], "
+                        "bool(sysconfig.get_config_var('Py_GIL_DISABLED')))"],
+                       timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        fields = proc.stdout.split()
+        if proc.returncode or len(fields) != 4:
+            continue
+        if (fields[3] == "True") != want_free_threaded:
+            continue
+        found = tuple(int(f) for f in fields[:3])
+        if best_version is None or found > best_version:
+            best, best_version = str(candidate), found
+    return best
+
+
 def create_venv(version: str, recreate: bool) -> Optional[List[str]]:
     """Create venvXXX with python<version> and install the requirements.
 
@@ -101,7 +133,7 @@ def create_venv(version: str, recreate: bool) -> Optional[List[str]]:
         return None
     if venv.exists() and Path(sys.prefix).resolve() == venv.resolve():
         raise RuntimeError("cannot recreate the venv running this script")
-    interpreter = shutil.which(f"python{version}")
+    interpreter = find_interpreter(version)
     if interpreter is None:
         raise RuntimeError(f"interpreter python{version} not found on PATH")
     if venv.exists():
@@ -294,8 +326,8 @@ def main(argv=None) -> int:
                         "3.14t,3.13 (default: all of "
                         + ", ".join(VERSIONS) + ")")
     parser.add_argument("--create", action="store_true",
-                        help="create missing venvs with python<version> from "
-                             "PATH (e.g. python3.13t) and install the dev "
+                        help="create missing venvs with the newest python<version> "
+                             "on PATH (e.g. python3.13t) and install the dev "
                              "requirements; on Windows create them by hand "
                              "with the py launcher")
     parser.add_argument("--recreate", action="store_true",
