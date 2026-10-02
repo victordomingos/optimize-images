@@ -73,7 +73,10 @@ def compute_ssim(img1: Image.Image, img2: Image.Image,
     """Compute the SSIM between two images, in memory.
 
     Both images are composited over ``bg_color`` (transparency flattened to
-    8-bit RGB) before the comparison; the SSIM is computed independently for
+    8-bit RGB) before the comparison. If the two flattened images are
+    pixel-identical the score is ``1.0`` and the scikit-image call is
+    skipped (a lossless re-encoding or a lossless conversion always scores
+    1.0 by definition). Otherwise the SSIM is computed independently for
     each color channel and averaged (``channel_axis=-1``), using the standard
     data_range of 255 for 8-bit data. Returns a plain Python float in [-1, 1]
     (1.0 means identical images) or None when the score cannot be computed
@@ -90,8 +93,14 @@ def compute_ssim(img1: Image.Image, img2: Image.Image,
     if img1.size != img2.size:
         return None
     try:
-        r1 = np.asarray(_flatten_over(img1, bg_color), dtype=np.float64)
-        r2 = np.asarray(_flatten_over(img2, bg_color), dtype=np.float64)
+        f1 = _flatten_over(img1, bg_color)
+        f2 = _flatten_over(img2, bg_color)
+        # Identical after flattening: SSIM is 1.0 by definition, skip the
+        # expensive scikit-image call (plan 5.1).
+        if f1.tobytes() == f2.tobytes():
+            return 1.0
+        r1 = np.asarray(f1, dtype=np.float64)
+        r2 = np.asarray(f2, dtype=np.float64)
         # scikit-image returns a numpy scalar; the public result must be a
         # plain Python float (no numpy dependency leaking to API callers).
         return float(_ssim_impl(r1, r2, data_range=255,

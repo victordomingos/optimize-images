@@ -220,7 +220,9 @@ def test_gate_keeps_original_when_score_fails(tmp_path, monkeypatch):
     monkeypatch.setattr(img_ssim, "_ssim_impl", _out_of_memory)
 
     img = Image.new('RGB', (32, 32), (120, 60, 30))
-    assert compute_ssim(img, img.copy()) is None
+    img2 = img.copy()
+    img2.putpixel((0, 0), (121, 60, 30))
+    assert compute_ssim(img, img2) is None
 
     path = _photo(tmp_path / "img.jpg")
     before = path.read_bytes()

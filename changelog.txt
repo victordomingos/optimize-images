@@ -57,6 +57,9 @@ v.2.2.0 - 2026-09-21
  * Converting a CMYK image (typically a JPEG) to a format that does not
    support CMYK, such as PNG or WebP, now converts it to RGB first instead of
    failing with an error.
+ * Palette PNG optimization now keeps every colour (it used to re-quantize
+   the image) and is much faster. Palette PNGs may therefore shrink less
+   than before, because their colours are no longer changed.
 
 ---
 v.2.1.0 - 2026-06-26

@@ -164,34 +164,97 @@ def make_grayscale(img: Image.Image) -> Image.Image:
 
 
 def rebuild_palette(img: Image.Image) -> Tuple[Image.Image, int]:
-    """ Rebuild the palette of a mode "P" PNG image
+    """Rebuild the palette of a mode "P" image.
 
-    It may allow for other tools, like PNGOUT and AdvPNG, to further reduce the
-    size of some indexed PNG images. However, it it was already an optimized PNG,
-    the resulting file size may in fact be bigger (which means optimize-images
-    may discard it by default). You may also want to use it as an intermediate
-    process, before doing a final optimization using those tools.
+    Removes unused palette entries, orders every non-opaque (alpha < 255)
+    entry before the opaque ones, stores the palette as plain RGB and
+    writes the alphas into ``img.info["transparency"]`` as a bytes object
+    (one byte per non-opaque entry).  Pixel indices are remapped so the
+    image looks identical.  Works on a copy so the caller's original is
+    untouched.
 
-    :param img: a mode "P" PNG image
-    :return: a tuple composed by a mode "P" PNG image object and an integer
-             with the resulting number of colors
+    :param img: a mode "P" image
+    :return: a tuple composed by a mode "P" image object and an integer
+             with the resulting number of colours used in the image
     """
-    width, height = img.size
-    img = img.convert("RGBA")
-    new_palette = Palette()
-    alpha_layer: Image.Image = Image.new("L", img.size)
+    img = img.copy()
 
-    for x in range(width):
-        for y in range(height):
-            red, green, blue, alpha = img.getpixel((x, y))
-            alpha_layer.putpixel((x, y), alpha)
-            new_palette.add(red, green, blue)
+    colors_list = img.getcolors(256)
+    if colors_list is None:
+        return img, 0  # more than 256 colours: nothing to reduce.
 
-    img.putalpha(alpha_layer)
-    palette = new_palette.get_palette()
-    num_colors = len(palette) // 3
-    img = img.convert("P", palette=palette, colors=num_colors)
-    return img, len(img.getcolors())
+    # Collect the used palette indices (sorted for determinism).
+    old_indices = sorted(c[1] for c in colors_list)
+    n = len(old_indices)
+
+    # ------------------------------------------------------------------
+    # Figure out (R, G, B, A) for every used palette index, regardless
+    # of how Pillow stored the alpha on this image (RGBA palette, bytes
+    # in info["transparency"], or a single int index).
+    # ------------------------------------------------------------------
+    palette_mode = img.palette.mode if img.palette else None  # 'RGB' or 'RGBA'
+    bytes_per_entry = 4 if palette_mode == 'RGBA' else 3
+    full_palette = img.getpalette(rawmode=palette_mode)
+
+    # Map old palette index → (r, g, b, a).
+    index_rgba: dict[int, tuple[int, int, int, int]] = {}
+    for old_idx in old_indices:
+        start = old_idx * bytes_per_entry
+        r = full_palette[start]
+        g = full_palette[start + 1]
+        b = full_palette[start + 2]
+        a = full_palette[start + 3] if palette_mode == 'RGBA' else 255
+        index_rgba[old_idx] = (r, g, b, a)
+
+    # Override alphas from ``img.info["transparency"]`` when the palette
+    # itself does not carry alpha (or carries incomplete alpha).
+    if "transparency" in img.info:
+        trns = img.info["transparency"]
+        if isinstance(trns, bytes):
+            for old_idx in old_indices:
+                if old_idx < len(trns):
+                    r, g, b, _ = index_rgba[old_idx]
+                    index_rgba[old_idx] = (r, g, b, trns[old_idx])
+        elif isinstance(trns, int) and trns in index_rgba:
+            r, g, b, _ = index_rgba[trns]
+            index_rgba[trns] = (r, g, b, 0)
+
+    # ------------------------------------------------------------------
+    # Reorder: non-opaque entries first, then opaque ones.
+    # ------------------------------------------------------------------
+    indexed = list(enumerate(old_indices))  # (local position, old_idx)
+    indexed.sort(key=lambda pair: (
+        index_rgba[old_indices[pair[0]]][3] == 255,  # False < True: non-opaque first
+        pair[0],  # keep original sorted order within each group
+    ))
+
+    # Build old index → new position in the reordered list.
+    old_to_new = {
+        old_indices[indexed[i][0]]: i for i in range(n)
+    }
+
+    # Build the new RGB palette and collect non-opaque alphas.
+    new_rgb: list[int] = []
+    non_opaque_alphas: list[int] = []
+    for new_pos in range(n):
+        old_idx = old_indices[indexed[new_pos][0]]
+        r, g, b, a = index_rgba[old_idx]
+        new_rgb.extend((r, g, b))
+        if a < 255:
+            non_opaque_alphas.append(a)
+
+    # Store palette as plain RGB and non-opaque alphas as tRNS bytes.
+    img.putpalette(new_rgb, rawmode="RGB")
+    if non_opaque_alphas:
+        img.info["transparency"] = bytes(non_opaque_alphas)
+    elif "transparency" in img.info:
+        del img.info["transparency"]
+
+    # Remap pixel indices: point() applies the 256-entry lookup in C.
+    lut = [old_to_new.get(i, i) for i in range(256)]
+    img = img.point(lut)
+
+    return img, n
 
 
 def is_at_least_1pct_smaller(final_size: int, orig_size: int) -> bool:

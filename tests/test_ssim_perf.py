@@ -53,7 +53,7 @@ def _photo_rgb(size=(320, 240), seed=42):
     base = np.stack([(x * 255 // w), (y * 255 // h), ((x + y) * 127 // (w + h))],
                     axis=-1)
     noisy = np.clip(base + rng.normal(0, 18, base.shape), 0, 255)
-    return Image.fromarray(noisy.astype('uint8'), 'RGB')
+    return Image.fromarray(noisy.astype('uint8'))
 
 
 def _logo_rgba(size=(200, 200)):
@@ -114,22 +114,9 @@ OPERATIONS = {
     'to_png': lambda data, **kw: convert_image_data(data, to='png', **kw),
 }
 
-# The PNG palette rebuild (default, non-fast mode) can change the pixels of
-# palette images before the SSIM reference is taken, so the score cannot be
-# checked against the decoded source. fast_mode skips that transform only.
-# Workaround for the rebuild_palette bug (plan F2): remove this set and the
-# ('png_p_trns', 'to_png') xfail below once the rebuild is lossless.
-FAST_MODE_CASES = {'png_p_trns'}
-
 # Pre-existing failures unrelated to SSIM, kept visible as strict xfails:
 # (case, operation) -> (expected exception, reason).
-KNOWN_BROKEN = {
-    # Converting a PNG to PNG falls back to in-place optimization, whose
-    # palette rebuild cannot be disabled here (no fast_mode parameter).
-    ('png_p_trns', 'to_png'): (AssertionError, 'pre-existing: palette '
-                               'rebuild alters pixels before the SSIM '
-                               'reference'),
-}
+KNOWN_BROKEN: Dict[Tuple[str, str], Tuple[type, str]] = {}
 
 
 def _cases():
@@ -148,8 +135,6 @@ GATE_CASES = [c for c in CASES if c.values[0] != 'jpeg_large']
 
 
 def _run(op, name, **kw):
-    if op == 'optimize' and name in FAST_MODE_CASES:
-        kw.setdefault('fast_mode', True)
     return OPERATIONS[op](CORPUS[name], **kw)
 
 
@@ -313,8 +298,6 @@ def test_lossless_output_scores_exactly_one(case):
     assert result.was_optimized
 
 
-@pytest.mark.xfail(strict=True, reason="lossless outputs could skip the SSIM computation (score is 1.0) "
-                   "- not implemented yet (plan 5.1)")
 @pytest.mark.parametrize("case", LOSSLESS_OUTPUTS)
 def test_lossless_output_skips_ssim_computation(case, ssim_calls):
     _, result = LOSSLESS_OUTPUTS[case]()
@@ -404,9 +387,8 @@ TRANSFORM_CASES = {
     'webp_rt': ('webp_lossy_rgba', 'optimize',
                 dict(remove_transparency=True, bg_color=(0, 0, 255)),
                 lambda img: remove_transparency(img, (0, 0, 255))),
-    # fast_mode: skip the lossy palette rebuild (plan F2) after -rc.
     'png_rc': ('png_rgb', 'optimize',
-               dict(reduce_colors=True, max_colors=64, fast_mode=True),
+               dict(reduce_colors=True, max_colors=64),
                lambda img: do_reduce_colors(img, 64)[0]),
 }
 
@@ -490,8 +472,6 @@ def _file_run(tmp_path, name, op, **kw):
     path = _write_source(tmp_path, name)
     if op != 'optimize':
         kw.update(convert_all=True, convert_to=op[3:])
-    if op == 'optimize' and name in FAST_MODE_CASES:
-        kw.setdefault('fast_mode', True)
     result = optimize_single_image(str(path), **kw)
     return path, result
 
@@ -552,9 +532,6 @@ PALETTE_SOURCES = {
 }
 
 
-@pytest.mark.xfail(strict=True, reason="palette rebuild re-quantizes "
-                   "palette images (lossy) before the SSIM reference "
-                   "(plan F2)")
 @pytest.mark.parametrize("source", PALETTE_SOURCES)
 def test_palette_png_default_optimization_is_lossless(source):
     data = PALETTE_SOURCES[source]()
