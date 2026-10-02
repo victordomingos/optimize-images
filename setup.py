@@ -7,17 +7,11 @@ import re
 from setuptools import setup, find_packages
 
 used = sys.version_info
-required = (3, 10)
+required = (3, 11)
 
-# if version of pip that doesn't understand the python_requires classifier,
-# must be pip >= 9.0.0
-# must be built using at least version 24.2.0 of setuptools
-# in order for the python_requires argument to be recognized and the appropriate
-# metadata generated
-# python -m pip install --upgrade pip setuptools
 if used[:2] < required:
     sys.stderr.write("Unsupported Python version: %s.%s. "
-                     "Python 3.10 or later is required." % (sys.version_info.major,
+                     "Python 3.11 or later is required." % (sys.version_info.major,
                                                             sys.version_info.minor))
     sys.exit(1)
 
@@ -62,7 +56,7 @@ setup(name='optimize-images',
           'Source': 'https://github.com/victordomingos/optimize-images',
           'Bug Reports': 'https://github.com/victordomingos/optimize-images/issues',
       },
-      python_requires='>=3.10',
+      python_requires='>=3.11',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
@@ -77,7 +71,6 @@ setup(name='optimize-images',
           'Operating System :: Unix',
           'Operating System :: POSIX :: Linux',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.10',
           'Programming Language :: Python :: 3.11',
           'Programming Language :: Python :: 3.12',
           'Programming Language :: Python :: 3.13',
@@ -94,7 +87,7 @@ setup(name='optimize-images',
                'seo-optimization website-performance cli recursive non-recursive',
 
       install_requires=get_requirements(),
-      extras_require={'ssim': ['scikit-image>=0.24']},
+      extras_require={'ssim': ['scikit-image>=0.24', 'numpy>=1.26']},
 
       entry_points={
           'console_scripts': ['optimize-images = optimize_images.__main__:main']
