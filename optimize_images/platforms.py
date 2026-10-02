@@ -11,6 +11,11 @@ from optimize_images.data_structures import PPoolExType, TPoolExType
 
 ExecutorClassType: TypeAlias = type[ThreadPoolExecutor] | type[ProcessPoolExecutor]
 
+# Measured 2026-10-02 on 224-file corpus, 18-core Mac: SSIM work competes for
+# memory so >8 workers makes every task much slower. 8 workers gives the best
+# and most stable timing across Python and free-threaded builds.
+SSIM_WORKER_CAP = 8
+
 
 class IconGenerator:
     """Provides icons for file status output, with Unicode or ASCII fallback."""
@@ -115,3 +120,16 @@ def adjust_for_platform() -> tuple[int, ExecutorClassType, int]:
         is_free_threaded(), os.name, platform.system(), num_cpus)
 
     return line_width, executor_class, default_workers
+
+
+def effective_worker_count(default_workers: int, ssim_active: bool) -> int:
+    """Cap parallel workers when the SSIM quality gate is active.
+
+    When ``ssim_active`` is True (``ssim_min`` or ``show_ssim``), scipy
+    SSIM work competes for memory across threads, so 8 workers is the
+    measured sweet-spot.  The cap is a minimum so smaller platform
+    defaults are preserved.
+    """
+    if ssim_active:
+        return min(default_workers, SSIM_WORKER_CAP)
+    return default_workers

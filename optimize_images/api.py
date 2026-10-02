@@ -27,7 +27,7 @@ from optimize_images.img_ssim import (
 from optimize_images.inmemory import convert_image_data as _convert_image_data
 from optimize_images.inmemory import optimize_image_data as _optimize_image_data
 from optimize_images.metadata import ImageMetadata, inspect_image
-from optimize_images.platforms import adjust_for_platform
+from optimize_images.platforms import adjust_for_platform, effective_worker_count
 from timeit import default_timer as timer
 from typing import Iterator, List, Callable, Optional
 from typing import Tuple
@@ -183,6 +183,10 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
     line_width, our_pool_executor, workers = adjust_for_platform()
     if internal.jobs != 0:
         workers = internal.jobs
+    else:
+        workers = effective_worker_count(workers,
+                                         internal.ssim_min is not None
+                                         or internal.show_ssim)
     tasks = _build_tasks(internal)
     with our_pool_executor(max_workers=workers) as executor:
         # Submit every task and yield each result as soon as it finishes
