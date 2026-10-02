@@ -51,11 +51,11 @@ def palette_color_count(path):
         return (len(raw) // 3) if raw else 0
 
 
-def unique_color_count(path, cap=1_000_000):
+def unique_color_count(path):
     with Image.open(path) as img:
         rgba = img.convert("RGBA")
-        colors = rgba.getcolors(cap)
-        return len(colors) if colors is not None else len(set(rgba.getdata()))
+        # maxcolors >= number of pixels, so getcolors() never returns None.
+        return len(rgba.getcolors(rgba.width * rgba.height))
 
 
 def image_mode(path):

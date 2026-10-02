@@ -761,8 +761,11 @@ vários, é usada a versão mais recente; no Windows, crie os ambientes à mão 
 criar os ambientes selecionados, por exemplo depois de uma nova versão do Python. O `--install` e o `--create` instalam
 os requisitos um a um e preferem pacotes já compilados (*wheels*), pelo que um pacote que ainda não tenha *wheel* para
 uma nova versão do Python (por exemplo, o scikit-image no 3.15) apenas faz ignorar os respetivos testes, o que fica
-indicado na tabela. O `--jobs` define quantos ambientes são testados ao mesmo tempo. O script usa apenas a biblioteca
-padrão. As imagens de teste em `tests/test-images/` nunca devem ser alteradas: os testes trabalham sobre cópias.
+indicado na tabela. O `--jobs` define quantos ambientes são testados ao mesmo tempo. A entrada `3.11-min` (`venv311min`)
+instala as versões mais antigas suportadas de todas as dependências, a partir do `requirements-min.txt` (Pillow 12.0.0,
+scikit-image 0.24.0, ...). Os testes tratam qualquer `DeprecationWarning` como erro, para que código que deixaria de
+funcionar na próxima versão do Pillow ou do Python falhe logo. O script usa apenas a biblioteca padrão. As imagens de
+teste em `tests/test-images/` nunca devem ser alteradas: os testes trabalham sobre cópias.
 
 ## Encontrou um *bug* ou tem uma sugestão?
 

@@ -5,12 +5,18 @@ runs pytest and the repository root as working directory, so the tests use
 the code in this checkout and the dependencies of the active venv, whether or
 not the package is installed there.
 """
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEST_IMAGES = Path(__file__).resolve().parent / "test-images"
+
+
+def _cli_env():
+    """The CLI subprocess also treats deprecations as errors (see pytest.ini)."""
+    return {**os.environ, "PYTHONWARNINGS": "error::DeprecationWarning"}
 
 
 def cli_command(*args):
@@ -22,6 +28,7 @@ def run_cli(*args, **kwargs):
     kwargs.setdefault("capture_output", True)
     kwargs.setdefault("text", True)
     kwargs.setdefault("timeout", 120)
+    kwargs.setdefault("env", _cli_env())
     return subprocess.run(cli_command(*args), cwd=REPO_ROOT, **kwargs)
 
 
@@ -30,4 +37,5 @@ def start_cli(*args, **kwargs):
     kwargs.setdefault("stdout", subprocess.PIPE)
     kwargs.setdefault("stderr", subprocess.PIPE)
     kwargs.setdefault("text", True)
+    kwargs.setdefault("env", _cli_env())
     return subprocess.Popen(cli_command(*args), cwd=REPO_ROOT, **kwargs)

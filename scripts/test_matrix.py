@@ -32,9 +32,12 @@ from typing import List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTEST_TIMEOUT = 30 * 60  # seconds; a normal run takes about one minute
-VERSIONS = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t"]
+VERSIONS = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t",
+            "3.11-min"]
+MIN_SUFFIX = "-min"  # oldest supported dependencies (requirements-min.txt)
 DEV_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
 RUNTIME_REQUIREMENTS = REPO_ROOT / "requirements.txt"
+MIN_REQUIREMENTS = REPO_ROOT / "requirements-min.txt"
 
 PROBE = (
     "import importlib.util, json, sys, sysconfig\n"
@@ -67,7 +70,13 @@ class Result:
 
 
 def venv_dir(version: str) -> Path:
-    return REPO_ROOT / ("venv" + version.replace(".", ""))
+    # 3.13t -> venv313t, 3.11-min -> venv311min
+    return REPO_ROOT / ("venv" + version.replace(".", "").replace("-", ""))
+
+
+def python_version(version: str) -> str:
+    """The interpreter part of a matrix entry: 3.11-min -> 3.11."""
+    return version.removesuffix(MIN_SUFFIX)
 
 
 def venv_python(venv: Path) -> Path:
@@ -99,6 +108,7 @@ def find_interpreter(version: str) -> Optional[str]:
     python.org, Homebrew, uv); the one with the highest patch release wins,
     whatever the PATH order.
     """
+    version = python_version(version)
     name = f"python{version}" + (".exe" if os.name == "nt" else "")
     want_free_threaded = version.endswith("t")
     best, best_version = None, None
@@ -136,23 +146,30 @@ def create_venv(version: str, recreate: bool) -> Optional[List[str]]:
         raise RuntimeError("cannot recreate the venv running this script")
     interpreter = find_interpreter(version)
     if interpreter is None:
-        raise RuntimeError(f"interpreter python{version} not found on PATH")
+        raise RuntimeError(f"interpreter python{python_version(version)} "
+                           "not found on PATH")
     if venv.exists():
         shutil.rmtree(venv)
     proc = run([interpreter, "-m", "venv", venv])
     if proc.returncode:
         raise RuntimeError(f"venv creation failed: {proc.stderr.strip()}")
 
-    return install_requirements(venv)
+    return install_requirements(venv, version)
 
 
-def install_requirements(venv: Path) -> List[str]:
+def install_requirements(venv: Path, version: str) -> List[str]:
     """Install requirements.txt, then each dev requirement on its own, so one
     package without a wheel for this Python (e.g. on a new release) does not
     leave the venv unusable; failures are returned as notes."""
     python = venv_python(venv)
     run([python, "-m", "pip", "install", "-q", "--upgrade", "pip"])
     pip = [python, "-m", "pip", "install", "-q", "--prefer-binary"]
+    if version.endswith(MIN_SUFFIX):
+        proc = run(pip + ["-r", MIN_REQUIREMENTS])
+        if proc.returncode:
+            raise RuntimeError("minimum requirements failed: "
+                               + proc.stderr.strip().splitlines()[-1])
+        return []
     proc = run(pip + ["-r", RUNTIME_REQUIREMENTS])
     if proc.returncode:
         raise RuntimeError("runtime requirements failed: "
@@ -246,7 +263,7 @@ def _run_venv(version: str, args, log_dir: Path) -> Result:
         result.notes += created or []
     if args.install and created is None and python.exists():
         try:
-            result.notes += install_requirements(venv)
+            result.notes += install_requirements(venv, version)
         except (RuntimeError, OSError) as exc:
             result.status = "broken"
             result.notes.append(str(exc))
@@ -264,7 +281,7 @@ def _run_venv(version: str, args, log_dir: Path) -> Result:
         return result
     result.python = info["version"]
     result.free_threaded = info["free_threaded"]
-    if version.endswith("t") != info["free_threaded"]:
+    if python_version(version).endswith("t") != info["free_threaded"]:
         result.status = "broken"
         result.notes.append("wrong build: free-threading does not match the "
                             "venv name")
