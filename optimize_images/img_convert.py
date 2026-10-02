@@ -18,6 +18,7 @@ from optimize_images.img_aux_processing import (downsize_img, make_grayscale,
                                                 remove_transparency,
                                                 save_compressed,
                                                 ssim_needs_computing)
+from optimize_images.img_icc import get_suitable_icc
 from optimize_images.img_ssim import compute_ssim
 
 
@@ -82,6 +83,11 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
     if getattr(img, 'n_frames', 1) > 1:
         return None
 
+    # Read the source profile before any transforms (which create new
+    # images without img.info).  The profile is matched against the
+    # output mode, not the source mode.
+    src_profile = img.info.get('icc_profile')
+
     # 16-bit (and 32-bit 'I') grayscale must be scaled to 8 bits (v // 256);
     # a direct conversion would clip every sample above 255 to white. Done
     # before every other step so the resize, the transforms, the encoding and
@@ -110,6 +116,10 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
     save_kwargs = _target_save_kwargs(target, task)
     if info.supports_exif and task.keep_exif and had_exif and exif:
         save_kwargs['exif'] = exif
+
+    # Attach (or explicitly not attach) the ICC profile.
+    icc = get_suitable_icc(src_profile, img.mode, info.pil)
+    save_kwargs['icc_profile'] = icc
 
     tmp_buffer = BytesIO()
     try:

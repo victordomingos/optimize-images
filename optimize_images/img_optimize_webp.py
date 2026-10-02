@@ -7,6 +7,7 @@ from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.img_aux_processing import downsize_img, make_grayscale
 from optimize_images.img_aux_processing import remove_transparency, save_compressed
 from optimize_images.img_aux_processing import ssim_needs_computing
+from optimize_images.img_icc import get_suitable_icc
 from optimize_images.img_ssim import compute_ssim
 
 
@@ -77,6 +78,11 @@ def transform_webp(img: Image.Image, task: Task,
         had_exif = False
         exif = None
 
+    # Read the source profile before any transforms (which create new
+    # images without img.info).  The profile is matched against the
+    # output mode, not the source mode.
+    src_profile = img.info.get('icc_profile')
+
     if task.max_w or task.max_h:
         img, was_downsized = downsize_img(img, task.max_w, task.max_h)
     else:
@@ -88,7 +94,7 @@ def transform_webp(img: Image.Image, task: Task,
     if task.grayscale:
         img = make_grayscale(img)
 
-    save_kwargs = {
+    save_kwargs: dict = {
         'format': result_format,
         'quality': task.webp_quality,
         'method': task.webp_method,
@@ -97,6 +103,10 @@ def transform_webp(img: Image.Image, task: Task,
 
     if task.keep_exif and had_exif and exif:
         save_kwargs['exif'] = exif
+
+    # Attach (or explicitly not attach) the ICC profile.
+    icc = get_suitable_icc(src_profile, img.mode, result_format)
+    save_kwargs['icc_profile'] = icc
 
     tmp_buffer = BytesIO()  # In-memory buffer
     try:

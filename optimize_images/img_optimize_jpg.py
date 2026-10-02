@@ -9,6 +9,7 @@ from .img_aux_processing import downsize_img, save_compressed
 from .img_aux_processing import ssim_needs_computing
 from .img_aux_processing import make_grayscale
 from .img_dynamic_quality import jpeg_dynamic_quality
+from .img_icc import get_suitable_icc
 from .img_ssim import compute_ssim
 
 
@@ -66,6 +67,11 @@ def transform_jpg(img: Image.Image, task: Task,
         had_exif = False
         exif = None
 
+    # Read the source profile before any transforms (which create new
+    # images without img.info).  The profile is matched against the
+    # output mode, not the source mode.
+    src_profile = img.info.get('icc_profile')
+
     if task.max_w or task.max_h:
         img, was_downsized = downsize_img(img, task.max_w, task.max_h)
     else:
@@ -85,15 +91,19 @@ def transform_jpg(img: Image.Image, task: Task,
     tmp_buffer = BytesIO()  # In-memory buffer
 
     # If keeping EXIF and the source had EXIF, pass it through on save.
-    save_kwargs = {
+    save_kwargs: dict = {
         'quality': quality,
         'optimize': True,
         'progressive': use_progressive_jpg,
-        'format': result_format
+        'format': result_format,
     }
 
     if task.keep_exif and had_exif and exif:
         save_kwargs['exif'] = exif
+
+    # Attach (or explicitly not attach) the ICC profile.
+    icc = get_suitable_icc(src_profile, img.mode, result_format)
+    save_kwargs['icc_profile'] = icc
 
     try:
         img.save(tmp_buffer, **save_kwargs)

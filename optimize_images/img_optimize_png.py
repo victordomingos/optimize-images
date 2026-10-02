@@ -8,6 +8,7 @@ from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.img_aux_processing import do_reduce_colors, downsize_img, rebuild_palette
 from optimize_images.img_aux_processing import remove_transparency, make_grayscale, save_compressed
 from optimize_images.img_aux_processing import ssim_needs_computing
+from optimize_images.img_icc import get_suitable_icc
 from optimize_images.img_ssim import compute_ssim
 
 
@@ -77,6 +78,11 @@ def transform_png(img: Image.Image, task: Task,
     if getattr(img, "n_frames", 1) > 1:
         return None
 
+    # Read the source profile before any transforms (which create new
+    # images without img.info).  The profile is matched against the
+    # output mode, not the source mode.
+    src_profile = img.info.get('icc_profile')
+
     orig_colors, final_colors = 0, 0
 
     had_exif = has_exif = False  # Currently no exif methods for PNG files
@@ -104,11 +110,20 @@ def transform_png(img: Image.Image, task: Task,
         img, final_colors = rebuild_palette(img)
 
     tmp_buffer = BytesIO()  # In-memory buffer
+
+    # Attach (or explicitly not attach) the ICC profile.
+    # Pillow PNG writes the profile from img.info by default, so we must
+    # pass icc_profile=None explicitly to prevent that when the profile
+    # should be dropped (e.g. RGB profile on grayscale output).
+    icc = get_suitable_icc(src_profile, img.mode, result_format)
+
     try:
-        img.save(tmp_buffer, optimize=True, format=result_format)
+        img.save(tmp_buffer, optimize=True, format=result_format,
+                 icc_profile=icc)
     except IOError:
         ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(tmp_buffer, optimize=True, format=result_format)
+        img.save(tmp_buffer, optimize=True, format=result_format,
+                 icc_profile=icc)
 
     # Compute SSIM if requested. The reference is the image after the
     # transforms above but before the lossy encoding, so the score isolates
