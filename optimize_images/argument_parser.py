@@ -189,9 +189,10 @@ def get_args():
                              'file should just be processed once per session).')
 
     jobs_help = 'The max. number of simultaneous jobs to run at a given time. ' \
-                'The default value (0), for most platforms, will generate a ' \
-                'total of N + 1 processes, where N is the number of CPUs or ' \
-                'cores in the system.'
+                '0 (the default) means automatic: processes (CPUs + 1) on Linux ' \
+                'with regular Python; threads on macOS (up to 64) and Windows ' \
+                '(up to 32); one thread per CPU on free-threaded Python. When ' \
+                'SSIM scores are computed, the automatic value is at most 8.'
 
     parser.add_argument('-jobs', dest="jobs",
                         type=int, default=0, help=jobs_help)
@@ -234,9 +235,10 @@ def get_args():
     general_group.add_argument('-nc', '--no-comparison', action='store_true',
                                help=_tagged('ALL', nc_help))
 
-    fm_help = 'Skip some actions (e.g., the final palette rebuild for indexed ' \
-              'PNG images, or the variable JPEG quality setting) in order to ' \
-              'finish faster.'
+    fm_help = 'For JPEG files, skips the automatic quality search and uses ' \
+              'a fixed quality (-q, 80 if not given); for PNG files, skips the ' \
+              'palette rebuild for palette (indexed) images. No effect on ' \
+              'WebP files or on conversions to a different format.'
     general_group.add_argument('-fm', '--fast-mode', action='store_true',
                                help=_tagged('JPEG, PNG', fm_help))
 
@@ -244,7 +246,10 @@ def get_args():
         'Quality and encoding options'.upper())
 
     q_help = 'Specify a fixed quality setting for JPEG files (an integer ' \
-             'value, between 1 and 100).'
+             'value, between 1 and 100). When optimizing JPEG files in place, ' \
+             'a given -q is always used; without it, the quality is chosen ' \
+             'automatically, except with -fm/--fast-mode, where 80 is used, ' \
+             'and in conversions to JPEG/AVIF, which use 80.'
     enc_group.add_argument('-q', dest='quality',
                            type=int, help=_tagged('JPEG', q_help))
 
@@ -397,11 +402,10 @@ def get_args():
         msg = "\nPlease specify the path of the image or folder to process.\n\n"
         parser.exit(status=0, message=msg)
 
-    if not quality:
-        quality = DEFAULT_QUALITY
-    elif quality > 100 or quality < 1:
-        msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
-        parser.exit(status=0, message=msg)
+    if quality is not None:
+        if quality > 100 or quality < 1:
+            msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
+            parser.exit(status=0, message=msg)
 
     if args.max_width < 0 or args.max_height < 0:
         msg = "\nPlease specify image dimensions as positive integers.\n\n"

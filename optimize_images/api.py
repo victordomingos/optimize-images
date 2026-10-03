@@ -62,7 +62,7 @@ __all__ = [
 class PublicBatchOptions:
     src_path: str
     recursive: bool = True
-    quality: int = 80
+    quality: Optional[int] = None
     remove_transparency: bool = False
     reduce_colors: bool = False
     max_colors: int = 256
@@ -231,7 +231,7 @@ def optimize_as_batch(options: PublicBatchOptions) -> PublicBatchResult:
 def optimize_single_image(
         src_path: str,
         *,
-        quality: int = 80,
+        quality: Optional[int] = None,
         remove_transparency: bool = False,
         reduce_colors: bool = False,
         max_colors: int = 256,
@@ -292,7 +292,7 @@ def optimize_image_data(
         data: bytes,
         *,
         name: str = '',
-        quality: int = 80,
+        quality: Optional[int] = None,
         remove_transparency: bool = False,
         reduce_colors: bool = False,
         max_colors: int = 256,
@@ -350,7 +350,7 @@ def convert_image_data(
         *,
         to: str = 'jpeg',
         name: str = '',
-        quality: int = 80,
+        quality: Optional[int] = None,
         remove_transparency: bool = False,
         max_w: int = 0,
         max_h: int = 0,

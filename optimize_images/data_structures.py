@@ -16,7 +16,7 @@ class OutputConfiguration(NamedTuple):
 
 class Task(NamedTuple):
     src_path: str
-    quality: int
+    quality: Optional[int]
     remove_transparency: bool
     reduce_colors: bool
     max_colors: int
@@ -81,7 +81,7 @@ class OptimizedImage(NamedTuple):
 class BatchOptions:
     src_path: str
     recursive: bool = True
-    quality: int = 80
+    quality: Optional[int] = None
     remove_transparency: bool = False
     reduce_colors: bool = False
     max_colors: int = 256

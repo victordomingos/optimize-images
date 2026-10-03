@@ -119,8 +119,6 @@ def test_grayscale_output_is_single_channel(fmt):
 
 # --- -q / quality (plan 3.2) ----------------------------------------------
 
-@pytest.mark.xfail(strict=True, reason="plan F3: without fast mode the JPEG "
-                   "quality is chosen dynamically and -q is ignored")
 def test_quality_option_changes_jpeg_size():
     data = _encode(_photo((640, 480)), 'JPEG', quality=98)
     low, _ = optimize_image_data(data, quality=50,
@@ -137,6 +135,89 @@ def test_quality_option_applies_in_fast_mode():
     high, _ = optimize_image_data(data, quality=95, fast_mode=True,
                                   ignore_size_comparison=True)
     assert len(low) < len(high)
+
+
+@pytest.fixture
+def dynamic_quality_calls(monkeypatch):
+    from optimize_images import img_optimize_jpg
+    calls = []
+    original = img_optimize_jpg.jpeg_dynamic_quality
+
+    def counting(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(img_optimize_jpg, "jpeg_dynamic_quality", counting)
+    return calls
+
+
+def test_quality_default_is_none_in_public_api():
+    import inspect
+    from optimize_images.api import convert_image_data
+    assert PublicBatchOptions(src_path='.').quality is None
+    for func in (optimize_single_image, optimize_image_data,
+                 convert_image_data):
+        assert inspect.signature(func).parameters['quality'].default is None
+
+
+def test_explicit_quality_is_used_without_fast_mode(dynamic_quality_calls):
+    data = _encode(_photo(), 'JPEG', quality=98)
+    fixed, _ = optimize_image_data(data, quality=60,
+                                   ignore_size_comparison=True)
+    assert not dynamic_quality_calls
+    fast, _ = optimize_image_data(data, quality=60, fast_mode=True,
+                                  ignore_size_comparison=True)
+    assert fixed == fast
+
+
+def test_default_quality_stays_dynamic(dynamic_quality_calls):
+    data = _encode(_photo(), 'JPEG', quality=98)
+    optimize_image_data(data, ignore_size_comparison=True)
+    assert len(dynamic_quality_calls) == 1
+
+
+def test_fast_mode_without_quality_uses_80():
+    data = _encode(_photo(), 'JPEG', quality=98)
+    default, _ = optimize_image_data(data, fast_mode=True,
+                                     ignore_size_comparison=True)
+    explicit, _ = optimize_image_data(data, quality=80, fast_mode=True,
+                                      ignore_size_comparison=True)
+    assert default == explicit
+
+
+def test_conversion_to_jpeg_without_quality_uses_80():
+    from optimize_images.api import convert_image_data
+    data = _encode(_photo(), 'PNG')
+    default, _ = convert_image_data(data, to='jpeg',
+                                    ignore_size_comparison=True)
+    explicit, _ = convert_image_data(data, to='jpeg', quality=80,
+                                     ignore_size_comparison=True)
+    assert default == explicit
+
+
+def _cli_quality(tmp_path, monkeypatch, *extra):
+    # Checked on the parsed arguments: a subprocess (or a process pool)
+    # cannot be monkeypatched to observe the quality actually used.
+    from optimize_images.argument_parser import get_args
+    monkeypatch.setattr('sys.argv', ['optimize-images', *extra, str(tmp_path)])
+    return get_args()[3]
+
+
+def test_cli_without_quality_passes_none(tmp_path, monkeypatch):
+    # Without -q the CLI must hand "not given" (None) to the batch, so JPEG
+    # files keep the automatic quality.
+    assert _cli_quality(tmp_path, monkeypatch) is None
+
+
+def test_cli_passes_given_quality(tmp_path, monkeypatch):
+    assert _cli_quality(tmp_path, monkeypatch, '-q', '65') == 65
+
+
+def test_cli_rejects_quality_zero(tmp_path):
+    from helpers import run_cli
+    (tmp_path / 'photo.jpg').write_bytes(_encode(_photo(), 'JPEG', quality=95))
+    proc = run_cli('-q', '0', str(tmp_path))
+    assert "between 1 and 100" in proc.stderr + proc.stdout
 
 
 # --- packaging ------------------------------------------------------------

@@ -31,7 +31,7 @@ _SUPPORTED = {'JPEG', 'MPO', 'PNG', 'WEBP'}
 _PIL_TO_CANON = {'PNG': 'png', 'JPEG': 'jpeg', 'MPO': 'jpeg', 'WEBP': 'webp'}
 
 
-def _build_task(name: str, quality: int, remove_transparency: bool,
+def _build_task(name: str, quality: Optional[int], remove_transparency: bool,
                 reduce_colors: bool, max_colors: int, max_w: int, max_h: int,
                 keep_exif: bool, bg_color: Tuple[int, int, int],
                 grayscale: bool, ignore_size_comparison: bool,
@@ -73,7 +73,7 @@ def optimize_image_data(
         data: bytes,
         *,
         name: str = '',
-        quality: int = 80,
+        quality: Optional[int] = None,
         remove_transparency: bool = False,
         reduce_colors: bool = False,
         max_colors: int = 256,
@@ -145,7 +145,7 @@ def convert_image_data(
         *,
         to: str = 'jpeg',
         name: str = '',
-        quality: int = 80,
+        quality: Optional[int] = None,
         remove_transparency: bool = False,
         max_w: int = 0,
         max_h: int = 0,

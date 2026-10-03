@@ -11,6 +11,7 @@ from .img_aux_processing import make_grayscale
 from .img_dynamic_quality import jpeg_dynamic_quality
 from .img_icc import get_suitable_icc
 from .img_ssim import compute_ssim
+from .constants import DEFAULT_QUALITY
 
 
 def optimize_jpg(task: Task) -> TaskResult:
@@ -83,8 +84,8 @@ def transform_jpg(img: Image.Image, task: Task,
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    if task.fast_mode:
-        quality = task.quality
+    if task.fast_mode or task.quality is not None:
+        quality = task.quality if task.quality is not None else DEFAULT_QUALITY
     else:
         quality, _ = jpeg_dynamic_quality(img)
 

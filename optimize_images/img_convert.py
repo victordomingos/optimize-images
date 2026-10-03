@@ -14,6 +14,7 @@ from typing import Optional
 from PIL import Image, ImageFile
 from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.formats import FORMATS
+from optimize_images.constants import DEFAULT_QUALITY
 from optimize_images.img_aux_processing import (downsize_img, make_grayscale,
                                                 remove_transparency,
                                                 save_compressed,
@@ -46,14 +47,15 @@ def _target_save_kwargs(target: str, task: Task) -> dict:
     info = FORMATS[target]
     kwargs = {'format': info.pil}
     if target == 'jpeg':
-        kwargs.update(quality=task.quality, optimize=True, progressive=True)
+        kwargs.update(quality=task.quality if task.quality is not None else DEFAULT_QUALITY,
+                      optimize=True, progressive=True)
     elif target == 'png':
         kwargs.update(optimize=True)
     elif target == 'webp':
         kwargs.update(quality=task.webp_quality, method=task.webp_method,
                       lossless=task.webp_lossless)
     elif target == 'avif':
-        kwargs.update(quality=task.quality)
+        kwargs.update(quality=task.quality if task.quality is not None else DEFAULT_QUALITY)
     elif target == 'jpeg2000':
         kwargs.update(quality_mode='rates', quality_layers=[20])
     return kwargs
