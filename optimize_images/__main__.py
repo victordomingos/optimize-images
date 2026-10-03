@@ -51,6 +51,13 @@ from timeit import default_timer as timer
 
 
 def main():
+    # Make stdout and stderr tolerant to encoding errors so file names or
+    # icons that cannot be represented in the output encoding (e.g. cp1252
+    # on Windows pipes, or "Ł", "cópia" with combining marks) are printed as
+    # "?" instead of crashing the whole run.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(errors="replace")
     args = get_args()
     try:
         optimize_batch(*args)

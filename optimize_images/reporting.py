@@ -99,17 +99,20 @@ def show_file_status(result: Any, line_width: int, icons: IconGenerator,
         """Truncate only the path from the left so the tail remains visible."""
         if not (isinstance(line_width, int) and line_width > 0):
             return prefix_text + path_text
+        # Choose the ellipsis from the icon set, not from the encoding probe.
+        ellipsis = "…" if icons.use_unicode else "..."
         available = line_width - len(prefix_text)
+        ellipsis_len = len(ellipsis)
         if available <= 0:
             return (
-                prefix_text[: max(0, line_width - 1)] + "…"
+                prefix_text[: max(0, line_width - ellipsis_len)] + ellipsis
                 if line_width > 0
                 else prefix_text
             )
         if len(path_text) <= available:
             return prefix_text + path_text
-        keep = max(0, available - 1)  # reserve 1 for ellipsis
-        return prefix_text + ("…" + path_text[-keep:] if keep > 0 else "…")
+        keep = max(0, available - ellipsis_len)  # reserve len(ellipsis) chars
+        return prefix_text + (ellipsis + path_text[-keep:] if keep > 0 else ellipsis)
 
     # Print the first line with correct truncation rules
     print(clamp_path_end(prefix, path))

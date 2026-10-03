@@ -25,7 +25,20 @@ class IconGenerator:
 
     def __init__(self) -> None:
         system = platform.system()
-        self.use_unicode = system not in ("Windows", "Haiku")
+        use_unicode = system not in ("Windows", "Haiku")
+
+        # Even on supported platforms, stdout may use an encoding that cannot
+        # represent Unicode icons (e.g. Windows ANSI code page when output is
+        # piped or redirected). Try encoding the legend text; if it fails,
+        # fall back to ASCII.
+        if use_unicode and sys.stdout.encoding:
+            try:
+                ("✅ Optimized file     ℹ️  EXIF info present"
+                 .encode(sys.stdout.encoding))
+            except (LookupError, UnicodeEncodeError):
+                use_unicode = False
+
+        self.use_unicode = use_unicode
         self.arrow = "->"
 
         if self.use_unicode:
