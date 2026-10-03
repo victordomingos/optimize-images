@@ -148,6 +148,11 @@ def _cli_run(args, extra):
             summary = {'returncode': proc.returncode,
                        'optimized': int(match.group(1)) if match else None,
                        'saved': match.group(2).strip() if match else None}
+            if proc.returncode:
+                # Keep the end of the error output: the run is otherwise
+                # only visible as a missing summary.
+                summary['stderr_tail'] = proc.stderr[-3000:]
+                summary['stdout_tail'] = proc.stdout[-1000:]
     return {'seconds': statistics.median(times), **(summary or {})}
 
 
