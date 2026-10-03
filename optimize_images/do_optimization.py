@@ -42,13 +42,55 @@ def _conversion_target(task: Task, img_format: str):
     return target
 
 
+def _file_size(task: Task) -> int:
+    """Return the on-disk size of the file, or 0 if even that fails."""
+    try:
+        return os.path.getsize(task.src_path)
+    except OSError:
+        return 0
+
+
+def _skipped_result(task: Task, img_format: str,
+                    orig_mode: str, orig_size: int,
+                    error: str = '',
+                    had_exif: bool = False) -> TaskResult:
+    """Build a skipped TaskResult for a file that could not be optimized.
+
+    ``error`` is one of ``"out_of_memory"``, ``"image_too_large"``, or the
+    empty string (meaning an unreadable / unsupported file).
+    """
+    return TaskResult(
+        img=task.src_path,
+        orig_format=img_format,
+        result_format='',
+        orig_mode=orig_mode,
+        result_mode='',
+        orig_colors=0,
+        final_colors=0,
+        orig_size=orig_size,
+        final_size=orig_size,
+        was_optimized=False,
+        was_downsized=False,
+        had_exif=had_exif,
+        has_exif=False,
+        output_config=task.output_config,
+        ssim=None,
+        error=error if error else None,
+    )
+
+
 def do_optimization(task: Task) -> TaskResult:
     """ Try to reduce file size of an image.
 
-    Expects a Task object containing all the parameters for the image
-    processing. When a conversion is requested (and applicable), the shared
-    converter is used regardless of the source format; otherwise the image is
-    optimized in place by the matching per-format optimizer.
+    Expects a Task object containing all the parameters for the processing.
+    When a conversion is requested (and applicable), the shared converter is
+    used regardless of the source format; otherwise the image is optimized in
+    place by the matching per-format optimizer.
+
+    If a file raises ``MemoryError`` (out of memory) or
+    ``Image.DecompressionBombError`` (image too large), it is returned as a
+    skipped result with the corresponding ``error`` and the original file is
+    kept.  Unreadable files (``OSError``) are reported with no error field.
 
     :param task: A Task object with all the parameters for the processing.
     :return: A TaskResult object containing information for single file report.
@@ -66,33 +108,46 @@ def do_optimization(task: Task) -> TaskResult:
                 had_exif = bool(exif and len(exif) > 0)
             except Exception:
                 exif, had_exif = None, False
-            return convert_image(task, img, img_format, orig_mode,
-                                 orig_size, had_exif, exif)
+            try:
+                return convert_image(task, img, img_format, orig_mode,
+                                     orig_size, had_exif, exif)
+            except MemoryError:
+                img.close()
+                return _skipped_result(task, img_format, orig_mode,
+                                       orig_size, error='out_of_memory',
+                                       had_exif=had_exif)
+            except Image.DecompressionBombError:
+                img.close()
+                return _skipped_result(task, img_format, orig_mode,
+                                       orig_size, error='image_too_large',
+                                       had_exif=had_exif)
 
         img.close()
-        if img_format == 'PNG':
-            return optimize_png(task)
-        if img_format in ('JPEG', 'MPO'):
-            return optimize_jpg(task)
-        if img_format == 'WEBP':
-            return optimize_webp(task)
+        try:
+            if img_format == 'PNG':
+                return optimize_png(task)
+            if img_format in ('JPEG', 'MPO'):
+                return optimize_jpg(task)
+            if img_format == 'WEBP':
+                return optimize_webp(task)
+
+        except MemoryError:
+            return _skipped_result(task, img_format, orig_mode, orig_size,
+                                   error='out_of_memory')
+        except Image.DecompressionBombError:
+            return _skipped_result(task, img_format, orig_mode, orig_size,
+                                   error='image_too_large')
+
+    except Image.DecompressionBombError:
+        return _skipped_result(task, '', '', _file_size(task),
+                               error='image_too_large')
+
+    except MemoryError:
+        return _skipped_result(task, '', '', _file_size(task),
+                               error='out_of_memory')
 
     except OSError:
-        return TaskResult(img=task.src_path,
-                          orig_format='',
-                          result_format='',
-                          orig_mode='',
-                          result_mode='',
-                          orig_colors=0,
-                          final_colors=0,
-                          orig_size=os.path.getsize(task.src_path),
-                          final_size=0,
-                          was_optimized=False,
-                          was_downsized=False,
-                          had_exif=False,
-                          has_exif=False,
-                          output_config=task.output_config,
-                          ssim=None)
+        return _skipped_result(task, '', '', _file_size(task))
 
     # Readable but unsupported format: report it as skipped.
     try:

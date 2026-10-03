@@ -101,6 +101,7 @@ class PublicTaskResult:
     had_exif: bool
     has_exif: bool
     ssim: Optional[float] = None
+    error: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -168,6 +169,7 @@ def _to_public_result(r: _TaskResult) -> PublicTaskResult:
         had_exif=r.had_exif,
         has_exif=r.has_exif,
         ssim=r.ssim,
+        error=r.error,
     )
 
 

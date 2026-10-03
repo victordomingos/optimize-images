@@ -62,6 +62,7 @@ def show_file_status(result: Any, line_width: int, icons: IconGenerator,
     second SSIM line when the threshold rejected a skipped file.
     Compatible with PublicTaskResult and TaskResult.
     """
+    error = getattr(result, 'error', None)
     img = getattr(result, "img", "")
     was_optimized = getattr(result, "was_optimized", False)
     was_downsized = getattr(result, "was_downsized", False)
@@ -158,6 +159,12 @@ def show_file_status(result: Any, line_width: int, icons: IconGenerator,
         if ssim is not None and ssim_min is not None and ssim < ssim_min:
             print(clamp(
                 f"     SSIM: {ssim:.4f} below threshold {ssim_min:g}"))
+        elif error == 'out_of_memory':
+            print(clamp(
+                "     Not enough memory to process this image; the original was kept."))
+        elif error == 'image_too_large':
+            print(clamp(
+                "     Image too large (above Pillow's pixel limit); the original was kept."))
 
 
 def show_final_report(found_files: int,
@@ -165,7 +172,8 @@ def show_final_report(found_files: int,
                       src_size: int,
                       bytes_saved: int,
                       time_passed: float,
-                      output_config: OutputConfiguration):
+                      output_config: OutputConfiguration,
+                      memory_errors: int = 0):
     """
     Show a final report with the time spent and filesize savings
 
@@ -200,6 +208,9 @@ def show_final_report(found_files: int,
     report += f"\n   Optimized {optimized_files} files." \
               f"\n   Average savings: {human(average)} per optimized file" \
               f"\n   Total space saved: {human(bytes_saved)} / {percent:.1f}%\n"
+    if memory_errors:
+        report += f"   {memory_errors} file(s) skipped for lack of memory. " \
+                  f"Try a lower -jobs value.\n"
     print(report)
 
 

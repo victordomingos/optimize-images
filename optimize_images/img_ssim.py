@@ -80,8 +80,10 @@ def compute_ssim(img1: Image.Image, img2: Image.Image,
     each color channel and averaged (``channel_axis=-1``), using the standard
     data_range of 255 for 8-bit data. Returns a plain Python float in [-1, 1]
     (1.0 means identical images) or None when the score cannot be computed
-    (backend missing, different sizes, or a MemoryError/ValueError from the
-    conversion or the comparison). Any other exception is propagated, so a
+    (backend missing, different sizes, or a ValueError from the conversion or
+    the comparison). A MemoryError from the conversion or the comparison is
+    propagated so the caller can report it (plan 1.10: out-of-memory while
+    computing SSIM scores). Any other exception is propagated, so a
     real bug is not masked by a silent fail-closed rejection of every file.
     The window parameters (win_size=7, uniform weights, sample covariance)
     are pinned to scikit-image's current defaults so the calibrated
@@ -107,5 +109,5 @@ def compute_ssim(img1: Image.Image, img2: Image.Image,
                                 channel_axis=-1, win_size=7,
                                 gaussian_weights=False,
                                 use_sample_covariance=True))
-    except (MemoryError, ValueError):
+    except ValueError:
         return None

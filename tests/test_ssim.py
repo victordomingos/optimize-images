@@ -212,9 +212,11 @@ def test_gate_applies_without_size_comparison(tmp_path):
 
 
 @requires_backend
-def test_gate_keeps_original_when_score_fails(tmp_path, monkeypatch):
-    # A MemoryError inside the SSIM backend (large image, many workers) must
-    # yield no score, and the gate must then keep the original (fail closed).
+def test_gate_keeps_original_when_score_runs_out_of_memory(tmp_path,
+                                                           monkeypatch):
+    # A MemoryError inside the SSIM backend (large image, many workers) is
+    # not a score: it propagates, and the caller keeps the original (fail
+    # closed) and reports why, so the user can lower -jobs.
     def _out_of_memory(*_args, **_kwargs):
         raise MemoryError
     monkeypatch.setattr(img_ssim, "_ssim_impl", _out_of_memory)
@@ -222,7 +224,8 @@ def test_gate_keeps_original_when_score_fails(tmp_path, monkeypatch):
     img = Image.new('RGB', (32, 32), (120, 60, 30))
     img2 = img.copy()
     img2.putpixel((0, 0), (121, 60, 30))
-    assert compute_ssim(img, img2) is None
+    with pytest.raises(MemoryError):
+        compute_ssim(img, img2)
 
     path = _photo(tmp_path / "img.jpg")
     before = path.read_bytes()
@@ -230,6 +233,7 @@ def test_gate_keeps_original_when_score_fails(tmp_path, monkeypatch):
                                    ignore_size_comparison=True, ssim_min=0.5)
     assert result.ssim is None
     assert not result.was_optimized
+    assert result.error == "out_of_memory"
     assert path.read_bytes() == before
 
     out, result = optimize_image_data(before, fast_mode=True, quality=50,
@@ -237,7 +241,20 @@ def test_gate_keeps_original_when_score_fails(tmp_path, monkeypatch):
                                       ssim_min=0.5)
     assert result.ssim is None
     assert not result.was_optimized
+    assert result.error == "out_of_memory"
     assert out == before
+
+
+@requires_backend
+def test_score_value_error_still_gives_no_score(monkeypatch):
+    # A ValueError from the backend still means "no score" (fail closed).
+    def _bad_input(*_args, **_kwargs):
+        raise ValueError
+    monkeypatch.setattr(img_ssim, "_ssim_impl", _bad_input)
+    img = Image.new('RGB', (32, 32), (120, 60, 30))
+    img2 = img.copy()
+    img2.putpixel((0, 0), (121, 60, 30))
+    assert compute_ssim(img, img2) is None
 
 
 @requires_backend
@@ -330,7 +347,7 @@ def _status_result(was_optimized, ssim, orig_size=1000, final_size=800):
         orig_size=orig_size, final_size=final_size, orig_format='JPEG',
         result_format='JPEG', orig_mode='RGB', result_mode='RGB',
         orig_colors=0, final_colors=0, had_exif=False, has_exif=False,
-        ssim=ssim)
+        ssim=ssim, error=None)
 
 
 def test_report_optimized_shows_ssim(capsys):

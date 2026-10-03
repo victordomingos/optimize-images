@@ -30,7 +30,7 @@ ADDITIVE_KEYWORD_PARAMS = ["convert_to", "webp_quality", "webp_lossless",
 REQUIRED_RESULT_FIELDS = {
     "img", "orig_format", "result_format", "orig_mode", "result_mode",
     "orig_colors", "final_colors", "orig_size", "final_size", "was_optimized",
-    "was_downsized", "had_exif", "has_exif", "ssim",
+    "was_downsized", "had_exif", "has_exif", "ssim", "error",
 }
 
 

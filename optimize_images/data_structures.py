@@ -57,6 +57,7 @@ class TaskResult(NamedTuple):
     has_exif: bool
     output_config: Optional[OutputConfiguration]
     ssim: Optional[float] = None
+    error: Optional[str] = None
 
 
 class OptimizedImage(NamedTuple):

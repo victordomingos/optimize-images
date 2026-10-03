@@ -69,6 +69,12 @@ def _skipped(name: str, fmt: str, mode: str, orig_size: int) -> TaskResult:
                       False, False, False, False, None, None)
 
 
+def _out_of_memory_result(name: str, fmt: str, mode: str,
+                           orig_size: int) -> TaskResult:
+    return TaskResult(name, fmt, fmt, mode, mode, 0, 0, orig_size, orig_size,
+                      False, False, False, False, None, None, error='out_of_memory')
+
+
 def optimize_image_data(
         data: bytes,
         *,
@@ -111,32 +117,37 @@ def optimize_image_data(
         if fmt not in _SUPPORTED:
             return data, _skipped(name, fmt, mode, orig_size)
 
-        if fmt in ('JPEG', 'MPO'):
-            opt = transform_jpg(img, task, orig_size)
-        elif fmt == 'PNG':
-            opt = transform_png(img, task, orig_size)
-        else:  # WEBP
-            opt = transform_webp(img, task, orig_size)
+        try:
+            if fmt in ('JPEG', 'MPO'):
+                opt = transform_jpg(img, task, orig_size)
+            elif fmt == 'PNG':
+                opt = transform_png(img, task, orig_size)
+            else:  # WEBP
+                opt = transform_webp(img, task, orig_size)
 
-        if opt is None:  # animated WebP or PNG: leave untouched
-            return data, _skipped(name, fmt, mode, orig_size)
+            if opt is None:  # animated WebP or PNG: leave untouched
+                return data, _skipped(name, fmt, mode, orig_size)
 
-    final_size = opt.buffer.getbuffer().nbytes
-    compare_sizes = not ignore_size_comparison
-    if is_worth_keeping(final_size, orig_size, compare_sizes,
-                        ssim=opt.ssim, ssim_min=ssim_min):
-        out_bytes = opt.buffer.getvalue()
-        was_optimized = True
-    else:
-        out_bytes = data
-        final_size = orig_size
-        was_optimized = False
+            final_size = opt.buffer.getbuffer().nbytes
+            compare_sizes = not ignore_size_comparison
+            if is_worth_keeping(final_size, orig_size, compare_sizes,
+                                ssim=opt.ssim, ssim_min=ssim_min):
+                out_bytes = opt.buffer.getvalue()
+                was_optimized = True
+            else:
+                out_bytes = data
+                final_size = orig_size
+                was_optimized = False
 
-    result = TaskResult(name, opt.orig_format, opt.result_format,
-                        opt.orig_mode, opt.result_mode, opt.orig_colors,
-                        opt.final_colors, orig_size, final_size, was_optimized,
-                        opt.was_downsized, opt.had_exif, opt.has_exif, None,
-                        opt.ssim)
+            result = TaskResult(name, opt.orig_format, opt.result_format,
+                                opt.orig_mode, opt.result_mode, opt.orig_colors,
+                                opt.final_colors, orig_size, final_size,
+                                was_optimized, opt.was_downsized,
+                                opt.had_exif, opt.has_exif, None,
+                                opt.ssim, error=None)
+        except MemoryError:
+            return data, _out_of_memory_result(name, fmt, mode, orig_size)
+
     return out_bytes, result
 
 
@@ -170,7 +181,9 @@ def convert_image_data(
     disabled), the original bytes are returned unchanged, with the original
     format reported in the result. Converting to the source's own format is a
     no-op and falls back to in-place optimization. Multi-frame sources
-    (animation/multipage) are returned unchanged. Raises ``ValueError`` for an
+    (animation/multipage) are returned unchanged. On a MemoryError the
+    original bytes are returned and ``result.error`` is ``"out_of_memory"``.
+    Raises ``ValueError`` for an
     unknown or unavailable target, and ``OSError`` if ``data`` is unreadable.
     """
     target = normalize_target(to)  # raises ValueError if unavailable
@@ -204,24 +217,29 @@ def convert_image_data(
         except Exception:
             exif, had_exif = None, False
 
-        opt = transform_convert(task, img, src_format, mode, had_exif, exif,
-                                orig_size=orig_size)
-        if opt is None:  # multi-frame: leave untouched
-            return data, _skipped(name, src_format, mode, orig_size)
+        try:
+            opt = transform_convert(task, img, src_format, mode, had_exif, exif,
+                                    orig_size=orig_size)
+            if opt is None:  # multi-frame: leave untouched
+                return data, _skipped(name, src_format, mode, orig_size)
 
-    final_size = opt.buffer.getbuffer().nbytes
-    compare_sizes = not ignore_size_comparison
-    if is_worth_keeping(final_size, orig_size, compare_sizes,
-                        ssim=opt.ssim, ssim_min=ssim_min):
-        out_bytes = opt.buffer.getvalue()
-        result = TaskResult(name, opt.orig_format, opt.result_format, mode,
-                            opt.result_mode, 0, 0, orig_size, final_size, True,
-                            opt.was_downsized, had_exif, opt.has_exif, None,
-                            opt.ssim)
-    else:
-        # Not worth it: keep the original bytes (and the original format).
-        out_bytes = data
-        result = TaskResult(name, src_format, src_format, mode, mode, 0, 0,
-                            orig_size, orig_size, False, opt.was_downsized,
-                            had_exif, had_exif, None, opt.ssim)
+            final_size = opt.buffer.getbuffer().nbytes
+            compare_sizes = not ignore_size_comparison
+            if is_worth_keeping(final_size, orig_size, compare_sizes,
+                                ssim=opt.ssim, ssim_min=ssim_min):
+                out_bytes = opt.buffer.getvalue()
+                result = TaskResult(name, opt.orig_format, opt.result_format, mode,
+                                    opt.result_mode, 0, 0, orig_size, final_size,
+                                    True, opt.was_downsized, had_exif,
+                                    opt.has_exif, None, opt.ssim, error=None)
+            else:
+                # Not worth it: keep the original bytes (and the original format).
+                out_bytes = data
+                result = TaskResult(name, src_format, src_format, mode, mode, 0, 0,
+                                    orig_size, orig_size, False,
+                                    opt.was_downsized, had_exif, had_exif,
+                                    None, opt.ssim, error=None)
+        except MemoryError:
+            return data, _out_of_memory_result(name, src_format, mode, orig_size)
+
     return out_bytes, result

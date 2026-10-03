@@ -97,12 +97,22 @@ def test_score_is_a_plain_float():
     assert type(compute_ssim(img, img.copy())) is float
 
 
-def test_flatten_failure_still_returns_none(monkeypatch):
-    # The gate fails closed: a conversion that runs out of memory must give
-    # None (original kept), not an exception that aborts the batch.
+def test_flatten_out_of_memory_propagates(monkeypatch):
+    # Running out of memory is not a score: it propagates to the caller,
+    # which keeps the original and reports the file as out of memory.
     def out_of_memory(*_args, **_kwargs):
         raise MemoryError
 
     monkeypatch.setattr(img_ssim, "_flatten_over", out_of_memory)
+    img = _gradient()
+    with pytest.raises(MemoryError):
+        compute_ssim(img, img.copy())
+
+
+def test_flatten_value_error_still_returns_none(monkeypatch):
+    def bad_input(*_args, **_kwargs):
+        raise ValueError
+
+    monkeypatch.setattr(img_ssim, "_flatten_over", bad_input)
     img = _gradient()
     assert compute_ssim(img, img.copy()) is None

@@ -101,6 +101,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
     skipped_files = 0
     total_src_size = 0
     total_bytes_saved = 0
+    memory_errors = 0
 
     # Build PublicBatchOptions for the public API
     options = PublicBatchOptions(
@@ -135,7 +136,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         stop_event = threading.Event()
 
         def on_result(public_result):
-            nonlocal found_files, optimized_files, skipped_files, total_src_size, total_bytes_saved
+            nonlocal found_files, optimized_files, skipped_files, total_src_size, total_bytes_saved, memory_errors
             found_files += 1
             total_src_size += public_result.orig_size
             if public_result.was_optimized:
@@ -143,6 +144,8 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                 total_bytes_saved += public_result.orig_size - public_result.final_size
             else:
                 skipped_files += 1
+            if public_result.error == 'out_of_memory':
+                memory_errors += 1
 
             if output_config.quiet_mode or output_config.show_only_summary:
                 return
@@ -154,12 +157,16 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
             else:
                 show_file_status(public_result, line_width, IconGenerator(),
                                  show_ssim, ssim_min=ssim_min)
-
         try:
             watch_directory(options, on_result=on_result, stop_event=stop_event)
         except KeyboardInterrupt:
             msg = "\b \n\n  == Operation was interrupted by the user. ==\n"
             raise OIKeyboardInterrupt(msg)
+        if memory_errors:
+            time_passed = timer() - appstart
+            show_final_report(found_files, optimized_files, total_src_size,
+                              total_bytes_saved, time_passed, output_config,
+                              memory_errors=memory_errors)
         return
 
     icons = None
@@ -186,6 +193,8 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                 total_bytes_saved += result.orig_size - result.final_size
             else:
                 skipped_files += 1
+            if result.error == 'out_of_memory':
+                memory_errors += 1
 
             if output_config.quiet_mode or output_config.show_only_summary:
                 continue
@@ -205,7 +214,8 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
     if found_files:
         time_passed = timer() - appstart
         show_final_report(found_files, optimized_files, total_src_size,
-                          total_bytes_saved, time_passed, output_config)
+                          total_bytes_saved, time_passed, output_config,
+                          memory_errors=memory_errors)
     else:
         msg = "\nNo supported image files were found in the specified directory."
         raise OIImagesNotFoundError(msg)
