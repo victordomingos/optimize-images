@@ -117,6 +117,93 @@ def test_grayscale_output_is_single_channel(fmt):
         assert img.format == fmt
 
 
+def _rgba_photo(size=(96, 64)):
+    """Colourful RGBA image: a fully transparent band, a half-transparent
+    band and opaque pixels."""
+    img = _photo(size).convert('RGBA')
+    alpha = Image.new('L', size, 255)
+    alpha.paste(0, (0, 0, size[0], size[1] // 4))
+    alpha.paste(128, (0, size[1] // 4, size[0], size[1] // 2))
+    img.putalpha(alpha)
+    return img
+
+
+def _palette_with_transparency(size=(96, 64), colors=64):
+    """Colourful palette image whose index 0 is fully transparent."""
+    img = _photo(size).quantize(colors)
+    buf = io.BytesIO()
+    img.save(buf, 'PNG', transparency=0)
+    return buf.getvalue()
+
+
+def _alpha(img):
+    return img.convert('RGBA').getchannel('A').tobytes()
+
+
+def _is_gray(img):
+    rgb = img.convert('RGBA')
+    r, g, b, _ = rgb.split()
+    return r.tobytes() == g.tobytes() == b.tobytes()
+
+
+def test_grayscale_rgba_keeps_transparency():
+    # Plan 0.5: -g on RGBA goes through LA and back to RGBA.
+    src = _rgba_photo()
+    out, result = optimize_image_data(_encode(src, 'PNG'), grayscale=True,
+                                      ignore_size_comparison=True)
+    assert result.was_optimized
+    with Image.open(io.BytesIO(out)) as img:
+        assert _is_gray(img)
+        assert _alpha(img) == _alpha(src)
+
+
+def test_grayscale_palette_image_is_gray_and_keeps_transparency():
+    # Plan 0.5: -g on a palette image turns every palette entry gray.
+    data = _palette_with_transparency()
+    with Image.open(io.BytesIO(data)) as src:
+        src_alpha = _alpha(src)
+        assert not _is_gray(src)
+    out, result = optimize_image_data(data, grayscale=True,
+                                      ignore_size_comparison=True)
+    assert result.was_optimized
+    with Image.open(io.BytesIO(out)) as img:
+        assert _is_gray(img)
+        assert _alpha(img) == src_alpha
+
+
+@pytest.mark.parametrize("max_colors", [16, 64])
+def test_reduce_colors_on_palette_image_respects_max_colors(max_colors):
+    # Plan 0.8: -rc on an image that is already a palette image.
+    data = _encode(_photo((96, 64)).quantize(200), 'PNG')
+    out, result = optimize_image_data(data, reduce_colors=True,
+                                      max_colors=max_colors,
+                                      ignore_size_comparison=True)
+    with Image.open(io.BytesIO(out)) as img:
+        assert img.mode == 'P'
+        assert len(img.getcolors()) <= max_colors
+    assert result.final_colors <= max_colors
+
+
+@pytest.mark.xfail(strict=True, reason="plan 0.8: -rc drops transparency: "
+                   "a palette image loses its tRNS, and in RGBA a small "
+                   "transparent area is merged into an opaque colour")
+@pytest.mark.parametrize("source", ["palette", "rgba"])
+def test_reduce_colors_keeps_transparent_pixels(source):
+    # A small transparent area (~2% of the pixels), as in a logo or icon.
+    data = _palette_with_transparency()
+    if source == "rgba":
+        with Image.open(io.BytesIO(data)) as img:
+            data = _encode(img.convert('RGBA'), 'PNG')
+    with Image.open(io.BytesIO(data)) as src:
+        transparent = [i for i, a in enumerate(_alpha(src)) if a == 0]
+    assert transparent
+    out, _ = optimize_image_data(data, reduce_colors=True, max_colors=16,
+                                 ignore_size_comparison=True)
+    with Image.open(io.BytesIO(out)) as img:
+        alpha = _alpha(img)
+    assert all(alpha[i] == 0 for i in transparent)
+
+
 # --- -q / quality (plan 3.2) ----------------------------------------------
 
 def test_quality_option_changes_jpeg_size():
