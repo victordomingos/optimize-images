@@ -318,7 +318,7 @@ def get_args():
                              help=_tagged('PNG', rc_help))
 
     mc_help = "The maximum number of colors when reducing colors (-rc) " \
-              "(an integer between 0 and 256). Defaults to 256. When -rc is " \
+              "(an integer between 1 and 256). Defaults to 256. When -rc is " \
               "used on an image with transparent pixels, one palette entry is " \
               "reserved for fully transparent pixels and counts toward -mc."
     color_group.add_argument('-mc', dest="max_colors",
@@ -408,6 +408,10 @@ def get_args():
         if quality > 100 or quality < 1:
             msg = "\nPlease specify an integer quality value between 1 and 100.\n\n"
             parser.exit(status=0, message=msg)
+
+    if args.max_colors < 1 or args.max_colors > 256:
+        msg = "\nPlease specify an integer number of colors between 1 and 256.\n\n"
+        parser.exit(status=0, message=msg)
 
     if args.max_width < 0 or args.max_height < 0:
         msg = "\nPlease specify image dimensions as positive integers.\n\n"

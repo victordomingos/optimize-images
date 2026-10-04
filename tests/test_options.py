@@ -424,3 +424,15 @@ def test_console_script_entry_point():
     scripts = {ep.name: ep.value for ep in dist.entry_points
                if ep.group == 'console_scripts'}
     assert scripts.get('optimize-images') == 'optimize_images.__main__:main'
+
+
+@pytest.mark.parametrize("max_colors", ["0", "257"])
+def test_cli_rejects_max_colors_out_of_range(tmp_path, max_colors):
+    from helpers import run_cli
+    path = tmp_path / "image.png"
+    path.write_bytes(_encode(_photo(), 'PNG'))
+    before = path.read_bytes()
+    proc = run_cli('-rc', '-mc', max_colors, str(tmp_path))
+    assert "between 1 and 256" in proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr
+    assert path.read_bytes() == before
