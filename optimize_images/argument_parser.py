@@ -318,7 +318,9 @@ def get_args():
                              help=_tagged('PNG', rc_help))
 
     mc_help = "The maximum number of colors when reducing colors (-rc) " \
-              "(an integer between 0 and 255). Defaults to 255."
+              "(an integer between 0 and 256). Defaults to 256. When -rc is " \
+              "used on an image with transparent pixels, one palette entry is " \
+              "reserved for fully transparent pixels and counts toward -mc."
     color_group.add_argument('-mc', dest="max_colors",
                              type=int, default=256,
                              help=_tagged('PNG', mc_help))

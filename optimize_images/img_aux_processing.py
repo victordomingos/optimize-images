@@ -87,6 +87,13 @@ def do_reduce_colors(img: Image.Image,
     mode 1, it cannot be further reduced, so it's returned back with no
     changes.
 
+    For images with fully transparent pixels (alpha == 0), one palette entry
+    is reserved for full transparency (which counts toward -mc).  The
+    algorithm quantizes visible pixels as RGBA (preserving partial alpha for
+    half-transparent pixels) and stores the per-entry alphas as bytes in
+    ``img.info[\"transparency\"]``, so that subsequent transforms
+    (grayscale, palette rebuild) can honour them.
+
     :param img: a PIL image in color (modes P, RGBA, RGB, CMYK, YCbCr, LAB or HSV)
     :param max_colors: an integer indicating the maximum number of colors allowed.
     :return: a PIL image in mode P (or mode 1, as stated above), an integer
@@ -111,29 +118,118 @@ def do_reduce_colors(img: Image.Image,
     elif orig_mode == "LA":
         img = img.convert("RGBA")
 
-    # Actual color reduction happening here
-    if orig_mode in ["RGB", "L"]:
+    # Actual colour reduction (RGBA is quantized as-is so its alpha
+    # channel is preserved — an earlier composite would have multiplied
+    # alpha by itself, e.g. 128→64, which we avoid by quantizing the
+    # RGBA image directly).  For CMYK/YCbCr/LAB/HSV we convert to RGB;
+    # for RGB/L/RGBA/P we set the palette.
+    if orig_mode in ["CMYK", "YCbCr", "LAB", "HSV"]:
+        palette = Image.ADAPTIVE
+    elif orig_mode in ["RGB", "L"]:
         palette = Image.ADAPTIVE
     elif orig_mode == "RGBA":
         palette = Image.ADAPTIVE
-        transparent = Image.new("RGBA", img.size, (0, 0, 0, 0))
-        # blend with transparent image using own alpha
-        img = Image.composite(img, transparent, img)
+    elif orig_mode == "LA":
+        palette = Image.ADAPTIVE
     elif orig_mode == "P":
         palette = img.getpalette()
         img = img.convert("RGBA")
-        width, height = img.size
-        alpha_layer = Image.new("L", img.size)
-        for x in range(width):
-            for y in range(height):
-                _, _, _, alpha = img.getpixel((x, y))
-                alpha_layer.putpixel((x, y), alpha)
-        img.putalpha(alpha_layer)
-    else:
-        return img, 0, 0
+
+    # --- transparent-aware path (only when source RGBA, LA or P) ---------
+    if orig_mode in ("RGBA", "LA", "P"):
+        # The image was converted to RGBA (from LA or P) and quantized
+        # as RGBA so its per-pixel alpha is preserved.  Check whether the
+        # image has any fully transparent pixel (alpha == 0).
+        alpha = img.getchannel('A')  # mode L
+        if alpha.getextrema()[0] == 0:
+            return _reduce_colors_keeping_transparency(
+                img, alpha, max_colors, orig_colors
+            )
+        # No fully transparent pixels: standard opaque path (byte-for-byte).
+        img = img.convert("P", palette=palette, colors=max_colors)
+        return img, orig_colors, len(img.getcolors())
 
     img = img.convert("P", palette=palette, colors=max_colors)
     return img, orig_colors, len(img.getcolors())
+
+
+def _reduce_colors_keeping_transparency(
+        rgba: Image.Image,
+        alpha: Image.Image,
+        max_colors: int,
+        orig_colors: int
+) -> Tuple[Image.Image, int, int]:
+    """Reduce colours of a RGBA image while keeping transparency.
+
+    Fully transparent pixels (alpha == 0) are preserved by reserving one
+    palette entry for them (which counts toward -mc).  The algorithm:
+
+    1. Mask: 255 where alpha == 0 (transparent → fill), else 0.
+    2. Get the average visible colour by converting to RGB, resizing to
+       1×1 with Image.BOX (averages all visible pixels).
+    3. Paste (average + (255,)) into a copy of the image using the mask,
+       so fully-transparent pixels become opaque copies of the average.
+    4. Quantize the working image to max(1, max_colors - 1) colours;
+       quantize on an RGBA image preserves per-pixel alpha in the RGBA
+       palette, so half-transparent pixels keep their partial alpha.
+    5. Extend the RGB palette by one entry (0, 0, 0) as the transparent
+       colour, and remap all fully-transparent pixels to that index.
+    6. Store the per-entry alphas as bytes in info["transparency"] so
+       that subsequent transforms (grayscale, palette rebuild) can honour
+       them.
+
+    :param rgba: a PIL Image in mode RGBA (may have alpha 0, 128, 255).
+    :param alpha: the alpha channel (mode L), already extracted.
+    :param max_colors: the maximum number of colours (0 … 256).
+    :param orig_colors: the original colour count (for the return value).
+    :return: (quantized image in mode P, orig_colors, final colour count).
+    """
+    # a) invisible: 255 where alpha == 0 (transparent → paint), else 0.
+    invisible = alpha.point(lambda a: 255 if a == 0 else 0)
+
+    # b) Compute the average visible colour.  Convert to RGB (dropping
+    #    alpha), resize to 1×1 with Image.BOX (averages), and create a
+    #    full-size solid RGBA image with that colour.
+    visible = rgba.copy()
+    fill_rgb = rgba.convert("RGB").resize((1, 1), Image.BOX)
+    fill_rgba = Image.new(
+        "RGBA", rgba.size, fill_rgb.getpixel((0, 0))
+    )
+    visible.paste(fill_rgba, mask=invisible)
+
+    # c) Quantize visible pixels to max(1, max_colors - 1) colours.
+    #    Quantize on an RGBA image creates a 4-byte RGBA palette that
+    #    preserves per-pixel alpha for every entry (half-transparent
+    #    pixels keep their partial alpha).
+    quantized = visible.quantize(
+        max(1, max_colors - 1), method=Image.Quantize.FASTOCTREE
+    )
+
+    # d) Read its palette with getpalette(rawmode="RGBA"); n = number of
+    #    entries; alphas = the 4th byte of each entry followed by one 0
+    #    byte (the last index, reserved for full transparency).
+    rgba_pal = list(quantized.getpalette(rawmode="RGBA"))
+    n = len(rgba_pal) // 4  # max_colors - 1 (before adding the transparent entry)
+    alphas = bytes(rgba_pal[i * 4 + 3] for i in range(n)) + bytes([0])
+
+    # e) Extend the RGBA palette by one entry (0, 0, 0, 0) as the
+    #    transparent colour, and remap all fully transparent pixels to
+    #    that index.
+    rgba_pal.extend([0, 0, 0, 0])  # last entry (index n, fully transparent)
+    quantized.putpalette(rgba_pal, rawmode="RGBA")
+
+    # f) quantized.paste(n, mask=invisible) - only the fully transparent
+    #    pixels get entry n; no other remapping.
+    quantized.paste(n, mask=invisible)
+
+    # g) quantized.info["transparency"] = alphas (bytes) — one alpha
+    #    value per palette index (n opaque/partial entries + 1 transparent
+    #    entry at index n).  This works with both RGB and RGBA palettes,
+    #    so -g and the palette rebuild honour it.
+    quantized.info["transparency"] = alphas
+
+    # h) return quantized, orig_colors, len(quantized.getcolors()).
+    return quantized, orig_colors, len(quantized.getcolors())
 
 
 def make_grayscale(img: Image.Image) -> Image.Image:

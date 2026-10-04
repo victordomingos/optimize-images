@@ -184,24 +184,128 @@ def test_reduce_colors_on_palette_image_respects_max_colors(max_colors):
     assert result.final_colors <= max_colors
 
 
-@pytest.mark.xfail(strict=True, reason="plan 0.8: -rc drops transparency: "
-                   "a palette image loses its tRNS, and in RGBA a small "
-                   "transparent area is merged into an opaque colour")
-@pytest.mark.parametrize("source", ["palette", "rgba"])
-def test_reduce_colors_keeps_transparent_pixels(source):
-    # A small transparent area (~2% of the pixels), as in a logo or icon.
+def _rc_source(source):
+    """Palette (tRNS) or RGBA image with a small transparent area (~2% of the
+    pixels, as in a logo or icon); "rgba_bands" adds large transparent and
+    half-transparent bands."""
+    if source == "rgba_bands":
+        return _encode(_rgba_photo(), 'PNG')
     data = _palette_with_transparency()
     if source == "rgba":
         with Image.open(io.BytesIO(data)) as img:
             data = _encode(img.convert('RGBA'), 'PNG')
+    return data
+
+
+def _reduce(data, max_colors=16):
+    out, result = optimize_image_data(data, reduce_colors=True,
+                                      max_colors=max_colors,
+                                      ignore_size_comparison=True)
+    return out, result
+
+
+@pytest.mark.parametrize("source", ["palette", "rgba"])
+def test_reduce_colors_keeps_transparent_pixels(source):
+    data = _rc_source(source)
     with Image.open(io.BytesIO(data)) as src:
         transparent = [i for i, a in enumerate(_alpha(src)) if a == 0]
     assert transparent
-    out, _ = optimize_image_data(data, reduce_colors=True, max_colors=16,
-                                 ignore_size_comparison=True)
+    out, _ = _reduce(data)
     with Image.open(io.BytesIO(out)) as img:
         alpha = _alpha(img)
     assert all(alpha[i] == 0 for i in transparent)
+
+
+@pytest.mark.parametrize("source", ["palette", "rgba", "rgba_bands"])
+def test_reduce_colors_keeps_exactly_the_invisible_pixels(source):
+    # Fully transparent pixels stay fully transparent, and no visible pixel
+    # (opaque or half-transparent) becomes invisible.
+    data = _rc_source(source)
+    with Image.open(io.BytesIO(data)) as src:
+        before = [a == 0 for a in _alpha(src)]
+    out, _ = _reduce(data)
+    with Image.open(io.BytesIO(out)) as img:
+        after = [a == 0 for a in _alpha(img)]
+    assert after == before
+
+
+@pytest.mark.parametrize("source", ["palette", "rgba"])
+def test_reduce_colors_then_grayscale_keeps_the_invisible_pixels(source):
+    # -g runs after -rc and rewrites the palette: the transparency set by
+    # -rc must survive it (and the palette rebuild that follows).
+    data = _rc_source(source)
+    with Image.open(io.BytesIO(data)) as src:
+        before = [a == 0 for a in _alpha(src)]
+    out, _ = optimize_image_data(data, reduce_colors=True, max_colors=16,
+                                 grayscale=True, ignore_size_comparison=True)
+    with Image.open(io.BytesIO(out)) as img:
+        assert _is_gray(img)
+        assert [a == 0 for a in _alpha(img)] == before
+
+
+def test_reduce_colors_keeps_partial_transparency():
+    # Half-transparent pixels may have their alpha quantized, but they must
+    # not all become opaque, and opaque pixels must stay opaque.
+    src = _rgba_photo()
+    before = _alpha(src)
+    out, _ = _reduce(_encode(src, 'PNG'))
+    with Image.open(io.BytesIO(out)) as img:
+        after = _alpha(img)
+    partial = [i for i, a in enumerate(before) if 0 < a < 255]
+    still_partial = sum(1 for i in partial if 0 < after[i] < 255)
+    assert still_partial >= len(partial) // 2
+    assert all(after[i] == 255 for i, a in enumerate(before) if a == 255)
+
+
+@pytest.mark.parametrize("source", ["palette", "rgba", "rgba_bands"])
+def test_reduce_colors_with_transparency_keeps_the_picture(source):
+    # The visible pixels must still look like the source: they use most of
+    # the allowed colours, and the average colour error stays small.
+    data = _rc_source(source)
+    with Image.open(io.BytesIO(data)) as src:
+        before = src.convert('RGBA').tobytes()
+    out, _ = _reduce(data, max_colors=16)
+    with Image.open(io.BytesIO(out)) as img:
+        after = img.convert('RGBA').tobytes()
+    visible = [i for i in range(0, len(before), 4) if before[i + 3] > 0]
+    colours = {after[i:i + 3] for i in visible}
+    assert len(colours) >= 8
+    error = sum(abs(before[i + c] - after[i + c])
+                for i in visible for c in range(3)) / (3 * len(visible))
+    assert error < 20
+
+
+@pytest.mark.parametrize("source", ["palette", "rgba", "rgba_bands"])
+@pytest.mark.parametrize("max_colors", [2, 16, 64])
+def test_reduce_colors_with_transparency_respects_max_colors(source,
+                                                             max_colors):
+    # The fully transparent entry counts towards -mc.
+    out, result = _reduce(_rc_source(source), max_colors)
+    with Image.open(io.BytesIO(out)) as img:
+        assert img.mode == 'P'
+        assert len(img.getcolors()) <= max_colors
+    assert result.final_colors <= max_colors
+
+
+def test_reduce_colors_keeps_partial_alpha_without_transparent_pixels():
+    # RGBA with half-transparent pixels but none fully transparent: the
+    # alpha must not be squared (the old composite turned 128 into 64).
+    src = _rgba_photo()
+    src.putalpha(src.getchannel('A').point(lambda a: max(a, 1)))
+    out, _ = _reduce(_encode(src, 'PNG'), max_colors=64)
+    with Image.open(io.BytesIO(out)) as img:
+        alpha = _alpha(img)
+    half = [alpha[i] for i, a in enumerate(_alpha(src)) if a == 128]
+    assert abs(sum(half) / len(half) - 128) < 16
+
+
+def test_reduce_colors_without_transparency_adds_none():
+    # An opaque image must not gain a transparent palette entry.
+    data = _encode(_photo((96, 64)), 'PNG')
+    out, _ = _reduce(data)
+    with Image.open(io.BytesIO(out)) as img:
+        assert 'transparency' not in img.info
+        assert set(_alpha(img)) == {255}
 
 
 # --- -q / quality (plan 3.2) ----------------------------------------------
