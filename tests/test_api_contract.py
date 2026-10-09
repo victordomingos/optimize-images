@@ -23,7 +23,8 @@ from optimize_images.data_structures import Task
 # Parameters that must remain keyword-only-with-default so that positional
 # calls written for older versions keep working.
 ADDITIVE_KEYWORD_PARAMS = ["convert_to", "webp_quality", "webp_lossless",
-                           "webp_method", "ssim_min", "show_ssim"]
+                           "webp_method", "ssim_min", "show_ssim",
+                           "jpeg_tables"]
 
 # Fields the public result must keep exposing. Extra fields are fine (additive);
 # a missing field is a breaking change.
@@ -78,11 +79,13 @@ def test_task_builds_with_defaults_for_conversion_fields():
     assert defaults["convert_to"] == "jpeg"
     assert defaults["ssim_min"] is None
     assert defaults["show_ssim"] is False
+    assert defaults["jpeg_tables"] == "standard"
 
     minimal = Task("p", 80, False, False, 256, 0, 0, False, False, False,
                    False, (255, 255, 255), False, False, False, None)
     assert minimal.convert_to == "jpeg"
     assert minimal.ssim_min is None
+    assert minimal.jpeg_tables == "standard"
 
 
 if __name__ == "__main__":

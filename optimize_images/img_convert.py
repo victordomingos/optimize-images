@@ -14,6 +14,7 @@ from typing import Optional
 from PIL import Image, ImageFile
 from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.formats import FORMATS
+from optimize_images.jpeg_qtables import jpeg_quality_kwargs
 from optimize_images.constants import DEFAULT_QUALITY
 from optimize_images.img_aux_processing import (downsize_img, make_grayscale,
                                                 remove_transparency,
@@ -42,13 +43,17 @@ def _normalize_target(task: Task) -> str:
     return 'jpeg' if target == 'jpg' else target
 
 
-def _target_save_kwargs(target: str, task: Task) -> dict:
+def _target_save_kwargs(target: str, task: Task,
+                        image_mode: str) -> dict:
     """Best-effort encoding parameters for each supported output format."""
     info = FORMATS[target]
     kwargs = {'format': info.pil}
     if target == 'jpeg':
-        kwargs.update(quality=task.quality if task.quality is not None else DEFAULT_QUALITY,
-                      optimize=True, progressive=True)
+        kwargs.update(optimize=True, progressive=True)
+        kwargs.update(jpeg_quality_kwargs(
+            image_mode,
+            task.quality if task.quality is not None else DEFAULT_QUALITY,
+            task.jpeg_tables))
     elif target == 'png':
         kwargs.update(optimize=True)
     elif target == 'webp':
@@ -115,7 +120,7 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
     if img.mode == 'CMYK' and target != 'jpeg':
         img = img.convert('RGB')
 
-    save_kwargs = _target_save_kwargs(target, task)
+    save_kwargs = _target_save_kwargs(target, task, img.mode)
     if info.supports_exif and task.keep_exif and had_exif and exif:
         save_kwargs['exif'] = exif
 

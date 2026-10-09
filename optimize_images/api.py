@@ -24,6 +24,7 @@ from optimize_images.img_ssim import (
     ensure_ssim_available,
     validate_ssim_min,
 )
+from optimize_images.jpeg_qtables import validate_jpeg_tables
 from optimize_images.inmemory import convert_image_data as _convert_image_data
 from optimize_images.inmemory import optimize_image_data as _optimize_image_data
 from optimize_images.metadata import ImageMetadata, inspect_image
@@ -83,6 +84,7 @@ class PublicBatchOptions:
     webp_method: int = 6
     ssim_min: Optional[float] = None
     show_ssim: bool = False
+    jpeg_tables: str = 'standard'
 
 
 @dataclass(frozen=True)
@@ -150,6 +152,7 @@ def _to_internal_options(opts: PublicBatchOptions) -> _BatchOptions:
         webp_method=opts.webp_method,
         ssim_min=opts.ssim_min,
         show_ssim=opts.show_ssim,
+        jpeg_tables=opts.jpeg_tables,
     )
 
 
@@ -178,6 +181,7 @@ def _to_public_result(r: _TaskResult) -> PublicTaskResult:
 # -----------------------
 
 def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTaskResult]:
+    validate_jpeg_tables(options.jpeg_tables)
     if options.ssim_min is not None:
         validate_ssim_min(options.ssim_min)
         ensure_ssim_available()
@@ -253,7 +257,9 @@ def optimize_single_image(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
+        jpeg_tables: str = 'standard',
 ) -> PublicTaskResult:
+    validate_jpeg_tables(jpeg_tables)
     if ssim_min is not None:
         validate_ssim_min(ssim_min)
         ensure_ssim_available()
@@ -281,6 +287,7 @@ def optimize_single_image(
         webp_method=webp_method,
         ssim_min=ssim_min,
         show_ssim=show_ssim,
+        jpeg_tables=jpeg_tables,
     )
     internal = _to_internal_options(options)
     tasks = list(_build_tasks(internal))
@@ -310,6 +317,7 @@ def optimize_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
+        jpeg_tables: str = 'standard',
 ) -> Tuple[bytes, PublicTaskResult]:
     """Optimize an in-memory image: bytes in, bytes out.
 
@@ -321,6 +329,7 @@ def optimize_image_data(
 
     Raises OSError if ``data`` is not a readable image.
     """
+    validate_jpeg_tables(jpeg_tables)
     if ssim_min is not None:
         validate_ssim_min(ssim_min)
         ensure_ssim_available()
@@ -343,6 +352,7 @@ def optimize_image_data(
         webp_method=webp_method,
         ssim_min=ssim_min,
         show_ssim=show_ssim,
+        jpeg_tables=jpeg_tables,
     )
     return out_bytes, _to_public_result(result)
 
@@ -365,6 +375,7 @@ def convert_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
+        jpeg_tables: str = 'standard',
 ) -> Tuple[bytes, PublicTaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 
@@ -382,6 +393,7 @@ def convert_image_data(
     returned unchanged. Raises ValueError for an unknown/unavailable target and
     OSError if ``data`` is not a readable image.
     """
+    validate_jpeg_tables(jpeg_tables)
     if ssim_min is not None:
         validate_ssim_min(ssim_min)
         ensure_ssim_available()
@@ -402,6 +414,7 @@ def convert_image_data(
         webp_method=webp_method,
         ssim_min=ssim_min,
         show_ssim=show_ssim,
+        jpeg_tables=jpeg_tables,
     )
     return out_bytes, _to_public_result(result)
 
@@ -412,6 +425,7 @@ def watch_directory(
         stop_event: Optional[threading.Event] = None,
 ) -> None:
     """Watch a directory for new image files and optimize them as they appear."""
+    validate_jpeg_tables(options.jpeg_tables)
     if options.ssim_min is not None:
         validate_ssim_min(options.ssim_min)
         ensure_ssim_available()
@@ -450,6 +464,7 @@ def watch_directory(
         internal.webp_method,
         internal.ssim_min,
         internal.show_ssim,
+        internal.jpeg_tables,
     )
 
     # Define a function to check if a file is a supported image
@@ -522,6 +537,7 @@ def watch_directory(
                 task.webp_method,
                 task.ssim_min,
                 task.show_ssim,
+                task.jpeg_tables,
             )
 
             # Process the image

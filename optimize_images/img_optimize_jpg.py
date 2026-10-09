@@ -6,6 +6,7 @@ from PIL import Image, ImageFile
 
 from .data_structures import Task, TaskResult, OptimizedImage
 from .img_aux_processing import downsize_img, save_compressed
+from .jpeg_qtables import jpeg_quality_kwargs
 from .img_aux_processing import ssim_needs_computing
 from .img_aux_processing import make_grayscale
 from .img_dynamic_quality import jpeg_dynamic_quality
@@ -87,7 +88,7 @@ def transform_jpg(img: Image.Image, task: Task,
     if task.fast_mode or task.quality is not None:
         quality = task.quality if task.quality is not None else DEFAULT_QUALITY
     else:
-        quality, _ = jpeg_dynamic_quality(img)
+        quality, _ = jpeg_dynamic_quality(img, jpeg_tables=task.jpeg_tables)
 
     tmp_buffer = BytesIO()  # In-memory buffer
 
@@ -97,6 +98,7 @@ def transform_jpg(img: Image.Image, task: Task,
         'optimize': True,
         'progressive': use_progressive_jpg,
         'format': result_format,
+        **jpeg_quality_kwargs(img.mode, quality, task.jpeg_tables),
     }
 
     if task.keep_exif and had_exif and exif:

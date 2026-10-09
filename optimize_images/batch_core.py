@@ -22,7 +22,8 @@ def build_tasks(options: BatchOptions) -> Iterable[Task]:
                  options.fast_mode, options.output_config,
                  options.convert_to, options.webp_quality,
                  options.webp_lossless, options.webp_method,
-                 options.ssim_min, options.show_ssim)
+                 options.ssim_min, options.show_ssim,
+                 options.jpeg_tables)
             for img_path in search_images(options.src_path, recursive=options.recursive)
         )
     elif os.path.isfile(options.src_path) and '~temp~' not in options.src_path:
@@ -35,6 +36,7 @@ def build_tasks(options: BatchOptions) -> Iterable[Task]:
                  options.fast_mode, options.output_config,
                  options.convert_to, options.webp_quality,
                  options.webp_lossless, options.webp_method,
-                 options.ssim_min, options.show_ssim)
+                 options.ssim_min, options.show_ssim,
+                 options.jpeg_tables)
         ]
     return []

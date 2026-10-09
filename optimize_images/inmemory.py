@@ -37,7 +37,8 @@ def _build_task(name: str, quality: Optional[int], remove_transparency: bool,
                 grayscale: bool, ignore_size_comparison: bool,
                 fast_mode: bool, webp_quality: int, webp_lossless: bool,
                 webp_method: int, ssim_min: Optional[float],
-                show_ssim: bool = False) -> Task:
+                show_ssim: bool = False,
+                jpeg_tables: str = 'standard') -> Task:
     return Task(
         src_path=name,
         quality=quality,
@@ -61,6 +62,7 @@ def _build_task(name: str, quality: Optional[int], remove_transparency: bool,
         webp_method=webp_method,
         ssim_min=ssim_min,
         show_ssim=show_ssim,
+        jpeg_tables=jpeg_tables,
     )
 
 
@@ -95,6 +97,7 @@ def optimize_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
+        jpeg_tables: str = 'standard',
 ) -> Tuple[bytes, TaskResult]:
     """Optimize an image given as bytes and return ``(optimized_bytes, result)``.
 
@@ -109,7 +112,7 @@ def optimize_image_data(
                        max_colors, max_w, max_h, keep_exif, bg_color,
                        grayscale, ignore_size_comparison, fast_mode,
                        webp_quality, webp_lossless, webp_method, ssim_min,
-                       show_ssim)
+                       show_ssim, jpeg_tables)
 
     with Image.open(BytesIO(data)) as img:
         fmt = (img.format or '').upper()
@@ -169,6 +172,7 @@ def convert_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
+        jpeg_tables: str = 'standard',
 ) -> Tuple[bytes, TaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 
@@ -203,12 +207,13 @@ def convert_image_data(
                 ignore_size_comparison=ignore_size_comparison,
                 webp_quality=webp_quality, webp_lossless=webp_lossless,
                 webp_method=webp_method, ssim_min=ssim_min,
-                show_ssim=show_ssim)
+                show_ssim=show_ssim, jpeg_tables=jpeg_tables)
 
         task = _build_task(name, quality, remove_transparency, False, 256,
                            max_w, max_h, keep_exif, bg_color, grayscale,
                            ignore_size_comparison, False, webp_quality,
-                           webp_lossless, webp_method, ssim_min, show_ssim)
+                           webp_lossless, webp_method, ssim_min, show_ssim,
+                           jpeg_tables)
         task = task._replace(convert_to=target, convert_all=True)
 
         try:

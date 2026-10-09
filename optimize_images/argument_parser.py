@@ -12,6 +12,7 @@ from optimize_images.data_structures import OutputConfiguration
 from optimize_images.exif_format import format_exif
 from optimize_images.formats import available_output_formats
 from optimize_images.metadata import inspect_image
+from optimize_images.jpeg_qtables import JPEG_TABLE_NAMES
 
 
 def get_version_info() -> str:
@@ -308,6 +309,15 @@ def get_args():
                            action='store_false',
                            help=_tagged('JPEG, WebP, convert', no_ssim_show_help))
 
+    jqt_help = ("JPEG quantization tables: 'standard' (default, current "
+                "behaviour) or 'mozjpeg3' (mozjpeg's default table: smaller "
+                "files at the same quality number; only the table, not the "
+                "mozjpeg encoder).")
+    enc_group.add_argument('-jt', '--jpeg-tables', dest='jpeg_tables',
+                           choices=JPEG_TABLE_NAMES,
+                           default='standard',
+                           help=_tagged('JPEG, convert', jqt_help))
+
     color_group = parser.add_argument_group(
         'Color, transparency and metadata options'.upper())
 
@@ -472,4 +482,4 @@ def get_args():
         args.keep_exif, args.convert_all, args.convert_big, args.force_delete, \
         bg_color, args.grayscale, args.no_comparison, args.fast_mode, \
         args.jobs, output_config, convert_to, webp_quality, \
-        args.webp_lossless, args.webp_method, args.ssim_min, args.show_ssim
+        args.webp_lossless, args.webp_method, args.ssim_min, args.show_ssim, args.jpeg_tables

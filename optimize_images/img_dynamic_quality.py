@@ -11,6 +11,7 @@ from PIL import ImageChops, ImageStat
 from math import log
 
 from .constants import DEFAULT_QUALITY
+from .jpeg_qtables import jpeg_quality_kwargs
 
 
 def compare_images(img1: Image.Image, img2: Image.Image) -> Optional[float]:
@@ -38,16 +39,18 @@ def compare_images(img1: Image.Image, img2: Image.Image) -> Optional[float]:
     return diff_ratio * 100
 
 
-def get_diff_at_quality(photo, quality: int) -> float:
-    """Return a difference score for this JPEG image saved at the specified quality
+def get_diff_at_quality(photo, quality: int,
+                        *, jpeg_tables: str = 'standard') -> float:
+    """Return a difference score for this JPEG image saved at the specified quality.
 
     A SSIM score would be much better, but currently there is no pure Python
     implementation available.
     """
     diff_photo = BytesIO()
-    # optimize is omitted here as it doesn't affect
-    # quality but requires additional memory and cpu
-    photo.save(diff_photo, format="JPEG", quality=quality, progressive=True)
+    # optimize is omitted here as it doesn't affect quality but requires
+    # additional memory and cpu
+    photo.save(diff_photo, format="JPEG", progressive=True,
+               **jpeg_quality_kwargs(photo.mode, quality, jpeg_tables))
     diff_photo.seek(0)
     diff_score = compare_images(photo, Image.open(diff_photo))
 
@@ -69,7 +72,8 @@ def _diff_iteration_count(low: int, high: int) -> int:
 
 
 def jpeg_dynamic_quality(original_photo: Image.Image,
-                         use_dynamic_quality: bool = True) -> Tuple[int, float]:
+                         use_dynamic_quality: bool = True,
+                         *, jpeg_tables: str = 'standard') -> Tuple[int, float]:
     """Return an integer representing the quality that this JPEG image should be
     saved at to attain the quality threshold specified for this photo class.
 
@@ -85,19 +89,19 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
     photo = original_photo.resize((400, 400))
 
     if not use_dynamic_quality:
-        default_diff = get_diff_at_quality(photo, high)
+        default_diff = get_diff_at_quality(photo, high, jpeg_tables=jpeg_tables)
         return high, default_diff
 
     # 95 is the highest useful value for JPEG. Higher values cause different behavior
     # Used to establish the image's intrinsic ssim without encoder artifacts
-    normalized_diff = get_diff_at_quality(photo, 95)
+    normalized_diff = get_diff_at_quality(photo, 95, jpeg_tables=jpeg_tables)
 
     selected_quality = selected_diff = None
 
     # loop bisection. ssim/diff function increases monotonically so this will converge
     for _ in range(_diff_iteration_count(low, high)):
         curr_quality = (low + high) // 2
-        curr_diff = get_diff_at_quality(photo, curr_quality)
+        curr_diff = get_diff_at_quality(photo, curr_quality, jpeg_tables=jpeg_tables)
         diff_ratio = curr_diff / normalized_diff
 
         if diff_ratio >= diff_goal:
@@ -111,5 +115,5 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
     if selected_quality:
         return selected_quality, selected_diff
     else:
-        default_diff = get_diff_at_quality(photo, high)
+        default_diff = get_diff_at_quality(photo, high, jpeg_tables=jpeg_tables)
         return high, default_diff

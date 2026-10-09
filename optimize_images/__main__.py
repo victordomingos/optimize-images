@@ -71,7 +71,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                    conv_big, force_del, bg_color, grayscale, ignore_size_comparison,
                    fast_mode, jobs, output_config, convert_to='jpeg',
                    webp_quality=80, webp_lossless=False, webp_method=6,
-                   ssim_min=None, show_ssim=None):
+                   ssim_min=None, show_ssim=None, jpeg_tables="standard"):
     appstart = timer()
     line_width, our_pool_executor, workers = adjust_for_platform()
 
@@ -128,6 +128,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         webp_method=webp_method,
         ssim_min=ssim_min,
         show_ssim=api_show_ssim,
+        jpeg_tables=jpeg_tables,
     )
 
     if watch_dir:
