@@ -4,6 +4,24 @@ Version history:
 
 ---
 v.2.2.0 - 2026-09-21
+ * Behaviour change (JPEG): smaller JPEG files by default. New
+   -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'auto' (the default),
+   'standard' or 'mozjpeg3'. 'mozjpeg3' encodes with the default quantization
+   table of the mozjpeg encoder (index 3), for brightness and colour, scaled
+   from the same quality value; only the table changes, not the encoder, and
+   the output is still a baseline JPEG. 'auto' uses 'standard' for JPEG files
+   already saved with the standard tables at about the quality used (such as
+   files optimized before by optimize-images), so they are not compressed a
+   second time, and 'mozjpeg3' for everything else; with --ssim-min, a file
+   whose mozjpeg3 result scores below the threshold is encoded again with the
+   standard tables before the original is kept. On the project's test
+   images, 'auto' gives JPEG files about 12% smaller in total (median
+   SSIMULACRA 2 loss of 0.2 points) and PNG to JPEG conversions about 3%
+   smaller, with the same quality. 'standard' restores the previous output
+   exactly. CMYK JPEGs are not affected. Public API (backwards compatible):
+   keyword-only jpeg_tables argument in optimize_single_image(),
+   optimize_image_data() and convert_image_data(), and a matching
+   PublicBatchOptions field (default 'auto'); unknown names raise ValueError.
  * New SSIM quality control: the -ssm/--ssim-min THRESHOLD option (JPEG,
    WebP, conversion; value between 0.0 and 1.0) computes the structural
    similarity between the image as it was just before the final lossy
@@ -38,6 +56,13 @@ v.2.2.0 - 2026-09-21
    not change if scikit-image changes its defaults). Scores are slightly
    higher (about +0.004) than tools using the Gaussian window of the original
    paper; the recommended thresholds were calibrated with this implementation.
+ * Embedded ICC colour profiles are now kept when optimizing and
+   converting JPEG, WebP and PNG files (profiles equivalent to sRGB
+   are removed). Files with a wide-gamut profile may be slightly
+   larger, but their colours no longer change.
+ * Dropped Python 3.10 (end of life since 2026-10-01); Python 3.11
+   is now the minimum. Python 3.15 is supported. The [ssim] extra now
+   also declares numpy.
  * Public API (backwards compatible): optimize_single_image(),
    optimize_image_data() and convert_image_data() gained keyword-only ssim_min
    and show_ssim arguments; PublicBatchOptions gained the matching ssim_min and
@@ -45,28 +70,13 @@ v.2.2.0 - 2026-09-21
    field (None when SSIM was not computed; with ssim_min alone, files rejected
    by the size check are not scored; show_ssim always returns the score). The
    public entry points raise ValueError for an ssim_min outside 0.0-1.0.
- * Behaviour change (JPEG): smaller JPEG files by default. New
-   -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'auto' (the default),
-   'standard' or 'mozjpeg3'. 'mozjpeg3' encodes with the default quantization
-   table of the mozjpeg encoder (index 3), for brightness and colour, scaled
-   from the same quality value; only the table changes, not the encoder, and
-   the output is still a baseline JPEG. 'auto' uses 'standard' for JPEG files
-   already saved with the standard tables at about the quality used (such as
-   files optimized before by optimize-images), so they are not compressed a
-   second time, and 'mozjpeg3' for everything else; with --ssim-min, a file
-   whose mozjpeg3 result scores below the threshold is encoded again with the
-   standard tables before the original is kept. On the project's test
-   images, 'auto' gives JPEG files about 12% smaller in total (median
-   SSIMULACRA 2 loss of 0.2 points) and PNG to JPEG conversions about 3%
-   smaller, with the same quality. 'standard' restores the previous output
-   exactly. CMYK JPEGs are not affected. Public API (backwards compatible):
-   keyword-only jpeg_tables argument in optimize_single_image(),
-   optimize_image_data() and convert_image_data(), and a matching
-   PublicBatchOptions field (default 'auto'); unknown names raise ValueError.
  * SSIM: identical (lossless) outputs are scored 1.0 without running
    the comparison, and batches that compute SSIM scores run at most
    8 images at a time by default (much faster on macOS and Windows,
    where the default used up to 64 and 32 threads respectively).
+ * Removed the unused optimize_images/watch.py module. Directory watching
+   has been served by the public API (optimize_images.api.watch_directory)
+   since v1.4; the -wd/--watch-directory option is unaffected.
  * Behaviour change (JPEG): -q / quality is now honoured without fast mode.
    Previously, -q was ignored for in-place JPEG optimization unless -fm was
    also given. Now, when a quality is explicitly provided, it is always used
@@ -74,31 +84,6 @@ v.2.2.0 - 2026-09-21
    except with -fm and in conversions to JPEG/AVIF, which use 80. Public API
    quality now defaults to None (previously 80), so 'not given' is
    distinguishable from quality=80.
- * Embedded ICC colour profiles are now kept when optimizing and
-   converting JPEG, WebP and PNG files (profiles equivalent to sRGB
-   are removed). Files with a wide-gamut profile may be slightly
-   larger, but their colours no longer change.
- * The CLI no longer crashes when a file name cannot be written in the
-   output encoding (e.g. Windows output redirected to a file or pipe);
-   such characters are shown as "?". Unicode icons and the path ellipsis
-   fall back to ASCII when the output cannot display them.
- * Removed the unused optimize_images/watch.py module. Directory watching
-   has been served by the public API (optimize_images.api.watch_directory)
-   since v1.4; the -wd/--watch-directory option is unaffected.
- * Animated PNG files (APNG) are now left untouched, like animated WebP
-   files, instead of being flattened to their first frame. (Camera MPO files
-   are still optimized as their primary image, as before.)
- * Converting a 16-bit grayscale PNG (Pillow modes I;16, I;16B, I;16L and I)
-   to another format now scales the samples to 8 bits (each value divided by
-   256) instead of clipping every value above 255 to white.
- * Converting a CMYK image (typically a JPEG) to a format that does not
-   support CMYK, such as PNG or WebP, now converts it to RGB first instead of
-   failing with an error.
- * Palette PNG optimization now keeps every colour (it used to
-   re-quantize the image) and is much faster. The palette and its
-   transparency are stored compactly (only the colours used). Palette
-   PNGs may therefore shrink less than before, because their colours
-   are no longer changed.
  * Running out of memory (for instance with a high -jobs value on big
    images), or an image above Pillow's pixel limit, no longer aborts the
    whole batch with an error: the file is skipped, its original is kept, the
@@ -110,9 +95,24 @@ v.2.2.0 - 2026-09-21
    transparent pixels stay transparent, using one palette entry that
    counts toward -mc, and half-transparent pixels keep an approximate
    transparency. -rc is also much faster on palette images.
- * Dropped Python 3.10 (end of life since 2026-10-01); Python 3.11
-   is now the minimum. Python 3.15 is supported. The [ssim] extra now
-   also declares numpy.
+ * Palette PNG optimization now keeps every colour (it used to
+   re-quantize the image) and is much faster. The palette and its
+   transparency are stored compactly (only the colours used). Palette
+   PNGs may therefore shrink less than before, because their colours
+   are no longer changed.
+ * The CLI no longer crashes when a file name cannot be written in the
+   output encoding (e.g. Windows output redirected to a file or pipe);
+   such characters are shown as "?". Unicode icons and the path ellipsis
+   fall back to ASCII when the output cannot display them.
+ * Animated PNG files (APNG) are now left untouched, like animated WebP
+   files, instead of being flattened to their first frame. (Camera MPO files
+   are still optimized as their primary image, as before.)
+ * Converting a 16-bit grayscale PNG (Pillow modes I;16, I;16B, I;16L and I)
+   to another format now scales the samples to 8 bits (each value divided by
+   256) instead of clipping every value above 255 to white.
+ * Converting a CMYK image (typically a JPEG) to a format that does not
+   support CMYK, such as PNG or WebP, now converts it to RGB first instead of
+   failing with an error.
 
 ---
 v.2.1.0 - 2026-06-26
