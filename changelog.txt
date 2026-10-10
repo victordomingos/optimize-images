@@ -134,6 +134,8 @@ v.2.2.0 - 2026-09-21
  * Converting a CMYK image (typically a JPEG) to a format that does not
    support CMYK, such as PNG or WebP, now converts it to RGB first instead of
    failing with an error.
+ * setup.py reads README.md as UTF-8, so building the package no longer
+   depends on the system's text encoding.
 
 ---
 v.2.1.0 - 2026-06-26

@@ -20,7 +20,7 @@ short_desc = "A command-line interface (CLI) utility written in pure Python " \
 
 
 def read_readme(file_name):
-    with open(os.path.join(os.path.dirname(__file__), file_name)) as f:
+    with open(os.path.join(os.path.dirname(__file__), file_name), encoding="utf-8") as f:
         return f.read()
 
 
