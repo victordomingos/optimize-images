@@ -1,17 +1,15 @@
 # encoding: utf-8
 import os
-from io import BytesIO
 
-from PIL import Image, ImageFile
+from PIL import Image
 
 from .data_structures import Task, TaskResult, OptimizedImage
 from .img_aux_processing import downsize_img, save_compressed
-from .jpeg_qtables import jpeg_quality_kwargs
-from .img_aux_processing import ssim_needs_computing
+from .jpeg_qtables import jpeg_quality_kwargs, resolve_jpeg_tables, retry_with_standard
+from .img_aux_processing import encode_and_score
 from .img_aux_processing import make_grayscale
-from .img_dynamic_quality import jpeg_dynamic_quality
+from .img_dynamic_quality import jpeg_dynamic_quality, DYNAMIC_QUALITY_MIN
 from .img_icc import get_suitable_icc
-from .img_ssim import compute_ssim
 from .constants import DEFAULT_QUALITY
 
 
@@ -73,6 +71,8 @@ def transform_jpg(img: Image.Image, task: Task,
     # images without img.info).  The profile is matched against the
     # output mode, not the source mode.
     src_profile = img.info.get('icc_profile')
+    # Same for the quantization tables, used by jpeg_tables='auto'.
+    src_quantization = getattr(img, 'quantization', None)
 
     if task.max_w or task.max_h:
         img, was_downsized = downsize_img(img, task.max_w, task.max_h)
@@ -85,20 +85,22 @@ def transform_jpg(img: Image.Image, task: Task,
     # only use progressive if file size is bigger
     use_progressive_jpg = orig_size > 10000
 
-    if task.fast_mode or task.quality is not None:
+    fixed_quality = task.fast_mode or task.quality is not None
+    if fixed_quality:
         quality = task.quality if task.quality is not None else DEFAULT_QUALITY
+        jpeg_tables = resolve_jpeg_tables(task.jpeg_tables, src_quantization,
+                                          quality, quality, was_downsized)
     else:
-        quality, _ = jpeg_dynamic_quality(img, jpeg_tables=task.jpeg_tables)
-
-    tmp_buffer = BytesIO()  # In-memory buffer
+        jpeg_tables = resolve_jpeg_tables(task.jpeg_tables, src_quantization,
+                                          DYNAMIC_QUALITY_MIN, DEFAULT_QUALITY,
+                                          was_downsized)
+        quality, _ = jpeg_dynamic_quality(img, jpeg_tables=jpeg_tables)
 
     # If keeping EXIF and the source had EXIF, pass it through on save.
     save_kwargs: dict = {
-        'quality': quality,
         'optimize': True,
         'progressive': use_progressive_jpg,
         'format': result_format,
-        **jpeg_quality_kwargs(img.mode, quality, task.jpeg_tables),
     }
 
     if task.keep_exif and had_exif and exif:
@@ -108,27 +110,18 @@ def transform_jpg(img: Image.Image, task: Task,
     icc = get_suitable_icc(src_profile, img.mode, result_format)
     save_kwargs['icc_profile'] = icc
 
-    try:
-        img.save(tmp_buffer, **save_kwargs)
-    except IOError:
-        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(tmp_buffer, **save_kwargs)
+    tmp_buffer, ssim = encode_and_score(
+        img, {**save_kwargs, **jpeg_quality_kwargs(img.mode, quality, jpeg_tables)},
+        task, orig_size)
+
+    if retry_with_standard(task.jpeg_tables, jpeg_tables, ssim, task.ssim_min):
+        if not fixed_quality:
+            quality, _ = jpeg_dynamic_quality(img, jpeg_tables='standard')
+        tmp_buffer, ssim = encode_and_score(
+            img, {**save_kwargs, **jpeg_quality_kwargs(img.mode, quality, 'standard')},
+            task, orig_size)
 
     has_exif = bool(save_kwargs.get('exif'))
-
-    # Compute SSIM if requested. The reference is the image after the
-    # transforms above but before the lossy encoding, so the score isolates
-    # the pure encoding loss (img is passed as-is: save() and the SSIM
-    # computation do not mutate it). The score is expensive, so it is
-    # skipped when the result is already rejected by the size check and the
-    # score has no other use (ssim_needs_computing); in that case it stays
-    # None, and the gate fails closed, so the decision is unchanged.
-    ssim = None
-    if ssim_needs_computing(task.ssim_min, task.show_ssim,
-                            not task.no_size_comparison,
-                            tmp_buffer.getbuffer().nbytes, orig_size):
-        with Image.open(tmp_buffer) as opt_img:
-            ssim = compute_ssim(img, opt_img, bg_color=task.bg_color)
 
     return OptimizedImage(tmp_buffer, orig_format, result_format, orig_mode,
                           img.mode, 0, 0, was_downsized, had_exif, has_exif, ssim)

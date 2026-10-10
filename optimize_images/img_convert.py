@@ -8,20 +8,19 @@ size comparison: the converted file is written only when it is actually smaller
 than the original, unless the user disabled the comparison.
 """
 import os
-from io import BytesIO
 from typing import Optional
 
-from PIL import Image, ImageFile
+from PIL import Image
 from optimize_images.data_structures import Task, TaskResult, OptimizedImage
 from optimize_images.formats import FORMATS
-from optimize_images.jpeg_qtables import jpeg_quality_kwargs
+from optimize_images.jpeg_qtables import (jpeg_quality_kwargs, resolve_jpeg_tables,
+                                          retry_with_standard)
 from optimize_images.constants import DEFAULT_QUALITY
-from optimize_images.img_aux_processing import (downsize_img, make_grayscale,
+from optimize_images.img_aux_processing import (downsize_img, encode_and_score,
+                                                make_grayscale,
                                                 remove_transparency,
-                                                save_compressed,
-                                                ssim_needs_computing)
+                                                save_compressed)
 from optimize_images.img_icc import get_suitable_icc
-from optimize_images.img_ssim import compute_ssim
 
 
 def _to_8bit_grayscale(img: Image.Image) -> Image.Image:
@@ -44,16 +43,18 @@ def _normalize_target(task: Task) -> str:
 
 
 def _target_save_kwargs(target: str, task: Task,
-                        image_mode: str) -> dict:
-    """Best-effort encoding parameters for each supported output format."""
+                        image_mode: str, jpeg_tables: str = 'standard') -> dict:
+    """Best-effort encoding parameters for each supported output format.
+
+    *jpeg_tables* is the concrete table name for a JPEG target ('auto'
+    already resolved).
+    """
     info = FORMATS[target]
     kwargs = {'format': info.pil}
     if target == 'jpeg':
+        quality = task.quality if task.quality is not None else DEFAULT_QUALITY
         kwargs.update(optimize=True, progressive=True)
-        kwargs.update(jpeg_quality_kwargs(
-            image_mode,
-            task.quality if task.quality is not None else DEFAULT_QUALITY,
-            task.jpeg_tables))
+        kwargs.update(jpeg_quality_kwargs(image_mode, quality, jpeg_tables))
     elif target == 'png':
         kwargs.update(optimize=True)
     elif target == 'webp':
@@ -94,6 +95,8 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
     # images without img.info).  The profile is matched against the
     # output mode, not the source mode.
     src_profile = img.info.get('icc_profile')
+    # Same for the quantization tables, used by jpeg_tables='auto'.
+    src_quantization = getattr(img, 'quantization', None)
 
     # 16-bit (and 32-bit 'I') grayscale must be scaled to 8 bits (v // 256);
     # a direct conversion would clip every sample above 255 to white. Done
@@ -120,36 +123,29 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
     if img.mode == 'CMYK' and target != 'jpeg':
         img = img.convert('RGB')
 
-    save_kwargs = _target_save_kwargs(target, task, img.mode)
+    jpeg_tables = 'standard'
+    if target == 'jpeg':
+        quality = task.quality if task.quality is not None else DEFAULT_QUALITY
+        jpeg_tables = resolve_jpeg_tables(task.jpeg_tables, src_quantization,
+                                          quality, quality, was_downsized)
+
+    extra_kwargs = {}
     if info.supports_exif and task.keep_exif and had_exif and exif:
-        save_kwargs['exif'] = exif
+        extra_kwargs['exif'] = exif
 
     # Attach (or explicitly not attach) the ICC profile.
-    icc = get_suitable_icc(src_profile, img.mode, info.pil)
-    save_kwargs['icc_profile'] = icc
+    extra_kwargs['icc_profile'] = get_suitable_icc(src_profile, img.mode, info.pil)
 
-    tmp_buffer = BytesIO()
-    try:
-        img.save(tmp_buffer, **save_kwargs)
-    except IOError:
-        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
-        img.save(tmp_buffer, **save_kwargs)
+    tmp_buffer, ssim = encode_and_score(
+        img, {**_target_save_kwargs(target, task, img.mode, jpeg_tables), **extra_kwargs},
+        task, orig_size)
 
-    has_exif = bool(save_kwargs.get('exif'))
+    if retry_with_standard(task.jpeg_tables, jpeg_tables, ssim, task.ssim_min):
+        tmp_buffer, ssim = encode_and_score(
+            img, {**_target_save_kwargs(target, task, img.mode, 'standard'), **extra_kwargs},
+            task, orig_size)
 
-    # Compute SSIM if requested. The reference is the image after the
-    # transforms above but before the lossy encoding, so the score isolates
-    # the pure encoding loss (img is passed as-is: save() and the SSIM
-    # computation do not mutate it). The score is expensive, so it is
-    # skipped when the result is already rejected by the size check and the
-    # score has no other use (ssim_needs_computing); in that case it stays
-    # None, and the gate fails closed, so the decision is unchanged.
-    ssim = None
-    if ssim_needs_computing(task.ssim_min, task.show_ssim,
-                            not task.no_size_comparison,
-                            tmp_buffer.getbuffer().nbytes, orig_size):
-        with Image.open(tmp_buffer) as opt_img:
-            ssim = compute_ssim(img, opt_img, bg_color=task.bg_color)
+    has_exif = bool(extra_kwargs.get('exif'))
 
     return OptimizedImage(tmp_buffer, orig_format, info.pil, orig_mode,
                           img.mode, 0, 0, was_downsized, had_exif, has_exif, ssim)

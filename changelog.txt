@@ -45,19 +45,24 @@ v.2.2.0 - 2026-09-21
    field (None when SSIM was not computed; with ssim_min alone, files rejected
    by the size check are not scored; show_ssim always returns the score). The
    public entry points raise ValueError for an ssim_min outside 0.0-1.0.
- * New -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'standard' (the
-   default, output unchanged) or 'mozjpeg3', which encodes with the default
-   quantization table of the mozjpeg encoder (index 3), for brightness and
-   colour, scaled from the same quality value. Only the table changes, not the
-   encoder, and the output is still a baseline JPEG. Same quality value,
-   smaller files, slightly lower SSIM: on the project's test images, JPEG
-   files about 12% smaller in total (median SSIM -0.003), PNG to JPEG
-   conversions about 3% smaller (same or slightly higher SSIM), grayscale
-   (-g) about 16% smaller (median SSIM -0.005). CMYK JPEGs are not affected.
-   Public API (backwards compatible): keyword-only jpeg_tables argument in
-   optimize_single_image(), optimize_image_data() and convert_image_data(),
-   and a matching PublicBatchOptions field (default 'standard'); unknown
-   names raise ValueError.
+ * Behaviour change (JPEG): smaller JPEG files by default. New
+   -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'auto' (the default),
+   'standard' or 'mozjpeg3'. 'mozjpeg3' encodes with the default quantization
+   table of the mozjpeg encoder (index 3), for brightness and colour, scaled
+   from the same quality value; only the table changes, not the encoder, and
+   the output is still a baseline JPEG. 'auto' uses 'standard' for JPEG files
+   already saved with the standard tables at about the quality used (such as
+   files optimized before by optimize-images), so they are not compressed a
+   second time, and 'mozjpeg3' for everything else; with --ssim-min, a file
+   whose mozjpeg3 result scores below the threshold is encoded again with the
+   standard tables before the original is kept. On the project's test
+   images, 'auto' gives JPEG files about 12% smaller in total (median
+   SSIMULACRA 2 loss of 0.2 points) and PNG to JPEG conversions about 3%
+   smaller, with the same quality. 'standard' restores the previous output
+   exactly. CMYK JPEGs are not affected. Public API (backwards compatible):
+   keyword-only jpeg_tables argument in optimize_single_image(),
+   optimize_image_data() and convert_image_data(), and a matching
+   PublicBatchOptions field (default 'auto'); unknown names raise ValueError.
  * SSIM: identical (lossless) outputs are scored 1.0 without running
    the comparison, and batches that compute SSIM scores run at most
    8 images at a time by default (much faster on macOS and Windows,

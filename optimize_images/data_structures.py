@@ -39,7 +39,7 @@ class Task(NamedTuple):
     webp_method: int = 6
     ssim_min: Optional[float] = None
     show_ssim: bool = False
-    jpeg_tables: str = 'standard'
+    jpeg_tables: str = 'auto'
 
 
 class TaskResult(NamedTuple):
@@ -106,7 +106,7 @@ class BatchOptions:
     webp_method: int = 6
     ssim_min: Optional[float] = None
     show_ssim: bool = False
-    jpeg_tables: str = 'standard'
+    jpeg_tables: str = 'auto'
 
 
 @dataclass

@@ -3,10 +3,12 @@ import os
 from io import BytesIO
 from typing import Optional, Tuple
 
-from PIL import Image
+from PIL import Image, ImageFile
 
 from .constants import DEFAULT_BG_COLOR
+from .data_structures import Task
 from .reporting import show_img_exception
+from .img_ssim import compute_ssim
 
 
 class Palette:
@@ -438,3 +440,29 @@ def save_compressed(src_path: str,
         was_optimized = False
 
     return was_optimized, final_size
+
+
+def encode_and_score(img: Image.Image, save_kwargs: dict, task: Task,
+                      orig_size: int):
+    """Encode *img* into a new buffer; return ``(buffer, ssim)``."""
+    tmp_buffer = BytesIO()  # In-memory buffer
+    try:
+        img.save(tmp_buffer, **save_kwargs)
+    except IOError:
+        ImageFile.MAXBLOCK = img.size[0] * img.size[1]
+        img.save(tmp_buffer, **save_kwargs)
+
+    # Compute SSIM if requested. The reference is the image after the
+    # transforms but before the lossy encoding, so the score isolates
+    # the pure encoding loss (img is passed as-is: save() and the SSIM
+    # computation do not mutate it). The score is expensive, so it is
+    # skipped when the result is already rejected by the size check and the
+    # score has no other use (ssim_needs_computing); in that case it stays
+    # None, and the gate fails closed, so the decision is unchanged.
+    ssim = None
+    if ssim_needs_computing(task.ssim_min, task.show_ssim,
+                            not task.no_size_comparison,
+                            tmp_buffer.getbuffer().nbytes, orig_size):
+        with Image.open(tmp_buffer) as opt_img:
+            ssim = compute_ssim(img, opt_img, bg_color=task.bg_color)
+    return tmp_buffer, ssim

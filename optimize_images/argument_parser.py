@@ -309,13 +309,17 @@ def get_args():
                            action='store_false',
                            help=_tagged('JPEG, WebP, convert', no_ssim_show_help))
 
-    jqt_help = ("JPEG quantization tables: 'standard' (default, current "
-                "behaviour) or 'mozjpeg3' (mozjpeg's default table: smaller "
-                "files at the same quality number; only the table, not the "
-                "mozjpeg encoder).")
+    jqt_help = ("JPEG quantization tables: 'auto' (default: 'standard' for "
+                "JPEG files already saved with the standard tables at about "
+                "the quality used, so they are not compressed twice, or when "
+                "the mozjpeg3 result scores below --ssim-min; 'mozjpeg3' "
+                "otherwise), 'standard' (the tables used before "
+                "2.2.0) or 'mozjpeg3' (mozjpeg's default table: smaller files "
+                "at the same quality number; only the table, not the mozjpeg "
+                "encoder).")
     enc_group.add_argument('-jt', '--jpeg-tables', dest='jpeg_tables',
                            choices=JPEG_TABLE_NAMES,
-                           default='standard',
+                           default='auto',
                            help=_tagged('JPEG, convert', jqt_help))
 
     color_group = parser.add_argument_group(

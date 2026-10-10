@@ -79,13 +79,13 @@ def test_task_builds_with_defaults_for_conversion_fields():
     assert defaults["convert_to"] == "jpeg"
     assert defaults["ssim_min"] is None
     assert defaults["show_ssim"] is False
-    assert defaults["jpeg_tables"] == "standard"
+    assert defaults["jpeg_tables"] == "auto"
 
     minimal = Task("p", 80, False, False, 256, 0, 0, False, False, False,
                    False, (255, 255, 255), False, False, False, None)
     assert minimal.convert_to == "jpeg"
     assert minimal.ssim_min is None
-    assert minimal.jpeg_tables == "standard"
+    assert minimal.jpeg_tables == "auto"
 
 
 if __name__ == "__main__":

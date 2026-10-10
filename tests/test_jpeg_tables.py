@@ -9,6 +9,8 @@ Verifies:
       Image.quantization across several usage patterns.
   4.  Public API functions (optimize_single_image, optimize_image_data,
       convert_image_data, optimize_as_batch) validate jpeg_tables.
+  5.  'auto' (the default) keeps the standard tables for JPEGs already saved
+      with them at about the quality used, and uses mozjpeg3 otherwise.
 """
 import io
 from pathlib import Path
@@ -28,6 +30,8 @@ from optimize_images.jpeg_qtables import (
     JPEG_TABLE_NAMES,
     MOZJPEG_TABLE_3,
     jpeg_quality_kwargs,
+    resolve_jpeg_tables,
+    standard_tables_quality,
     validate_jpeg_tables,
 )
 from helpers import run_cli
@@ -135,7 +139,7 @@ def test_jpeg_tables_contains_mozjpeg3():
 
 
 def test_jpeg_table_names():
-    assert JPEG_TABLE_NAMES == ('standard', 'mozjpeg3')
+    assert JPEG_TABLE_NAMES == ('auto', 'standard', 'mozjpeg3')
 
 
 # ── jpeg_quality_kwargs per mode ────────────────────────────────────────────
@@ -356,8 +360,8 @@ class TestMozjpeg3ViaCLI:
         assert list(quant[1]) == list(expected)
 
 
-class TestDefaultStandardTables:
-    """Verify default (no -jt) output uses standard tables."""
+class TestDefaultKeepsStandardSource:
+    """Default ('auto') keeps the standard tables of a standard-q85 source."""
 
     def test_cli_default_uses_standard_tables(self, tmp_path):
         """CLI without -jt keeps standard tables."""
@@ -477,3 +481,202 @@ class TestUnknownTableErrors:
             optimize_as_batch(PublicBatchOptions(
                 src_path=str(src), jpeg_tables='nonexistent'
             ))
+
+
+# ── 'auto' ──────────────────────────────────────────────────────────────────
+
+def _quantization_of(data_or_path):
+    if isinstance(data_or_path, (bytes, bytearray)):
+        data_or_path = io.BytesIO(data_or_path)
+    with Image.open(data_or_path) as img:
+        return img.quantization
+
+
+def _jpeg_bytes(img, **save_kwargs):
+    buf = io.BytesIO()
+    img.save(buf, 'JPEG', **save_kwargs)
+    return buf.getvalue()
+
+
+@pytest.mark.parametrize('mode', ('RGB', 'L'))
+def test_standard_tables_quality_matches_pillow(mode):
+    """Every quality 1-100 written by Pillow is recognised as itself."""
+    img = Image.new(mode, (16, 16))
+    for quality in range(1, 101):
+        quant = _quantization_of(_jpeg_bytes(img, quality=quality))
+        assert standard_tables_quality(quant) == quality
+
+
+def test_standard_tables_quality_rejects_other_tables():
+    img = _rgb_image()
+    moz = _jpeg_bytes(img, **jpeg_quality_kwargs('RGB', 75, 'mozjpeg3'))
+    assert standard_tables_quality(_quantization_of(moz)) is None
+    assert standard_tables_quality(None) is None
+    assert standard_tables_quality({}) is None
+
+
+def test_standard_tables_quality_rejects_mixed_tables():
+    """Standard luma with a non-standard chroma table is not 'standard'."""
+    other = _scaled_table(MOZJPEG_TABLE_3, 75)
+    quant = _quantization_of(_jpeg_bytes(_rgb_image(), quality=75))
+    mixed = {0: list(quant[0]), 1: list(other)}
+    assert standard_tables_quality(mixed) is None
+
+
+@pytest.mark.parametrize('source_quality, low, high, resized, expected', [
+    (75, 75, 80, False, 'standard'),   # automatic quality, same tables
+    (85, 75, 80, False, 'standard'),   # top of the window (high + 5)
+    (86, 75, 80, False, 'mozjpeg3'),
+    (70, 75, 80, False, 'mozjpeg3'),   # coarser source: re-quantized anyway
+    (95, 75, 80, False, 'mozjpeg3'),
+    (75, 75, 80, True, 'mozjpeg3'),    # resized: no block alignment left
+    (90, 90, 90, False, 'standard'),   # fixed -q 90
+    (95, 90, 90, False, 'standard'),
+    (96, 90, 90, False, 'mozjpeg3'),
+])
+def test_resolve_auto(source_quality, low, high, resized, expected):
+    quant = _quantization_of(_jpeg_bytes(_rgb_image(), quality=source_quality))
+    assert resolve_jpeg_tables('auto', quant, low, high, resized) == expected
+
+
+def test_resolve_auto_without_tables_is_mozjpeg3():
+    assert resolve_jpeg_tables('auto', None, 75, 80) == 'mozjpeg3'
+
+
+@pytest.mark.parametrize('name', ('standard', 'mozjpeg3'))
+def test_resolve_explicit_names_pass_through(name):
+    quant = _quantization_of(_jpeg_bytes(_rgb_image(), quality=75))
+    assert resolve_jpeg_tables(name, quant, 75, 80) == name
+    assert resolve_jpeg_tables(name, None, 75, 80, resized=True) == name
+
+
+def test_kwargs_auto_must_be_resolved():
+    with pytest.raises(ValueError, match='resolved'):
+        jpeg_quality_kwargs('RGB', 75, 'auto')
+
+
+class TestAutoEndToEnd:
+    """'auto' through the CLI and the in-memory API."""
+
+    def test_default_is_auto_everywhere(self):
+        import inspect
+        assert PublicBatchOptions(src_path='.').jpeg_tables == 'auto'
+        for func in (optimize_single_image, optimize_image_data, convert_image_data):
+            assert inspect.signature(func).parameters['jpeg_tables'].default == 'auto'
+
+    def test_standard_q75_source_same_bytes_as_standard(self, tmp_path):
+        """The case 'auto' protects: no second lossy generation."""
+        data = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=75).read_bytes()
+        auto, _ = optimize_image_data(data, ignore_size_comparison=True)
+        std, _ = optimize_image_data(data, jpeg_tables='standard',
+                                     ignore_size_comparison=True)
+        assert auto == std
+
+    def test_other_tables_source_gets_mozjpeg3(self, tmp_path):
+        """A JPEG with non-standard tables (camera, mozjpeg...) gets mozjpeg3."""
+        img = Image.new('RGB', (512, 512))
+        _pattern_fill(img)
+        data = _jpeg_bytes(img, **jpeg_quality_kwargs('RGB', 92, 'mozjpeg3'))
+        out, _ = optimize_image_data(data, ignore_size_comparison=True)
+        assert _find_mozjpeg_quality(out) is not None
+
+    def test_high_quality_standard_source_gets_mozjpeg3(self, tmp_path):
+        data = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=95).read_bytes()
+        out, _ = optimize_image_data(data, ignore_size_comparison=True)
+        assert _find_mozjpeg_quality(out) is not None
+
+    def test_downsized_standard_source_gets_mozjpeg3(self, tmp_path):
+        src = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=75)
+        result = run_cli('--quiet', '-nc', '-mw', '256', str(src))
+        assert result.returncode == 0
+        assert _find_mozjpeg_quality(str(src)) is not None
+
+    def test_fixed_quality_window(self, tmp_path):
+        """-q 60 on a standard-q60 source keeps standard; -q 90 does not."""
+        src = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=60)
+        data = src.read_bytes()
+        out60, _ = optimize_image_data(data, quality=60, ignore_size_comparison=True)
+        out90, _ = optimize_image_data(data, quality=90, ignore_size_comparison=True)
+        assert standard_tables_quality(_quantization_of(out60)) == 60
+        assert _find_mozjpeg_quality(out90) == 90
+
+    def test_png_to_jpeg_default_is_mozjpeg3(self, tmp_path):
+        data = _write_large_png(tmp_path / 'in.png').read_bytes()
+        out, result = convert_image_data(data, to='jpeg', ignore_size_comparison=True)
+        assert result.result_format == 'JPEG'
+        assert _find_mozjpeg_quality(out) == DEFAULT_QUALITY
+
+    def test_cli_default_png_conversion_is_mozjpeg3(self, tmp_path):
+        src = _write_large_png(tmp_path / 'in.png')
+        result = run_cli('--quiet', '-nc', '-ca', str(src))
+        assert result.returncode == 0
+        out = tmp_path / 'in.jpg'
+        assert out.exists()
+        assert _find_mozjpeg_quality(str(out)) == DEFAULT_QUALITY
+
+    def test_fast_mode_standard_q80_source_keeps_standard(self, tmp_path):
+        src = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=80)
+        result = run_cli('--quiet', '-nc', '-fm', str(src))
+        assert result.returncode == 0
+        assert standard_tables_quality(_quantization_of(str(src))) == DEFAULT_QUALITY
+
+    def test_grayscale_standard_q75_source_keeps_standard(self, tmp_path):
+        """The tables are read before make_grayscale replaces the image."""
+        data = _write_large_rgb_jpeg(tmp_path / 'in.jpg', quality=75).read_bytes()
+        out, result = optimize_image_data(data, grayscale=True, ignore_size_comparison=True)
+        assert result.result_mode == 'L'
+        assert _find_mozjpeg_quality(out) is None
+        assert standard_tables_quality(_quantization_of(out)) is not None
+
+
+# ── 'auto' under the SSIM gate ──────────────────────────────────────────────
+
+def test_retry_with_standard_rules():
+    from optimize_images.jpeg_qtables import retry_with_standard
+    assert retry_with_standard('auto', 'mozjpeg3', 0.90, 0.95)
+    assert not retry_with_standard('auto', 'mozjpeg3', 0.96, 0.95)
+    assert not retry_with_standard('auto', 'mozjpeg3', None, 0.95)   # not scored
+    assert not retry_with_standard('auto', 'mozjpeg3', 0.90, None)   # no gate
+    assert not retry_with_standard('auto', 'standard', 0.90, 0.95)
+    assert not retry_with_standard('mozjpeg3', 'mozjpeg3', 0.90, 0.95)  # explicit
+
+
+class TestAutoRetryUnderSSIMGate:
+    """'auto' redoes a gate-failing mozjpeg3 result with the standard tables."""
+
+    @staticmethod
+    def _midpoint(scores):
+        low, high = sorted(scores)
+        assert low < high
+        return (low + high) / 2
+
+    def test_inplace_retry_keeps_standard_result(self, tmp_path):
+        pytest.importorskip('skimage')
+        img = Image.new('RGB', (256, 256))
+        _pattern_fill(img)
+        data = _jpeg_bytes(img, **jpeg_quality_kwargs('RGB', 95, 'mozjpeg3'))
+        kw = dict(quality=60, show_ssim=True, ignore_size_comparison=True)
+        std, r_std = optimize_image_data(data, jpeg_tables='standard', **kw)
+        moz, r_moz = optimize_image_data(data, jpeg_tables='mozjpeg3', **kw)
+        if not r_moz.ssim < r_std.ssim:
+            pytest.skip('mozjpeg3 did not score lower on this image')
+        gate = self._midpoint((r_moz.ssim, r_std.ssim))
+        out, result = optimize_image_data(data, ssim_min=gate, **kw)
+        assert out == std
+        assert result.ssim == pytest.approx(r_std.ssim)
+        # Without the gate, auto keeps the smaller mozjpeg3 result.
+        out_nogate, _ = optimize_image_data(data, **kw)
+        assert out_nogate == moz
+
+    def test_conversion_retry_keeps_standard_result(self, tmp_path):
+        pytest.importorskip('skimage')
+        data = _write_large_png(tmp_path / 'in.png').read_bytes()
+        kw = dict(to='jpeg', quality=60, show_ssim=True, ignore_size_comparison=True)
+        std, r_std = convert_image_data(data, jpeg_tables='standard', **kw)
+        moz, r_moz = convert_image_data(data, jpeg_tables='mozjpeg3', **kw)
+        if not r_moz.ssim < r_std.ssim:
+            pytest.skip('mozjpeg3 did not score lower on this image')
+        gate = self._midpoint((r_moz.ssim, r_std.ssim))
+        out, result = convert_image_data(data, ssim_min=gate, **kw)
+        assert out == std
+        assert result.ssim == pytest.approx(r_std.ssim)

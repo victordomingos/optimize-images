@@ -324,12 +324,19 @@ rejeitados. Para o desativar, omita a opção. Sem o scikit-image, esta opção 
 erro clara.
 
 Os intervalos recomendados diferem conforme o regime. Medido em 224 fotografias com o codificador por omissão atual
-(qualidade dinâmica, ajustada para a web), as pontuações in situ variaram entre 0.929 e 1.0 (mediana 0.981): 0.90 não
+(qualidade dinâmica, ajustada para a web, tabelas JPEG padrão), as pontuações in situ variaram entre 0.929 e 1.0 (mediana 0.981): 0.90 não
 rejeita nada, e os valores úteis são **0.93-0.97** — a rejeição começa acima de 0.92 e cresce depressa (0.95 rejeita
 cerca de 2,2% dos ficheiros, em torno de 2,5% do total das poupanças de espaço; 0.96 cerca de 5,5%; 0.97 cerca de
 17,6%). As pontuações de conversão são mais baixas: 0.95 rejeita 16,6% dos ficheiros com `-ca` e 32,3% com
 `-ca -cc webp`, pelo que os valores úteis aí são **0.85-0.93**. A opção fica desativada por omissão; ative-a com
 `--ssim-min` quando quiser essa garantia.
+
+Com o valor por defeito `-jt auto`, estes valores continuam a aplicar-se. O SSIM dá à tabela do mozjpeg uma pontuação
+ligeiramente mais baixa do que à tabela padrão (mediana cerca de 0.003 menor) para um resultado com um aspeto
+praticamente igual, por isso um JPEG codificado com a tabela do mozjpeg que fique abaixo do limite é codificado de novo
+com as tabelas padrão antes de se manter o original. Nas imagens de teste do projeto, os ficheiros JPEG otimizados no
+lugar com `auto` ficaram mais pequenos no total do que com `-jt standard` em todos os limites de 0.93 a 0.97, e nenhum ficheiro
+ficou maior.
 
 A pontuação é calculada com a função `structural_similarity` do scikit-image, que usa por omissão uma janela uniforme de
 7x7, em vez da janela gaussiana do artigo original do SSIM, pelo que as pontuações podem ser ligeiramente mais altas
@@ -397,18 +404,38 @@ optimize-images -q 65 -ke ./
 ##### Tabelas de quantização JPEG
 
 Utilize a opção `-jt` ou `--jpeg-tables` para escolher as tabelas de quantização usadas para codificar ficheiros JPEG:
-`standard` (por defeito, que mantém o comportamento anterior, byte a byte) ou `mozjpeg3` (a tabela predefinida do
-codificador mozjpeg, índice 3 no seu `jcparam.c`, usada tanto para o brilho como para a cor e escalada a partir do
-mesmo valor de qualidade). Só muda a tabela, não o codificador: o resultado continua a ser um JPEG baseline que
-qualquer descodificador lê. Aplica-se à otimização de ficheiros JPEG no lugar (qualidade automática, `-q` ou `-fm`) e
-às conversões para JPEG (`-ca`, `-cb`, `-cf jpeg`); os ficheiros JPEG em CMYK não são afetados.
 
-Com o mesmo valor de qualidade, `mozjpeg3` dá ficheiros mais pequenos com um SSIM ligeiramente mais baixo. Medido nas
-imagens de teste do projeto (80 fotografias, 126 ficheiros PNG): ficheiros JPEG cerca de 12% mais pequenos no total
-(mediana de 8%), com um SSIM mediano 0.003 mais baixo; conversões de PNG para JPEG cerca de 3% mais pequenas, com um
-SSIM igual ou ligeiramente mais alto; com `-g` (tons de cinzento) cerca de 16% mais pequenos, mas com uma perda de SSIM
-maior (mediana de 0.005). Os ganhos são maiores em imagens com muita cor. Combine-a com `--ssim-min` para garantir uma
-qualidade mínima.
+- `auto` (por defeito): `standard` para ficheiros JPEG que já foram gravados com as tabelas padrão com uma qualidade
+  próxima da que vai ser usada (por exemplo, ficheiros já otimizados antes pelo optimize-images), e `mozjpeg3` para
+  todos os outros (fotografias de câmaras e telemóveis, ficheiros de outros programas, conversões para JPEG).
+- `standard`: as tabelas da norma JPEG, usadas pelo Pillow e pelo optimize-images antes da versão 2.2.0. Com este
+  valor, o resultado é igual ao de antes, byte a byte.
+- `mozjpeg3`: a tabela predefinida do codificador mozjpeg (índice 3 no seu `jcparam.c`), usada tanto para o brilho
+  como para a cor e escalada a partir do mesmo valor de qualidade. Com o mesmo valor de qualidade, dá ficheiros mais
+  pequenos.
+
+Só muda a tabela, não o codificador: o resultado continua a ser um JPEG baseline que qualquer descodificador lê.
+Aplica-se à otimização de ficheiros JPEG no lugar (qualidade automática, `-q` ou `-fm`) e às conversões para JPEG
+(`-ca`, `-cb`, `-cf jpeg`); os ficheiros JPEG em CMYK não são afetados.
+
+Porquê `auto`: voltar a codificar um JPEG com as mesmas tabelas e uma qualidade próxima quase não perde nada, enquanto
+mudar de tabela o comprime uma segunda vez. Nos ficheiros JPEG já gravados com as tabelas padrão à qualidade
+automática, `mozjpeg3` perdeu cerca de 7 pontos de SSIMULACRA 2 (uma medida de qualidade percetual de 0 a 100; 90
+significa sem perda visível), o suficiente para se notar com ampliação; `auto` trata-os como antes. Com `--ssim-min`, `auto` também volta a codificar
+um ficheiro com as tabelas padrão quando a tabela do mozjpeg fica abaixo do limite. Medido nas imagens
+de teste do projeto (80 ficheiros JPEG, 126 ficheiros PNG): com `auto`, os ficheiros JPEG ficam cerca de 12% mais
+pequenos no total do que com `standard`, com uma perda mediana de 0,2 pontos de SSIMULACRA 2 (4,5 no máximo); as
+conversões de PNG para JPEG ficam cerca de 3% mais pequenas, com a mesma qualidade. Com `-g` (tons de cinzento) o
+ganho é maior (cerca de 16% com `mozjpeg3`), mas a perda também (SSIM mediano 0,005 mais baixo). Combine-a com
+`--ssim-min` para garantir uma qualidade mínima, ou use `-jt standard` para manter o resultado anterior.
+
+Obter exatamente o resultado das versões anteriores:
+
+```
+optimize-images -jt standard ./
+```
+
+Usar a tabela do mozjpeg em todos os ficheiros, incluindo os ficheiros JPEG já gravados com as tabelas padrão:
 
 ```
 optimize-images -jt mozjpeg3 ./
@@ -727,7 +754,7 @@ for section, tags in format_exif(meta.exif).items():
 #### Opções e resultados
 
 `PublicBatchOptions` reúne todas as definições; apenas `src_path` é obrigatório (as predefinições incluem
-`recursive=True`, `jobs=0`, que significa deteção automática, e `jpeg_tables='standard'`). A qualidade predefine para `None`, o que significa
+`recursive=True`, `jobs=0`, que significa deteção automática, e `jpeg_tables='auto'`). A qualidade predefine para `None`, o que significa
 que a qualidade é escolhida automaticamente. Cada imagem otimizada é reportada através de um
 `PublicTaskResult` com: `img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`, `orig_colors`/`final_colors`,
 `orig_size`/`final_size` (em bytes), `ssim` (a pontuação de semelhança estrutural, ou None quando não foi

@@ -13,6 +13,9 @@ from math import log
 from .constants import DEFAULT_QUALITY
 from .jpeg_qtables import jpeg_quality_kwargs
 
+# The automatic quality is searched from here up to DEFAULT_QUALITY.
+DYNAMIC_QUALITY_MIN = DEFAULT_QUALITY - 5
+
 
 def compare_images(img1: Image.Image, img2: Image.Image) -> Optional[float]:
     """Calculate the difference between two images of the same size
@@ -82,7 +85,7 @@ def jpeg_dynamic_quality(original_photo: Image.Image,
     """
     diff_goal = 0.992
     high = DEFAULT_QUALITY
-    low = high - 5
+    low = DYNAMIC_QUALITY_MIN
 
     # working on a smaller size image doesn't give worse results but is faster
     # changing this value requires updating the calculated thresholds

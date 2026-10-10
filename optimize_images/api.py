@@ -84,7 +84,7 @@ class PublicBatchOptions:
     webp_method: int = 6
     ssim_min: Optional[float] = None
     show_ssim: bool = False
-    jpeg_tables: str = 'standard'
+    jpeg_tables: str = 'auto'
 
 
 @dataclass(frozen=True)
@@ -257,7 +257,7 @@ def optimize_single_image(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
-        jpeg_tables: str = 'standard',
+        jpeg_tables: str = 'auto',
 ) -> PublicTaskResult:
     validate_jpeg_tables(jpeg_tables)
     if ssim_min is not None:
@@ -317,7 +317,7 @@ def optimize_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
-        jpeg_tables: str = 'standard',
+        jpeg_tables: str = 'auto',
 ) -> Tuple[bytes, PublicTaskResult]:
     """Optimize an in-memory image: bytes in, bytes out.
 
@@ -375,7 +375,7 @@ def convert_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
-        jpeg_tables: str = 'standard',
+        jpeg_tables: str = 'auto',
 ) -> Tuple[bytes, PublicTaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 

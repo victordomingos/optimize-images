@@ -311,12 +311,18 @@ score are still rejected; omit the option to turn the gate off. Without scikit-i
 clear error message.
 
 Recommended intervals differ by regime. Measured across 224 photographs with the current default encoder (dynamic
-quality, tuned for the web), in-place scores ranged from 0.929 to 1.0 (median 0.981): 0.90 rejects nothing, and useful
+quality, tuned for the web, standard JPEG tables), in-place scores ranged from 0.929 to 1.0 (median 0.981): 0.90 rejects nothing, and useful
 values are **0.93-0.97** — rejection starts above 0.92 and grows quickly (0.95 rejects about 2.2% of the files, roughly
 2.5% of the total space savings; 0.96 about 5.5%; 0.97 about 17.6%). Conversion scores are lower: 0.95 rejects 16.6% of
 the files with `-ca` and 32.3% with
 `-ca -cc webp`, so useful values there are **0.85-0.93**. The option is off by default; enable it with `--ssim-min` when
 you want the guarantee.
+
+With the default `-jt auto`, these values apply unchanged. SSIM scores mozjpeg's table slightly lower than the standard
+one (median about 0.003 less) for a result that looks about the same, so a JPEG encoded with mozjpeg's table that
+scores below the threshold is encoded again with the standard tables before the original is kept. On the project's
+test images, the JPEG files optimized in place with `auto` were smaller in total than with `-jt standard` at every threshold from
+0.93 to 0.97, and no file was larger.
 
 The score is computed with scikit-image's `structural_similarity`, which uses its default uniform 7x7 window rather
 than the Gaussian-weighted window of the original SSIM paper, so scores can be slightly higher (about 0.004) than
@@ -384,18 +390,37 @@ optimize-images -q 65 --keep-exif ./
 
 ##### JPEG quantization tables
 
-Use `-jt` or `--jpeg-tables` to choose the quantization tables used to encode JPEG files: `standard` (the default,
-which keeps the previous behaviour, byte for byte) or `mozjpeg3` (the default table of the mozjpeg encoder, index 3
-in its `jcparam.c`, used for both brightness and colour and scaled from the same quality value). Only the table
-changes, not the encoder: the output is still a baseline JPEG that any decoder reads. It applies to in-place JPEG
-optimization (automatic quality, `-q` or `-fm`) and to conversions to JPEG (`-ca`, `-cb`, `-cf jpeg`); CMYK JPEG
-files are not affected.
+Use `-jt` or `--jpeg-tables` to choose the quantization tables used to encode JPEG files:
 
-With the same quality value, `mozjpeg3` gives smaller files with a slightly lower SSIM. Measured on the project's
-test images (80 photographs, 126 PNG files): JPEG files about 12% smaller in total (median 8%), median SSIM 0.003
-lower; PNG to JPEG conversions about 3% smaller, with the same or a slightly higher SSIM; with `-g` (grayscale) about
-16% smaller, but with a larger SSIM loss (median 0.005). Gains are larger on colourful images. Combine it with
-`--ssim-min` to keep a minimum quality.
+- `auto` (the default): `standard` for JPEG files that were already saved with the standard tables at about the
+  quality that will be used (for example files optimized before by optimize-images), and `mozjpeg3` for everything
+  else (photos from cameras and phones, files from other programs, conversions to JPEG).
+- `standard`: the tables of the JPEG standard, used by Pillow and by optimize-images before 2.2.0. With this value the
+  output is the same as before, byte for byte.
+- `mozjpeg3`: the default table of the mozjpeg encoder (index 3 in its `jcparam.c`), used for both brightness and
+  colour and scaled from the same quality value. With the same quality value it gives smaller files.
+
+Only the table changes, not the encoder: the output is still a baseline JPEG that any decoder reads. It applies to
+in-place JPEG optimization (automatic quality, `-q` or `-fm`) and to conversions to JPEG (`-ca`, `-cb`, `-cf jpeg`);
+CMYK JPEG files are not affected.
+
+Why `auto`: re-encoding a JPEG with the same tables at about the same quality loses almost nothing, while switching
+tables compresses it a second time. On JPEG files already saved with the standard tables at the automatic quality,
+`mozjpeg3` lost about 7 points of SSIMULACRA 2 (a perceptual quality score from 0 to 100; 90 means no visible loss),
+enough to see when zooming in; `auto` keeps them as before. With `--ssim-min`, `auto` also encodes a file again with
+the standard tables when the mozjpeg table scores below the threshold. Measured on the project's test images (80 JPEG files,
+126 PNG files): with `auto`, JPEG files are about 12% smaller in total than with `standard`, with a median SSIMULACRA 2
+loss of 0.2 points (4.5 at most); PNG to JPEG conversions are about 3% smaller, with the same quality. With `-g`
+(grayscale) the gain is larger (about 16% with `mozjpeg3`), but so is the loss (median SSIM 0.005 lower). Combine
+it with `--ssim-min` to keep a minimum quality, or use `-jt standard` to keep the previous output.
+
+Get exactly the output of previous versions:
+
+```
+optimize-images -jt standard ./
+```
+
+Use the mozjpeg table for every file, including JPEG files already saved with the standard tables:
 
 ```
 optimize-images -jt mozjpeg3 ./
@@ -718,7 +743,7 @@ for section, tags in format_exif(meta.exif).items():
 ### Options and results
 
 `PublicBatchOptions` holds every setting; only `src_path` is required (defaults include `recursive=True`,
-`jobs=0` meaning auto-detect, `jpeg_tables='standard'`). Quality defaults to `None`, which means the quality is chosen
+`jobs=0` meaning auto-detect, `jpeg_tables='auto'`). Quality defaults to `None`, which means the quality is chosen
 automatically. Each optimized file is reported as a `PublicTaskResult` with:
 `img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`,
 `orig_colors`/`final_colors`, `orig_size`/`final_size` (bytes), `ssim` (the structural similarity score, or None when it

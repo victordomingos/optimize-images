@@ -38,7 +38,7 @@ def _build_task(name: str, quality: Optional[int], remove_transparency: bool,
                 fast_mode: bool, webp_quality: int, webp_lossless: bool,
                 webp_method: int, ssim_min: Optional[float],
                 show_ssim: bool = False,
-                jpeg_tables: str = 'standard') -> Task:
+                jpeg_tables: str = 'auto') -> Task:
     return Task(
         src_path=name,
         quality=quality,
@@ -97,7 +97,7 @@ def optimize_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
-        jpeg_tables: str = 'standard',
+        jpeg_tables: str = 'auto',
 ) -> Tuple[bytes, TaskResult]:
     """Optimize an image given as bytes and return ``(optimized_bytes, result)``.
 
@@ -172,7 +172,7 @@ def convert_image_data(
         webp_method: int = 6,
         ssim_min: Optional[float] = None,
         show_ssim: bool = False,
-        jpeg_tables: str = 'standard',
+        jpeg_tables: str = 'auto',
 ) -> Tuple[bytes, TaskResult]:
     """Convert an in-memory image to another format: bytes in, bytes out.
 

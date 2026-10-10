@@ -73,8 +73,8 @@ be kept instead.
 
 There are many other features and command-line options, like downsizing, 
 keeping EXIF data, color palette reduction, WebP optimization, PNG to JPEG 
-(or WebP) conversion, and smaller JPEG files with mozjpeg's quantization table 
-(`-jt mozjpeg3`). Please check the docs for further information.
+(or WebP) conversion, and smaller JPEG files by default thanks to mozjpeg's 
+quantization table (see `-jt`). Please check the docs for further information.
 
 **DISCLAIMER:  
 Please note that the operation is done DESTRUCTIVELY, by replacing the
