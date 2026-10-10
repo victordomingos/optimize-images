@@ -9,7 +9,12 @@ dependency:
 
 When scikit-image is not installed, scores simply cannot be computed and the
 rest of the tool keeps working normally.
+
+numpy and scikit-image are imported on first use, not at import time: they
+add 90-180 ms to every start (and to every worker process), which runs that
+never compute a score should not pay.
 """
+from importlib.util import find_spec
 from typing import Optional
 
 from PIL import Image
@@ -17,19 +22,42 @@ from PIL import Image
 from optimize_images.constants import DEFAULT_BG_COLOR
 from optimize_images.exceptions import OISSIMNotAvailableError
 
-try:
-    import numpy as np
-    from skimage.metrics import structural_similarity as _ssim_impl
-    _HAS_SKIMAGE = True
-except ImportError:
-    np = None  # type: ignore[assignment]
-    _ssim_impl = None  # type: ignore[assignment]
-    _HAS_SKIMAGE = False
+def _installed(name: str) -> bool:
+    """Return True if *name* can be found, without importing it."""
+    try:
+        return find_spec(name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+_HAS_SKIMAGE = _installed('numpy') and _installed('skimage')
+np = None
+_ssim_impl = None
+
+
+def _load_backend() -> bool:
+    """Import numpy and scikit-image on first use; return True if usable.
+
+    A package that is present but fails to import counts as missing.
+    """
+    global np, _ssim_impl, _HAS_SKIMAGE
+    if not _HAS_SKIMAGE:
+        return False
+    try:
+        if np is None:
+            import numpy
+            np = numpy
+        if _ssim_impl is None:
+            from skimage.metrics import structural_similarity
+            _ssim_impl = structural_similarity
+    except ImportError:
+        _HAS_SKIMAGE = False
+    return _HAS_SKIMAGE
 
 
 def ssim_available() -> bool:
-    """Return True when the SSIM backend (scikit-image) is installed."""
-    return _HAS_SKIMAGE
+    """Return True when the SSIM backend (scikit-image) can be used."""
+    return _load_backend()
 
 
 def ensure_ssim_available() -> None:
@@ -39,7 +67,7 @@ def ensure_ssim_available() -> None:
     explicitly requests SSIM-based quality control (``ssim_min``), so the tool
     fails fast instead of running a whole batch that would reject everything.
     """
-    if not _HAS_SKIMAGE:
+    if not _load_backend():
         raise OISSIMNotAvailableError(
             "\nSSIM quality control (--ssim-min) requires scikit-image, which "
             "is not installed. Install it with: pip install scikit-image")
@@ -90,7 +118,7 @@ def compute_ssim(img1: Image.Image, img2: Image.Image,
     thresholds stay valid if a future scikit-image version changes its
     defaults.
     """
-    if not _HAS_SKIMAGE or _ssim_impl is None or np is None:
+    if not _load_backend():
         return None
     if img1.size != img2.size:
         return None

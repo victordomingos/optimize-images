@@ -1,11 +1,7 @@
 # encoding: utf-8
-import concurrent.futures
 from dataclasses import dataclass
 from io import BytesIO
-from typing import NamedTuple, Tuple, NewType, Optional, List
-
-PPoolExType = NewType('PPoolExType', concurrent.futures.ProcessPoolExecutor)
-TPoolExType = NewType('TPoolExType', concurrent.futures.ThreadPoolExecutor)
+from typing import NamedTuple, Tuple, Optional, List
 
 
 class OutputConfiguration(NamedTuple):

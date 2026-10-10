@@ -56,6 +56,17 @@ v.2.2.0 - 2026-09-21
    not change if scikit-image changes its defaults). Scores are slightly
    higher (about +0.004) than tools using the Gaussian window of the original
    paper; the recommended thresholds were calibrated with this implementation.
+ * Faster start: numpy and scikit-image are loaded only when SSIM scores
+   are computed, and the process-pool and package-metadata modules only when
+   they are used. On the test machine (macOS, Python 3.11-3.15),
+   optimize-images --version takes about 60-90 ms instead of 140-270 ms, a
+   single image is optimized 38-47% faster, and importing the library is
+   2.5-4.5 times faster.
+ * Faster JPEG optimization: the automatic quality search downsizes its
+   400x400 working copy in two steps (Pillow's reducing_gap), about 11%
+   faster with -jobs 1 on Python 3.12 and later. The chosen quality can be one
+   step lower on a few photos (1 to 3 of 80 test photos: 2-4% smaller, SSIM
+   lower by 0.002 at most).
  * Embedded ICC colour profiles are now kept when optimizing and
    converting JPEG, WebP and PNG files (profiles equivalent to sRGB
    are removed). Files with a wide-gamut profile may be slightly
@@ -74,6 +85,9 @@ v.2.2.0 - 2026-09-21
    the comparison, and batches that compute SSIM scores run at most
    8 images at a time by default (much faster on macOS and Windows,
    where the default used up to 64 and 32 threads respectively).
+ * convert_image_data() and the other conversion entry points probe the
+   available target formats once per process instead of on every call (3-5%
+   faster when converting small images in memory).
  * Removed the unused optimize_images/watch.py module. Directory watching
    has been served by the public API (optimize_images.api.watch_directory)
    since v1.4; the -wd/--watch-directory option is unaffected.

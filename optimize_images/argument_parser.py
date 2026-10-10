@@ -4,7 +4,6 @@ import platform
 import re
 import sys
 from argparse import ArgumentParser
-from importlib.metadata import version, PackageNotFoundError
 from optimize_images import __version__
 from optimize_images.constants import DEFAULT_QUALITY, DEFAULT_WEBP_QUALITY, \
     DEFAULT_WEBP_METHOD, SUPPORTED_FORMATS
@@ -57,6 +56,8 @@ def _is_free_threaded() -> bool:
 
 def _get_package_version(package: str, fallback: str = "unknown") -> str:
     """Returns the installed version of a package, or the fallback string."""
+    # Imported here: only --version needs it, and it costs 1-8 ms per start.
+    from importlib.metadata import version, PackageNotFoundError
     try:
         return version(package)
     except PackageNotFoundError:

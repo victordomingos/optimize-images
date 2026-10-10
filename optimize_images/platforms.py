@@ -3,13 +3,16 @@ import os
 import platform
 import shutil
 import sys
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
-from optimize_images.data_structures import PPoolExType, TPoolExType
+if TYPE_CHECKING:
+    from concurrent.futures import ProcessPoolExecutor
 
-ExecutorClassType: TypeAlias = type[ThreadPoolExecutor] | type[ProcessPoolExecutor]
+# ProcessPoolExecutor is imported only where it is returned: its module pulls
+# in multiprocessing (6-13 ms per start), which threads-only platforms never use.
+ExecutorClassType: TypeAlias = "type[ThreadPoolExecutor] | type[ProcessPoolExecutor]"
 
 # Measured 2026-10-02 on 224-file corpus, 18-core Mac: SSIM work competes for
 # memory so >8 workers makes every task much slower. 8 workers gives the best
@@ -108,6 +111,7 @@ def select_executor(free_threaded: bool, os_name: str, system: str,
         # macOS: ThreadPoolExecutor for better resource handling.
         return ThreadPoolExecutor, min(num_cpus * 4, 64)
     # Unix/Linux: ProcessPoolExecutor to bypass the GIL for CPU-intensive work.
+    from concurrent.futures import ProcessPoolExecutor
     return ProcessPoolExecutor, num_cpus + 1
 
 

@@ -8,6 +8,7 @@ discovery/optimization and for the ``--convert-to`` output targets, and it is
 exposed through the public API so that third-party apps can populate their own
 menus from it.
 """
+from functools import lru_cache
 from io import BytesIO
 from typing import Dict, List, NamedTuple, Optional
 
@@ -54,8 +55,13 @@ def _codec_ok(info: FormatInfo) -> bool:
         return False
 
 
+@lru_cache(maxsize=None)
 def _can_encode(pil_name: str) -> bool:
-    """Probe whether this Pillow build can actually encode the format."""
+    """Probe whether this Pillow build can actually encode the format.
+
+    Cached: the Pillow build cannot change at run time, and the probe is a
+    real encode (about 0.25 ms per conversion request without the cache).
+    """
     try:
         Image.new('RGB', (1, 1)).save(BytesIO(), format=pil_name)
         return True
