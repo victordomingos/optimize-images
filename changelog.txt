@@ -98,6 +98,13 @@ v.2.2.0 - 2026-09-21
    except with -fm and in conversions to JPEG/AVIF, which use 80. Public API
    quality now defaults to None (previously 80), so 'not given' is
    distinguishable from quality=80.
+ * Ctrl-C now stops a batch promptly and safely: files not started yet are
+   left untouched, files in progress are finished first, and no traceback is
+   shown. Before, the whole batch kept running to the end on macOS and
+   Windows, and with worker processes (the default on Linux) an interrupted
+   worker could leave an image truncated to 0 bytes in place of the original.
+   Public API: stopping optimize_as_batch_stream() early (break, an exception
+   or Ctrl-C) now also cancels the files not started yet.
  * Running out of memory (for instance with a high -jobs value on big
    images), or an image above Pillow's pixel limit, no longer aborts the
    whole batch with an error: the file is skipped, its original is kept, the

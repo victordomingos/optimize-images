@@ -2,8 +2,10 @@
 import os
 import platform
 import shutil
+import signal
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, ThreadPoolExecutor
+from contextlib import contextmanager
 from functools import lru_cache
 from typing import TYPE_CHECKING, TypeAlias
 
@@ -113,6 +115,45 @@ def select_executor(free_threaded: bool, os_name: str, system: str,
     # Unix/Linux: ProcessPoolExecutor to bypass the GIL for CPU-intensive work.
     from concurrent.futures import ProcessPoolExecutor
     return ProcessPoolExecutor, num_cpus + 1
+
+
+def ignore_sigint() -> None:
+    """Worker-process initializer: leave Ctrl-C to the main process.
+
+    A terminal Ctrl-C reaches every process in the group; a worker killed
+    while writing an image would leave a truncated file instead of the
+    original. Workers start with SIGINT blocked (see sigint_deferred), so
+    it is ignored before it is unblocked.
+    """
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    if hasattr(signal, 'pthread_sigmask'):
+        signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT})
+
+
+@contextmanager
+def sigint_deferred():
+    """Block Ctrl-C in this thread while worker processes are started.
+
+    Workers inherit the blocked signal mask, so a Ctrl-C cannot kill one
+    while it is still starting up (before ignore_sigint runs); this thread
+    receives the Ctrl-C as soon as the block ends. No-op where
+    pthread_sigmask is missing (Windows, which only uses threads).
+    """
+    if not hasattr(signal, 'pthread_sigmask'):
+        yield
+        return
+    previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    try:
+        yield
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous)
+
+
+def create_executor(executor_class: ExecutorClassType, workers: int) -> Executor:
+    """Create the pool; process pools get workers that ignore Ctrl-C."""
+    if issubclass(executor_class, ThreadPoolExecutor):
+        return executor_class(max_workers=workers)
+    return executor_class(max_workers=workers, initializer=ignore_sigint)
 
 
 @lru_cache(maxsize=1)

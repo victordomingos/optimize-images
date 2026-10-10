@@ -32,7 +32,9 @@ API in optimize_images.api (optimize_single_image / optimize_as_batch).
 
 © 2026 Victor Domingos & contributers (MIT License)
 """
+import signal
 import sys
+import threading
 # Use only public API types
 from optimize_images.api import (
     optimize_as_batch_stream,
@@ -133,7 +135,6 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
 
     if watch_dir:
         # Use public API watcher with CLI rendering callback
-        import threading
         stop_event = threading.Event()
 
         def on_result(public_result):
@@ -170,6 +171,21 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
                               memory_errors=memory_errors)
         return
 
+    # Ctrl-C only sets a flag: an exception raised at an arbitrary point can
+    # land inside the thread pool's lock handling (as_completed) and corrupt it
+    # (RuntimeError: release unlocked lock). The loop stops after the current
+    # result; closing the stream cancels the files not started yet.
+    stop = threading.Event()
+
+    def request_stop(signum, frame):
+        stop.set()
+        signal.signal(signal.SIGINT, previous_handler)  # a 2nd Ctrl-C interrupts at once
+
+    previous_handler = signal.getsignal(signal.SIGINT)
+    handle_sigint = previous_handler is signal.default_int_handler
+    if handle_sigint:  # leave an ignored or custom handler alone
+        signal.signal(signal.SIGINT, request_stop)
+
     icons = None
     if not output_config.quiet_mode and not output_config.show_only_summary:
         icons = IconGenerator()
@@ -185,8 +201,10 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
             src_line = src_line[:line_width]
         print(src_line + "\n\n")
 
+    stream = optimize_as_batch_stream(options)
     try:
-        for result in optimize_as_batch_stream(options):
+        # Nothing is started if Ctrl-C came while the header was printed.
+        for result in ([] if stop.is_set() else stream):
             found_files += 1
             total_src_size += result.orig_size
             if result.was_optimized:
@@ -197,18 +215,24 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
             if result.error == 'out_of_memory':
                 memory_errors += 1
 
-            if output_config.quiet_mode or output_config.show_only_summary:
-                continue
-
-            if output_config.show_overall_progress:
-                cur_time_passed = round(timer() - appstart)
-                message = f"[{cur_time_passed:.1f}s] {icons.optimized if icons else ''} {optimized_files} {icons.skipped if icons else ''} {skipped_files}, saved {human(total_bytes_saved)}"
-                print(message, end='\r')
-            else:
-                show_file_status(result, line_width,
-                                 icons if icons else IconGenerator(), show_ssim,
-                                 ssim_min=ssim_min)
+            if not (output_config.quiet_mode or output_config.show_only_summary):
+                if output_config.show_overall_progress:
+                    cur_time_passed = round(timer() - appstart)
+                    message = f"[{cur_time_passed:.1f}s] {icons.optimized if icons else ''} {optimized_files} {icons.skipped if icons else ''} {skipped_files}, saved {human(total_bytes_saved)}"
+                    print(message, end='\r')
+                else:
+                    show_file_status(result, line_width,
+                                     icons if icons else IconGenerator(), show_ssim,
+                                     ssim_min=ssim_min)
+            if stop.is_set():
+                break
     except KeyboardInterrupt:
+        stop.set()
+    finally:
+        if handle_sigint:
+            signal.signal(signal.SIGINT, previous_handler)
+        stream.close()
+    if stop.is_set():
         msg = "\b \n\n  == Operation was interrupted by the user. ==\n"
         raise OIKeyboardInterrupt(msg)
 

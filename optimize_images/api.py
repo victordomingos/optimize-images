@@ -28,7 +28,8 @@ from optimize_images.jpeg_qtables import validate_jpeg_tables
 from optimize_images.inmemory import convert_image_data as _convert_image_data
 from optimize_images.inmemory import optimize_image_data as _optimize_image_data
 from optimize_images.metadata import ImageMetadata, inspect_image
-from optimize_images.platforms import adjust_for_platform, effective_worker_count
+from optimize_images.platforms import (adjust_for_platform, create_executor,
+                                      effective_worker_count, sigint_deferred)
 from timeit import default_timer as timer
 from typing import Iterator, List, Callable, Optional
 from typing import Tuple
@@ -194,13 +195,20 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
                                          internal.ssim_min is not None
                                          or internal.show_ssim)
     tasks = _build_tasks(internal)
-    with our_pool_executor(max_workers=workers) as executor:
+    with create_executor(our_pool_executor, workers) as executor:
         # Submit every task and yield each result as soon as it finishes
         # (completion order), so the report streams continuously instead of
         # stalling on a slow image that happens to be early in the list.
-        futures = [executor.submit(do_optimization, task) for task in tasks]
-        for future in as_completed(futures):
-            yield _to_public_result(future.result())
+        try:
+            with sigint_deferred():
+                futures = [executor.submit(do_optimization, task) for task in tasks]
+            for future in as_completed(futures):
+                yield _to_public_result(future.result())
+        except BaseException:
+            # Ctrl-C, an error, or a caller that stops iterating (GeneratorExit):
+            # drop the files not started yet; files in progress are finished.
+            executor.shutdown(wait=True, cancel_futures=True)
+            raise
 
 
 def optimize_as_batch(options: PublicBatchOptions) -> PublicBatchResult:

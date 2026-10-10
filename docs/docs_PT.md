@@ -707,6 +707,9 @@ for r in optimize_as_batch_stream(options):
     print(r.img, "poupou", r.orig_size - r.final_size, "bytes")
 ```
 
+Parar antes do fim (`break`, uma exceção ou Ctrl-C) cancela os ficheiros que ainda não começaram;
+os que já estão a ser processados são concluídos primeiro, para que nenhuma imagem fique escrita a meio.
+
 #### Otimizar uma pasta (agregado)
 
 Bloqueia e devolve os totais:

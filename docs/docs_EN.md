@@ -696,6 +696,9 @@ for r in optimize_as_batch_stream(options):
     print(r.img, "saved", r.orig_size - r.final_size, "bytes")
 ```
 
+Stopping early (`break`, an exception, or Ctrl-C) cancels the files that have not started yet;
+files already being processed are finished first, so no image is left half-written.
+
 ### Optimize a folder (aggregate)
 
 Blocks and returns totals:
