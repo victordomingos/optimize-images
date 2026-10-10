@@ -54,3 +54,16 @@ def test_minimum_requirements_satisfy_setup():
             continue
         pinned = tuple(int(x) for x in pins[key].split("."))
         assert pinned >= tuple(int(x) for x in floor.split(".")), name
+
+
+def test_only_the_optimize_images_package_is_installed():
+    """find_packages() alone would also ship tests/ or benchmarks/ as
+    top-level packages the day one of them gets an __init__.py."""
+    assert "find_packages(include=['optimize_images', 'optimize_images.*'])" in SETUP
+
+
+def test_license_is_an_spdx_expression():
+    """Setuptools deprecates the license classifiers in favour of an SPDX
+    expression (core metadata License-Expression)."""
+    assert "license_expression='MIT'" in SETUP
+    assert "License ::" not in SETUP
