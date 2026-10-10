@@ -28,6 +28,7 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
         - [Modo rápido](#modo-rápido)
         - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros)
         - [Número máximo de tarefas em simultâneo](#número-máximo-de-tarefas-em-simultâneo)
+        - [Perfis de cor](#perfis-de-cor)
         - [Configuração de saída](#configuração-de-saída)
         - [Controlo de qualidade SSIM](#controlo-de-qualidade-ssim)
     * [Opções específicas para cada formato](#opções-específicas-para-cada-formato)
@@ -63,11 +64,11 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
 
 ## Instalação e dependências:
 
-Para executar esta aplicação é necessária uma instalação do Python 3.10 ou superior. Procuramos manter no mínimo as
+Para executar esta aplicação é necessária uma instalação do Python 3.11 ou superior. Procuramos manter no mínimo as
 dependências externas, de modo a manter a compatibilidade com diferentes plataformas. Neste momento, requer:
 
-- Pillow==12.0.0
-- watchdog==6.0.0
+- Pillow>=12.0.0
+- watchdog>=6.0.0
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo quaisquer requisitos, é através deste
 comando:
@@ -80,11 +81,11 @@ pip3 install pillow watchdog optimize-images
 
 Depois de clonar este repositório, a versão atual de desenvolvimento pode ser facilmente instalada com o comando
 `pip install -e`, seguido do caminho para a pasta principal do projeto (a mesma pasta que contém o ficheiro `setup.py`).
-Em alternativa, poderá criar um ambiente virtual e utilizar de seguida o seguinte comando, substituindo `python3.10`
+Em alternativa, poderá criar um ambiente virtual e utilizar de seguida o seguinte comando, substituindo `python3.11`
 pela versão pretendida do Python 3:
 
 ```
-python3.10 -m pip install git+https://github.com/victordomingos/optimize-images
+python3.11 -m pip install git+https://github.com/victordomingos/optimize-images
 ```
 
 ## Como utilizar
@@ -175,7 +176,9 @@ optimize-images --help
 
 Algumas operações poderão eventualmente ser efetuadas mais rapidamente utilizando esta opção. De um modo geral, isso
 significa que os ficheiros resultantes serão um pouco maiores, para permitir em vez disso poupar alguns segundos durante
-o processamento das imagens. A utilização desta opção desativa a definição de qualidade JPEG variável.
+o processamento das imagens. Concretamente, nos ficheiros JPEG omite a pesquisa automática de qualidade e utiliza
+um valor fixo (-q, 80 por defeito), e nos ficheiros PNG omite a reconstrução da paleta nas imagens de paleta
+(indexadas). Não tem efeito em ficheiros WebP nem em conversões para outro formato.
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual, de forma recursiva, utilizando o modo rápido:
 
@@ -245,13 +248,25 @@ Neste momento, ao utilizar esta funcionalidade, não se encontra disponível a e
 
 #### Número máximo de tarefas em simultâneo
 
-É possível especificar o número máximo de tarefas de processamento a executar em simultâneo. O valor predefinido (0), na
-maior parte das plataformas, irá gerar um total de N + 1 processos, em que N é o número de processadores ou núcleos
-presentes no sistema.
+É possível especificar o número máximo de tarefas de processamento a executar em simultâneo. 0 (o valor predefinido)
+significa automático: no Linux com Python normal utiliza processos (número de CPUs + 1); no macOS e no Windows utiliza
+threads (até 64 no macOS e 32 no Windows); em Python sem GIL (free-threaded) utiliza uma thread por CPU. Quando são
+calculadas pontuações SSIM, o valor automático é no máximo 8. Se a máquina ficar sem memória, os ficheiros afetados
+são ignorados e reportados, com a sugestão de usar um valor `-jobs` menor.
 
 ```
 optimize-images -jobs 16 ./
 ```
+
+#### Perfis de cor
+
+Os ficheiros JPEG, WebP e PNG mantêm o perfil de cor ICC integrado (por exemplo, o Display P3 de muitos telemóveis e
+câmaras), para que as cores tenham o mesmo aspeto após a otimização. Antes da versão 2.2.0, os ficheiros JPEG e WebP
+perdiam os seus perfis, o que alterava a aparência das cores saturadas. Os perfis equivalentes a sRGB são removidos,
+porque os visualizadores assumem sRGB de qualquer modo (ficheiro mais pequeno, o mesmo aspeto). Quando a imagem passa a
+escala de cinzentos (-g), um perfil RGB já não se aplica e não é mantido. Isto é automático e independente de
+-ke/--keep-exif (o EXIF são metadados; o perfil define as cores). A pontuação SSIM compara os valores dos pixels, pelo
+que não é afetada pelos perfis.
 
 #### Configuração de saída
 
@@ -322,7 +337,11 @@ A pontuação é calculada com a função `structural_similarity` do scikit-imag
 com esta implementação.
 
 Calcular a pontuação é dispendioso: pode dominar o tempo de execução em pastas com imagens muito grandes, pelo que uma
-execução com SSIM ativado levará muito mais tempo do que sem ele.
+execução com SSIM ativado levará muito mais tempo do que sem ele. Para resultados idênticos (saídas sem perdas), é
+atribuída imediatamente uma pontuação de 1.0 sem executar a comparação, pelo que as saídas sem perdas quase não
+acrescentam tempo a --ssim-min / --show-ssim. Quando as pontuações SSIM são calculadas (--ssim-min ou --show-ssim), são
+processadas no máximo 8 imagens ao mesmo tempo, a menos que se indique -jobs, porque a comparação fica mais lenta
+quando muitas são executadas em simultâneo.
 
 ```
 optimize-images --ssim-min 0.95 ./
@@ -352,8 +371,9 @@ utilizador serão então selecionadas e aplicadas automaticamente para cada imag
 ##### Qualidade
 
 Defina a qualidade para ficheiros JPEG (um número inteiro, entre 1 e 100), usando o argumento `-q`, seguido do valor de
-qualidade a aplicar. Um valor mais baixo reduzirá tanto a qualidade de imagem como o tamanho do ficheiro. A utilização
-desta opção desativa a definição de qualidade variável.
+qualidade a aplicar. Um valor mais baixo reduzirá tanto a qualidade de imagem como o tamanho do
+ficheiro. Ao otimizar ficheiros JPEG no próprio formato, um `-q` indicado é sempre utilizado; sem ele, a qualidade é
+selecionada automaticamente, exceto com `-fm` (modo rápido) e nas conversões para JPEG ou AVIF, que utilizam 80.
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e em todas as subpastas, aplicando uma qualidade
 de 65% aos ficheiros JPEG:
@@ -365,13 +385,33 @@ optimize-images -q 65 ./
 ##### Manter dados EXIF
 
 Utilize a opção `-ke` ou `--keep-exif` para manter os dados EXIF existentes em imagens JPEG e WebP (por defeito, se não
-acrescentar este argumento, os dados EXIF são apagados.
+acrescentar este argumento, os dados EXIF são apagados).
 
 Tentar otimizar todos os ficheiros de imagem na pasta de trabalho atual e em todas as suas subpastas, aplicando uma
 qualidade de 65% a ficheiros JPEG e mantendo os dados EXIF originais:
 
 ```
 optimize-images -q 65 -ke ./
+```
+
+##### Tabelas de quantização JPEG
+
+Utilize a opção `-jt` ou `--jpeg-tables` para escolher as tabelas de quantização usadas para codificar ficheiros JPEG:
+`standard` (por defeito, que mantém o comportamento anterior, byte a byte) ou `mozjpeg3` (a tabela predefinida do
+codificador mozjpeg, índice 3 no seu `jcparam.c`, usada tanto para o brilho como para a cor e escalada a partir do
+mesmo valor de qualidade). Só muda a tabela, não o codificador: o resultado continua a ser um JPEG baseline que
+qualquer descodificador lê. Aplica-se à otimização de ficheiros JPEG no lugar (qualidade automática, `-q` ou `-fm`) e
+às conversões para JPEG (`-ca`, `-cb`, `-cf jpeg`); os ficheiros JPEG em CMYK não são afetados.
+
+Com o mesmo valor de qualidade, `mozjpeg3` dá ficheiros mais pequenos com um SSIM ligeiramente mais baixo. Medido nas
+imagens de teste do projeto (80 fotografias, 126 ficheiros PNG): ficheiros JPEG cerca de 12% mais pequenos no total
+(mediana de 8%), com um SSIM mediano 0.003 mais baixo; conversões de PNG para JPEG cerca de 3% mais pequenas, com um
+SSIM igual ou ligeiramente mais alto; com `-g` (tons de cinzento) cerca de 16% mais pequenos, mas com uma perda de SSIM
+maior (mediana de 0.005). Os ganhos são maiores em imagens com muita cor. Combine-a com `--ssim-min` para garantir uma
+qualidade mínima.
+
+```
+optimize-images -jt mozjpeg3 ./
 ```
 
 #### PNG:
@@ -381,10 +421,11 @@ optimize-images -q 65 -ke ./
 Para reduzir o número de cores (PNG) usando uma paleta de cores adaptativa Com difusão, utilize o argumento opcional
 `-rc`. Esta opção pode ter um grande impacto no tamanho dos ficheiros, mas por favor tenha em consideração que também
 irá afetar de uma forma muito notória a qualidade de imagem, especialmente em imagens que tenham gradientes de cores
-e/ou transparência.
+e/ou transparência. Os pixels totalmente transparentes continuam transparentes: é reservada uma entrada da paleta para
+eles, que conta para o `-mc`. Os pixels meio-transparentes mantêm uma transparência aproximada.
 
 Tentar otimizar um único ficheiro de imagem na pasta atual, aplicando uma paleta de cores adaptativa, com o número de
-cores predefinido (255):
+cores predefinido (256):
 
 ```
 optimize-images -rc ./imagefile.png
@@ -393,7 +434,8 @@ optimize-images -rc ./imagefile.png
 ##### Número máximo de cores
 
 Utilize o argumento opcional `-mc` para especificar o Número máximo de cores para imagens PNG, ao utilizar a opção de
-redução de cores (um número inteiro entre 0 e 255). O valor predefinido é 255.
+redução de cores (um número inteiro entre 1 e 256). O valor predefinido é 256. Quando utilizado em imagens com pixels
+transparentes, uma entrada da paleta é reservada para pixels totalmente transparentes e conta para -mc.
 
 Tentar otimizar um único ficheiro de imagem na pasta atual, reduzindo a paleta de cores para um valor específico:
 
@@ -405,12 +447,12 @@ Tentar otimizar todos os ficheiros de imagem na pasta atual e em todas as suas s
 aos ficheiros JPEG e reduzindo a paleta de cores dos ficheiros PNG para apenas 64 cores:
 
 ```
-optimize-images -q 60 -rc -mc 64 ./
+optimize-images -q 65 -rc -mc 64 ./
 ```
 
-Convém notar que se for indicado um número de cores muito baixo isso pode implicar a perda de transparência,
-substituindo-a por cores inesperadas. Nesses casos, é normalmente possível obter melhores resultados utilizando esta
-opção combinada com a remoção explícita de transparência (`-rt`) e com a substituição da cor de fundo (`-bg` ou `-hbg`).
+Convém notar que um número máximo de cores (`-mc`) muito baixo reduz de forma notória a qualidade das cores. Se
+preferir não ter transparência nenhuma, combine esta opção com a remoção explícita de transparência (`-rt`) e com a
+substituição da cor de fundo (`-bg` ou `-hbg`).
 
 Por exemplo, para otimizar um ficheiro PNG, reduzindo a paleta para o máximo de 8 cores, removendo a transparência e
 aplicando um fundo branco:
@@ -570,7 +612,8 @@ print(result.was_optimized, result.orig_size, result.final_size)
 
 As opções são apenas por palavra-chave: `quality`, `max_w`, `max_h`, `reduce_colors`, `max_colors`,
 `remove_transparency`, `bg_color`, `grayscale`, `keep_exif`, `convert_all`, `conv_big`, `force_del`, `fast_mode`,
-`ignore_size_comparison`, `convert_to`, `webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`. O
+`ignore_size_comparison`, `convert_to`, `webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`,
+`jpeg_tables`. O
 formato de destino da conversão é definido por `convert_to` (`'jpeg'` por defeito, ou `'webp'`); a codificação WebP é
 ajustada com `webp_quality`, `webp_lossless` e `webp_method`. O `ssim_min` mantém o ficheiro original quando o resultado
 pontua abaixo do mínimo de semelhança estrutural, e o `show_ssim` pede a pontuação calculada no resultado; ambos
@@ -596,9 +639,10 @@ Mantém o formato original e aceita as mesmas opções de processamento que o
 `optimize_single_image`, exceto as específicas de ficheiro/conversão: `quality`,
 `max_w`, `max_h`, `reduce_colors`, `max_colors`, `remove_transparency`,
 `bg_color`, `grayscale`, `keep_exif`, `fast_mode`, `ignore_size_comparison`,
-`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, e ainda um `name` opcional que é devolvido no
+`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e ainda um `name` opcional que é devolvido no
 resultado. Quando otimizar não compensa (e a comparação de tamanho não foi desativada), os bytes originais são
-devolvidos inalterados. A conversão de formato não é suportada por este ponto de entrada.
+devolvidos inalterados. Se faltar memória (MemoryError), os bytes originais são também devolvidos e `result.error` é
+`"out_of_memory"`. A conversão de formato não é suportada por este ponto de entrada.
 
 #### Converter uma imagem em memória (bytes a entrar, bytes a sair)
 
@@ -621,7 +665,8 @@ formato da origem otimiza-a no lugar; e fontes multi-fotograma (animações) sã
 comuns
 `quality`, `max_w`, `max_h`, `remove_transparency`, `bg_color`, `grayscale`,
 `keep_exif`, `ignore_size_comparison`, `webp_quality`, `webp_lossless`,
-`webp_method`, `ssim_min`, `show_ssim`, e um `name` opcional.
+`webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e um `name` opcional. Se faltar memória (MemoryError), os bytes originais são
+também devolvidos e `result.error` é `"out_of_memory"`.
 
 #### Otimizar uma pasta (em fluxo)
 
@@ -681,13 +726,15 @@ for section, tags in format_exif(meta.exif).items():
 
 #### Opções e resultados
 
-`PublicBatchOptions` reúne todas as definições; apenas `src_path` é obrigatório (as predefinições incluem `quality=80`,
-`recursive=True`, `jobs=0`, que significa deteção automática). Cada imagem otimizada é reportada através de um
+`PublicBatchOptions` reúne todas as definições; apenas `src_path` é obrigatório (as predefinições incluem
+`recursive=True`, `jobs=0`, que significa deteção automática, e `jpeg_tables='standard'`). A qualidade predefine para `None`, o que significa
+que a qualidade é escolhida automaticamente. Cada imagem otimizada é reportada através de um
 `PublicTaskResult` com: `img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`, `orig_colors`/`final_colors`,
 `orig_size`/`final_size` (em bytes), `ssim` (a pontuação de semelhança estrutural, ou None quando não foi
 calculada — quando apenas `ssim_min` foi dado e o ficheiro foi rejeitado pela verificação de tamanho, quando o
-scikit-image está em falta e `show_ssim` foi pedido, ou quando a pontuação não foi solicitada), e os
-indicadores `was_optimized`, `was_downsized`, `had_exif`, `has_exif`. A função `optimize_as_batch` devolve um
+scikit-image está em falta e `show_ssim` foi pedido, ou quando a pontuação não foi solicitada), `error` (None,
+`"out_of_memory"` quando faltou memória, ou `"image_too_large"` quando a imagem excede o limite de pixels do Pillow),
+e os indicadores `was_optimized`, `was_downsized`, `had_exif`, `has_exif`. A função `optimize_as_batch` devolve um
 `PublicBatchResult` com a lista de ficheiros, além das contagens agregadas, do tamanho total, dos bytes poupados e do
 tempo decorrido.
 

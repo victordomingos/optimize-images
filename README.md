@@ -28,8 +28,9 @@ Please refer to the above links if you want to know about all the options availa
 ## Installation and dependencies:
 
 To install and run this application, you need to have a working
-Python 3.10+ installation. We try to keep the external dependencies at a minimum,
-in order to keep compatibility with different platforms. At this moment, we require:
+Python 3.11 or later installation. We try to keep the external dependencies
+at a minimum, in order to keep compatibility with different platforms. At
+this moment, we require:
 
   - Pillow>=12.0.0
   - watchdog>=6.0.0
@@ -71,8 +72,9 @@ If no space savings were achieved for a given file, the original version will
 be kept instead.
 
 There are many other features and command-line options, like downsizing, 
-keeping EXIF data, color palette reduction, WebP optimization, and PNG to JPEG 
-(or WebP) conversion. Please check the docs for further information.
+keeping EXIF data, color palette reduction, WebP optimization, PNG to JPEG 
+(or WebP) conversion, and smaller JPEG files with mozjpeg's quantization table 
+(`-jt mozjpeg3`). Please check the docs for further information.
 
 **DISCLAIMER:  
 Please note that the operation is done DESTRUCTIVELY, by replacing the

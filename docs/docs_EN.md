@@ -28,6 +28,7 @@ pure Python, but those packages and the features depending on them should be tre
         - [Fast mode](#fast-mode)
         - [Watch directory for new files](#watch-directory-for-new-files)
         - [Maximum number of simultaneous jobs](#maximum-number-of-simultaneous-jobs)
+        - [Colour profiles](#colour-profiles)
         - [Output configuration](#output-configuration)
         - [SSIM quality control](#ssim-quality-control)
     * [Format specific options](#format-specific-options)
@@ -63,11 +64,11 @@ pure Python, but those packages and the features depending on them should be tre
 
 ## Installation and dependencies:
 
-To install and run this application, you need to have a working Python 3.10+ installation. We try to keep the external
+To install and run this application, you need to have a working Python 3.11+ installation. We try to keep the external
 dependencies at a minimum, in order to keep compatibility with different platforms. At this moment, we require:
 
-- Pillow==12.0.0
-- watchdog==6.0.0
+- Pillow>=12.0.0
+- watchdog>=6.0.0
 
 The easiest way to install it in a single step, including any dependencies, is by using this command:
 
@@ -80,10 +81,10 @@ pip3 install pillow watchdog optimize-images
 After cloning this repository, the current development version can be easily, by using the shell command
 `pip install -e`, followed by the path to the main project directory (the same directory that has the `setup.py` file).
 Alternatively, you can create a virtual environment and use the following command (just replace
-`python3.10` with your intended python3 version)
+`python3.11` with your intended python3 version)
 
 ```
-python3.10 -m pip install git+https://github.com/victordomingos/optimize-images
+python3.11 -m pip install git+https://github.com/victordomingos/optimize-images
 ```
 
 ## How to use
@@ -167,8 +168,10 @@ optimize-images --help
 #### Fast mode:
 
 Some of the operations may eventually be finished sooner by using this option. Generally speaking, this means that the
-resulting files will have a slightly bigger size, in order to save instead a few seconds on image processing. Using this
-option disables dynamic JPEG quality setting.
+resulting files will have a slightly bigger size, in order to save instead a few seconds on image processing.
+Specifically, for JPEG files it skips the automatic quality search and uses a fixed quality (-q, 80 by default),
+and for PNG files it skips the palette rebuild for palette (indexed) images. It has no effect on WebP files or on
+conversions to a different format.
 
 Try to optimize all image files in current working directory, with recursion, using fast mode:
 
@@ -236,12 +239,24 @@ At this time, multiprocessing is not available when using this feature.
 
 #### Maximum number of simultaneous jobs
 
-You can specify the maximum number of simultaneous jobs that should be allowed to run at a given time. The default value
-(0), for most platforms, will generate a total of N + 1 processes, where N is the number of CPUs or cores in the system.
+You can specify the maximum number of simultaneous jobs that should be allowed to run at a given time. 0 (the default)
+means automatic: on Linux with regular Python it uses processes (CPUs + 1); on macOS and Windows it uses threads (up to
+64 on macOS and 32 on Windows); on free-threaded Python it uses one thread per CPU. When SSIM scores are computed, the
+automatic value is at most 8. If the machine runs out of memory, affected files are skipped and reported, with a
+suggestion to use a lower `-jobs` value.
 
 ```
 optimize-images -jobs 16 ./
 ```
+
+#### Colour profiles
+
+JPEG, WebP, and PNG files keep the embedded ICC colour profile (for example, Display P3 from many phones and cameras),
+so colours look the same after optimization. Before 2.2.0, JPEG and WebP outputs lost their profiles, which changed
+how saturated colours appeared. Profiles equivalent to sRGB are removed, because viewers assume sRGB anyway (smaller
+file, same look). When the image becomes grayscale (-g), an RGB profile no longer applies and is not kept. This is
+automatic and independent of -ke/--keep-exif (EXIF is metadata; the profile defines the colours). The SSIM score
+compares pixel values, so it is not affected by profiles.
 
 #### Output configuration
 
@@ -308,7 +323,10 @@ than the Gaussian-weighted window of the original SSIM paper, so scores can be s
 tools using the Gaussian version. The recommended thresholds above were calibrated with this implementation.
 
 Computing the score is expensive: it can dominate the run time on folders of very large images, so expect a run with
-SSIM enabled to take much longer than it would without it.
+SSIM enabled to take much longer than it would without it. For identical (lossless) outputs, a score of 1.0 is
+assigned immediately without running the comparison, so lossless outputs add almost no time to --ssim-min / --show-ssim.
+When SSIM scores are computed (--ssim-min or --show-ssim), at most 8 images are processed at the same time unless
+-jobs is given, because the comparison slows down when many run at once.
 
 ```
 optimize-images --ssim-min 0.95 ./
@@ -336,9 +354,10 @@ will then be automatically selected and applied for each image.
 
 ##### Quality
 
-Set a fixed value for the quality for JPEG files (an integer value, between 1 and 100), using the `-q` argument, folowed
-by the quality value to apply. A lower value will reduce both the image quality and the file size. Using this option
-disables the default dynamically variable JPEG quality setting.
+Set a fixed value for the quality for JPEG files (an integer value, between 1 and 100), using the `-q` argument,
+followed by the quality value to apply. A lower value will reduce both the image quality and the file size.
+When optimizing JPEG files in place, a given `-q` is always used; without it, the quality is chosen
+automatically, except with `-fm` (fast mode) and in conversions to JPEG or AVIF, which use 80.
 
 Try to optimize all image files in current working directory and all of its subdirectories, applying a quality of 65% to
 JPEG files:
@@ -360,7 +379,26 @@ optimize-images -q 65 -ke ./
 ```
 
 ```
-optimize-images --quality 65 --keep-exif ./
+optimize-images -q 65 --keep-exif ./
+```
+
+##### JPEG quantization tables
+
+Use `-jt` or `--jpeg-tables` to choose the quantization tables used to encode JPEG files: `standard` (the default,
+which keeps the previous behaviour, byte for byte) or `mozjpeg3` (the default table of the mozjpeg encoder, index 3
+in its `jcparam.c`, used for both brightness and colour and scaled from the same quality value). Only the table
+changes, not the encoder: the output is still a baseline JPEG that any decoder reads. It applies to in-place JPEG
+optimization (automatic quality, `-q` or `-fm`) and to conversions to JPEG (`-ca`, `-cb`, `-cf jpeg`); CMYK JPEG
+files are not affected.
+
+With the same quality value, `mozjpeg3` gives smaller files with a slightly lower SSIM. Measured on the project's
+test images (80 photographs, 126 PNG files): JPEG files about 12% smaller in total (median 8%), median SSIM 0.003
+lower; PNG to JPEG conversions about 3% smaller, with the same or a slightly higher SSIM; with `-g` (grayscale) about
+16% smaller, but with a larger SSIM loss (median 0.005). Gains are larger on colourful images. Combine it with
+`--ssim-min` to keep a minimum quality.
+
+```
+optimize-images -jt mozjpeg3 ./
 ```
 
 #### PNG:
@@ -369,10 +407,12 @@ optimize-images --quality 65 --keep-exif ./
 
 To reduce the number of colors (PNG) using an adaptive color palette with dithering, use the `-rc` optional argument.
 This option can have a big impact on file size, but please note that will also affect image quality in a very noticeable
-way, especially in images that have color gradients and/or transparency.
+way, especially in images that have color gradients and/or transparency. Fully transparent pixels stay transparent:
+one palette entry is reserved for them and counts toward `-mc`. Half-transparent pixels keep an approximate
+transparency.
 
 Try to optimize a single image file in current working directory, applying and adaptive color palette with the default
-amount of colors (255):
+amount of colors (256):
 
 ```
 optimize-images -rc ./imagefile.png
@@ -381,7 +421,8 @@ optimize-images -rc ./imagefile.png
 ##### Maximum number of colors
 
 Use the  `-mc` optional argument to specify the maximum number of colors for PNG images when using the reduce colors
-(-rc) option (an integer value, between 0 and 255). The default value is 255.
+(-rc) option (an integer value, between 1 and 256). The default value is 256. When used on images with transparent
+pixels, one palette entry is reserved for fully transparent pixels and counts toward -mc.
 
 Try to optimize a single image file in current working directory, reducing the color palette to a specific value:
 
@@ -393,12 +434,12 @@ Try to optimize all image files in current working directory and all of its subd
 JPEG files and reducing the color palette of PNG files to just 64 colors:
 
 ```
-optimize-images -q 60 -rc -mc 64 ./
+optimize-images -q 65 -rc -mc 64 ./
 ```
 
-Please note that indicating a very small number of colors may remove transparency, replacing it with unintended colors.
-In such cases, you will probably achieve better results by combining this option with explicit transparency removal
-(`-rt`) and background color replacement (`-bg` or `-hbg`).
+Please note that a very small maximum number of colors (`-mc`) reduces the color quality noticeably. If you prefer no
+transparency at all, combine this option with explicit transparency removal (`-rt`) and background color replacement
+(`-bg` or `-hbg`).
 
 For instance, to optimize a single PNG image file, reducing the color palette to 8 colors maximum, removing transparency
 and applying a white background:
@@ -446,7 +487,7 @@ optimize-images -cb -fd ./
 ```
 
 ```
-optimize-images --convert_big --force-delete
+optimize-images --convert-big --force-delete
 ```
 
 ##### Changing the default background color
@@ -563,7 +604,7 @@ Options are keyword-only: `quality`, `max_w`, `max_h`, `reduce_colors`,
 `max_colors`, `remove_transparency`, `bg_color`, `grayscale`, `keep_exif`,
 `convert_all`, `conv_big`, `force_del`, `fast_mode`, `ignore_size_comparison`,
 `convert_to`, `webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`,
-`show_ssim`. The conversion target is set by `convert_to` (`'jpeg'` by default, or `'webp'`); WebP encoding is tuned
+`show_ssim`, `jpeg_tables`. The conversion target is set by `convert_to` (`'jpeg'` by default, or `'webp'`); WebP encoding is tuned
 with `webp_quality`,
 `webp_lossless` and `webp_method`. `ssim_min` keeps the original file when the result scores below the minimum
 structural similarity, and `show_ssim`
@@ -590,9 +631,10 @@ It keeps the original format and accepts the same processing options as
 `optimize_single_image` except the file/conversion-specific ones: `quality`,
 `max_w`, `max_h`, `reduce_colors`, `max_colors`, `remove_transparency`,
 `bg_color`, `grayscale`, `keep_exif`, `fast_mode`, `ignore_size_comparison`,
-`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, plus an optional `name` echoed back in the
+`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, plus an optional `name` echoed back in the
 result. When optimizing does not help (and the size comparison is not disabled) the original bytes are returned
-unchanged. Format conversion is not supported through this entry point.
+unchanged. On a MemoryError the original bytes are also returned and `result.error` is `"out_of_memory"`. Format
+conversion is not supported through this entry point.
 
 ### Convert an image in memory (bytes in, bytes out)
 
@@ -614,8 +656,8 @@ size comparison is not disabled) the **original** bytes and format are returned 
 own format optimizes it in place; multi-frame sources (animations) are returned unchanged. It accepts the common options
 `quality`, `max_w`, `max_h`, `remove_transparency`, `bg_color`,
 `grayscale`, `keep_exif`, `ignore_size_comparison`, `webp_quality`,
-`webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, and an optional
-`name`.
+`webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, and an optional
+`name`. On a MemoryError the original bytes are also returned and `result.error` is `"out_of_memory"`.
 
 ### Optimize a folder (streaming)
 
@@ -675,13 +717,15 @@ for section, tags in format_exif(meta.exif).items():
 
 ### Options and results
 
-`PublicBatchOptions` holds every setting; only `src_path` is required (defaults include `quality=80`, `recursive=True`,
-`jobs=0` meaning auto-detect). Each optimized file is reported as a `PublicTaskResult` with:
+`PublicBatchOptions` holds every setting; only `src_path` is required (defaults include `recursive=True`,
+`jobs=0` meaning auto-detect, `jpeg_tables='standard'`). Quality defaults to `None`, which means the quality is chosen
+automatically. Each optimized file is reported as a `PublicTaskResult` with:
 `img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`,
 `orig_colors`/`final_colors`, `orig_size`/`final_size` (bytes), `ssim` (the structural similarity score, or None when it
 was not computed — when only `ssim_min` was given and the file was rejected by
 the size check, when scikit-image is missing and `show_ssim` was requested,
-or when the score was not otherwise requested), and the flags
+or when the score was not otherwise requested), `error` (None, `"out_of_memory"` when
+a MemoryError was caught, or `"image_too_large"` when the image exceeds Pillow's pixel limit), and the flags
 `was_optimized`, `was_downsized`, `had_exif`, `has_exif`. `optimize_as_batch`
 returns a `PublicBatchResult` with the file list plus aggregate counts, total size, bytes saved and elapsed seconds.
 
