@@ -286,7 +286,7 @@ def get_args():
                 '(measured across 224 photos with the default encoder: ' \
                 'scores 0.929-1.0, median 0.981; 0.95 rejects ~2%% of the ' \
                 'files, 0.96 ~6%%, 0.97 ~18%%); 0.85-0.93 for conversion ' \
-                '(0.95 rejects 16.6%% with -ca, 32.3%% with -ca -cc webp). ' \
+                '(0.95 rejects 16.6%% with -ca, 32.3%% with -ca -cf webp). ' \
                 'For images with transparency, the score is computed over ' \
                 'the background color (-bg/-hbg, white by default). ' \
                 'Computing the score is slow on very large images.'

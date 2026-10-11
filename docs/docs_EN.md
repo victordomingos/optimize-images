@@ -27,6 +27,8 @@ pure Python, but those packages and the features depending on them should be tre
     * [Format independent options](#format-independent-options)
         - [Image resizing](#image-resizing)
         - [Fast mode](#fast-mode)
+        - [Grayscale](#grayscale)
+        - [Saving without size comparison](#saving-without-size-comparison)
         - [Watch directory for new files](#watch-directory-for-new-files)
         - [Maximum number of simultaneous jobs](#maximum-number-of-simultaneous-jobs)
         - [Colour profiles](#colour-profiles)
@@ -39,7 +41,7 @@ pure Python, but those packages and the features depending on them should be tre
         - [PNG](#png)
             - [Reduce the number of colors](#reduce-the-number-of-colors)
             - [Maximum number of colors](#maximum-number-of-colors)
-            - [Automatic conversion of big PNG images (to JPEG or WebP)](#automatic-conversion-of-big-png-images-to-jpeg-or-webp)
+            - [Automatic conversion of big PNG images](#automatic-conversion-of-big-png-images)
             - [Changing the default background color](#changing-the-default-background-color)
         - [WebP](#webp)
             - [WebP quality](#webp-quality)
@@ -233,6 +235,26 @@ height of 800 pixels:
 optimize-images -nr -mh 800 ./
 ```
 
+#### Grayscale:
+
+Convert every processed image to grayscale with `-g` (or `--grayscale`); it applies to all formats. As with the other
+transforms, the result replaces the original only when it is smaller, unless the size comparison is disabled with `-nc`.
+
+```
+optimize-images -g ./
+```
+
+#### Saving without size comparison:
+
+By default, a processed image replaces the original only when the result is smaller. With `-nc` (or
+`--no-comparison`), the new image is saved anyway, even if it is larger — useful, for instance, if you prefer to have
+all images with the same colour, size or quality settings. It applies to all formats and also to conversions (`-ca`,
+`-cb`), which then keep the converted file whatever its size. The SSIM threshold (`--ssim-min`) still applies.
+
+```
+optimize-images -nc -q 80 ./
+```
+
 #### Watch directory for new files:
 
 Use this option when you have a folder which you would like to monitor for new image files and process them as soon as
@@ -336,7 +358,7 @@ quality, tuned for the web, standard JPEG tables), in-place scores ranged from 0
 values are **0.93-0.97** — rejection starts above 0.92 and grows quickly (0.95 rejects about 2.2% of the files, roughly
 2.5% of the total space savings; 0.96 about 5.5%; 0.97 about 17.6%). Conversion scores are lower: 0.95 rejects 16.6% of
 the files with `-ca` and 32.3% with
-`-ca -cc webp`, so useful values there are **0.85-0.93**. The option is off by default; enable it with `--ssim-min` when
+`-ca -cf webp`, so useful values there are **0.85-0.93**. The option is off by default; enable it with `--ssim-min` when
 you want the guarantee.
 
 With the default `-jt auto`, these values apply unchanged. SSIM scores mozjpeg's table slightly lower than the standard
@@ -494,7 +516,7 @@ and applying a white background:
 optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
 ```
 
-##### Automatic conversion of big PNG images (to JPEG or WebP)
+##### Automatic conversion of big PNG images
 
 Automatically convert big PNG images that have a large number of colors (presumably a photo or photo-like image) to a
 more efficient format. It uses an algorithm to determine whether the conversion is worthwhile and decides automatically
@@ -538,8 +560,8 @@ optimize-images --convert-big --force-delete
 
 ##### Changing the default background color
 
-By default, when removing transparency or converting from PNG to JPEG it will apply a white background color. You may
-choose a different background by using the argument `-bg` followed by 3 integer numbers, separated by spaces, between 0
+By default, a white background is used when removing transparency, when converting to JPEG, and when computing the
+SSIM score of an image with transparency. You may choose a different background by using the argument `-bg` followed by 3 integer numbers, separated by spaces, between 0
 and 255, for Red, Green and Blue. E.g.:
 `255 0 0` for a pure red color).
 
@@ -565,7 +587,7 @@ transparency (alpha channel) unless you also ask to remove it with `-rt`. Animat
 detected and left untouched, to avoid flattening the animation.
 
 You can also convert PNG images to WebP instead of JPEG - see
-[Automatic conversion of big PNG images (to JPEG or WebP)](#automatic-conversion-of-big-png-images-to-jpeg-or-webp).
+[Automatic conversion of big PNG images](#automatic-conversion-of-big-png-images).
 
 ##### WebP quality
 
@@ -630,6 +652,9 @@ optimize-images -i photo.jpg
 ```
 optimize-images --info photo.jpg
 ```
+
+`-i` must be used on its own, with only the image path: combined with any other option, it stops with a message
+and inspects nothing.
 
 ## Programmatic use (as a library)
 

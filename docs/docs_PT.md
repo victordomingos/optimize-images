@@ -27,6 +27,8 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
     * [Opções independentes do formato](#opções-independentes-do-formato)
         - [Redimensionamento de imagens](#redimensionamento-de-imagens)
         - [Modo rápido](#modo-rápido)
+        - [Escala de cinzentos](#escala-de-cinzentos)
+        - [Guardar sem comparar tamanhos](#guardar-sem-comparar-tamanhos)
         - [Monitorizar pasta pela criação de novos ficheiros](#monitorizar-pasta-pela-criação-de-novos-ficheiros)
         - [Número máximo de tarefas em simultâneo](#número-máximo-de-tarefas-em-simultâneo)
         - [Perfis de cor](#perfis-de-cor)
@@ -39,7 +41,7 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
         - [PNG](#png)
             - [Reduzir o número de cores](#reduzir-o-número-de-cores)
             - [Número máximo de cores](#número-máximo-de-cores)
-            - [Conversão automática de imagens PNG grandes (para JPEG ou WebP)](#conversão-automática-de-imagens-png-grandes-para-jpeg-ou-webp)
+            - [Conversão automática de imagens PNG grandes](#conversão-automática-de-imagens-png-grandes)
             - [Mudar a cor de fundo predefinida](#mudar-a-cor-de-fundo-predefinida)
         - [WebP](#webp)
             - [Qualidade WebP](#qualidade-webp)
@@ -243,6 +245,28 @@ reduzindo o tamanho de cada imagem para uma altura máxima de 800 pixels:
 optimize-images -nr -mh 800 ./
 ```
 
+#### Escala de cinzentos:
+
+Converta todas as imagens processadas para escala de cinzentos com `-g` (ou `--grayscale`); aplica-se a todos os
+formatos. Tal como nas outras transformações, o resultado só substitui o original quando é mais pequeno, exceto se a
+comparação de tamanhos for desativada com `-nc`.
+
+```
+optimize-images -g ./
+```
+
+#### Guardar sem comparar tamanhos:
+
+Por omissão, uma imagem processada só substitui o original quando o resultado é mais pequeno. Com `-nc` (ou
+`--no-comparison`), a nova imagem é guardada mesmo que seja maior — útil, por exemplo, se preferir ter todas as imagens
+com as mesmas definições de cor, tamanho ou qualidade. Aplica-se a todos os formatos e também às conversões (`-ca`,
+`-cb`), que passam a manter o ficheiro convertido seja qual for o seu tamanho. O limiar SSIM (`--ssim-min`) continua a
+aplicar-se.
+
+```
+optimize-images -nc -q 80 ./
+```
+
 #### Monitorizar pasta pela criação de novos ficheiros:
 
 Utilize esta opção quando tiver uma pasta onde pretenda monitorizar o aparecimento de novos ficheiros de imagem e
@@ -351,7 +375,7 @@ Os intervalos recomendados diferem conforme o regime. Medido em 224 fotografias 
 rejeita nada, e os valores úteis são **0.93-0.97** — a rejeição começa acima de 0.92 e cresce depressa (0.95 rejeita
 cerca de 2,2% dos ficheiros, em torno de 2,5% do total das poupanças de espaço; 0.96 cerca de 5,5%; 0.97 cerca de
 17,6%). As pontuações de conversão são mais baixas: 0.95 rejeita 16,6% dos ficheiros com `-ca` e 32,3% com
-`-ca -cc webp`, pelo que os valores úteis aí são **0.85-0.93**. A opção fica desativada por omissão; ative-a com
+`-ca -cf webp`, pelo que os valores úteis aí são **0.85-0.93**. A opção fica desativada por omissão; ative-a com
 `--ssim-min` quando quiser essa garantia.
 
 Com o valor por defeito `-jt auto`, estes valores continuam a aplicar-se. O SSIM dá à tabela do mozjpeg uma pontuação
@@ -511,7 +535,7 @@ aplicando um fundo branco:
 optimize-images -rc -mc 8 -rt -hbg ffffff ./imagefile.png
 ```
 
-##### Conversão automática de imagens PNG grandes (para JPEG ou WebP)
+##### Conversão automática de imagens PNG grandes
 
 Converter automaticamente quaisquer imagens PNG grandes que tenham um grande número de cores (presumivelmente uma
 fotografia ou uma imagem semelhante a uma fotografia) para um formato mais eficiente. Utiliza um algoritmo para
@@ -550,8 +574,8 @@ optimize-images -cb -fd ./
 
 ##### Mudar a cor de fundo predefinida
 
-Por defeito, ao remover a transparência ou ao converter de PNG para JPEG, será aplicado um fundo branco. É possível
-escolher uma cor de fundo diferente usando o argumento `-bg` seguido de 3 números inteiros, separados por espaços, entre
+Por defeito, é aplicado um fundo branco ao remover a transparência, ao converter para JPEG e ao calcular o SSIM de uma
+imagem com transparência. É possível escolher uma cor de fundo diferente usando o argumento `-bg` seguido de 3 números inteiros, separados por espaços, entre
 0 e 255, para Vermelho, Verde e Azul (RGB). Por exemplo: `255 0 0` (para aplicar um vermelho vivo).
 
 Para converter uma imagem PNG grande com alguma transparência (como, por exemplo, capturas de ecrã do macOS) aplicando
@@ -579,7 +603,7 @@ definições abaixo. O WebP mantém a transparência (canal alfa), exceto se tam
 ficheiros WebP e PNG animados são detetados e deixados intactos, para evitar perder a animação.
 
 Também pode converter imagens PNG para WebP em vez de JPEG - consulte
-[Conversão automática de imagens PNG grandes (para JPEG ou WebP)](#conversão-automática-de-imagens-png-grandes-para-jpeg-ou-webp).
+[Conversão automática de imagens PNG grandes](#conversão-automática-de-imagens-png-grandes).
 
 ##### Qualidade WebP
 
@@ -644,6 +668,9 @@ optimize-images -i foto.jpg
 ```
 optimize-images --info foto.jpg
 ```
+
+A opção `-i` tem de ser usada sozinha, apenas com o caminho da imagem: combinada com qualquer outra opção, termina
+com uma mensagem e não inspeciona nada.
 
 ### Utilização programática (como biblioteca)
 
