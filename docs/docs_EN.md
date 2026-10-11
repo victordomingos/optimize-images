@@ -18,6 +18,7 @@ pure Python, but those packages and the features depending on them should be tre
 ## Contents
 
 * **[Installation and dependencies](#installation-and-dependencies)**
+    * [Choosing a Python build](#choosing-a-python-build)
 
 * **[How to use](#how-to-use)**
     * [DISCLAIMER](#disclaimer)
@@ -75,6 +76,26 @@ The easiest way to install it in a single step, including any dependencies, is b
 ```
 pip3 install pillow watchdog optimize-images
 ```
+
+### Choosing a Python build
+
+Most of the work happens inside Pillow's image codecs, so the Python version makes little difference to the time
+spent on each image. What changes is how well a batch uses several cores:
+
+- **Free-threaded Python (3.14t, 3.15t)** processes images truly in parallel. Tested on a MacBook Pro M5 Pro, compared
+  with the regular build of the same version: 27 photos (54 MB) took 0.43 s instead of 2.1 s (about 5x faster), 157
+  small web images 0.29 s instead of 0.69 s (about 2.4x), and 36 large mixed files 4.4 s instead of 5.1 s (about
+  1.2x). A single image, or a run with `-jobs 1`, takes the same time. Peak memory was 20-35 % higher. The gain is
+  largest with JPEG files, because Pillow's JPEG encoder lets regular Python encode only one image at a time.
+- **Python 3.13t** also works, but Pillow 12.3 no longer publishes wheels for it: pip then builds Pillow from source
+  (a compiler is needed), or you can install `pillow<=12.2`.
+- If you use `--ssim-min`, check that scikit-image provides wheels for your Python build.
+- In watch mode (`-wd`) on macOS, watchdog turns the GIL back on in free-threaded builds (Python prints a warning
+  about it).
+- **The experimental JIT** (`PYTHON_JIT=1` on Python 3.14 and 3.15) made no measurable difference in our tests, so
+  there is no need to enable it.
+
+To check which build you are running, use `optimize-images -v`: free-threaded builds are shown as "(free-threaded)".
 
 ## Installing the most recent development version (may be unstable):
 

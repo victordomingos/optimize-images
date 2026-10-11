@@ -47,6 +47,11 @@ require the optional scikit-image package (`pip install scikit-image`, or
 `--show-ssim` prints a warning once and shows no scores, and `--ssim-min`
 stops the run with an error.
 
+Any Python from 3.11 to 3.15 works. For large batches, a free-threaded build
+(Python 3.14t or 3.15t) is several times faster on multi-core machines (about
+5x on a batch of photos on a MacBook Pro M5 Pro); see
+[Choosing a Python build](docs/docs_EN.md#choosing-a-python-build).
+
 ## How to use
 
 The most simple form of usage is to type a simple command in the shell, 

@@ -18,6 +18,7 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
 ## Conteúdo
 
 * **[Instalação e dependências](#instalação-e-dependências)**
+    * [Escolher a versão do Python](#escolher-a-versão-do-python)
 
 * **[Como utilizar](#como-utilizar)**
     * [Advertência](#advertência)
@@ -76,6 +77,28 @@ comando:
 ```
 pip3 install pillow watchdog optimize-images
 ```
+
+### Escolher a versão do Python
+
+A maior parte do trabalho é feita pelos codecs de imagem do Pillow, por isso a versão do Python pouco altera o tempo
+gasto com cada imagem. O que muda é o aproveitamento de vários núcleos num lote:
+
+- **Python *free-threaded* (3.14t, 3.15t)** processa as imagens verdadeiramente em paralelo. Testado num MacBook Pro
+  M5 Pro, em comparação com a versão normal do mesmo Python: 27 fotografias (54 MB) demoraram 0,43 s em vez de 2,1 s
+  (cerca de 5x mais rápido), 157 imagens pequenas para a web 0,29 s em vez de 0,69 s (cerca de 2,4x) e 36 ficheiros
+  grandes de vários formatos 4,4 s em vez de 5,1 s (cerca de 1,2x). Uma imagem isolada, ou uma execução com
+  `-jobs 1`, demora o mesmo tempo. O pico de memória foi 20-35 % mais alto. O ganho é maior com ficheiros JPEG,
+  porque o codificador JPEG do Pillow só deixa o Python normal codificar uma imagem de cada vez.
+- **O Python 3.13t** também funciona, mas o Pillow 12.3 já não publica *wheels* para essa versão: o pip compila então
+  o Pillow a partir do código-fonte (é preciso um compilador), ou pode instalar `pillow<=12.2`.
+- Se usar `--ssim-min`, confirme que o scikit-image disponibiliza *wheels* para a sua versão do Python.
+- No modo de monitorização de pastas (`-wd`) em macOS, o watchdog volta a ativar o GIL nas versões *free-threaded*
+  (o Python mostra um aviso sobre isso).
+- **O JIT experimental** (`PYTHON_JIT=1` no Python 3.14 e 3.15) não trouxe diferença mensurável nos nossos testes,
+  por isso não é necessário ativá-lo.
+
+Para confirmar que versão está a usar, execute `optimize-images -v`: as versões *free-threaded* aparecem como
+"(free-threaded)".
 
 ## Instalar a versão mais recente em desenvolvimento (possivelmente instável):
 
