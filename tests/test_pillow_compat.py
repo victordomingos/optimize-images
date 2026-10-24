@@ -2,7 +2,7 @@
 """Pillow compatibility guards.
 
 The project supports every Pillow release from the minimum in setup.py
-(12.0.0) to the newest, and should keep working when the next major release
+(13.0.0) to the newest, and should keep working when the next major release
 removes what is deprecated today. Two complementary checks:
 
 * at run time, pytest.ini turns every DeprecationWarning into an error, so a
@@ -11,7 +11,7 @@ removes what is deprecated today. Two complementary checks:
   or too new for the minimum version, also on paths the tests never execute.
 
 Source: https://pillow.readthedocs.io/en/stable/deprecations.html
-(checked 2026-10-02 for Pillow 12.3.0). Update the list when Pillow
+(checked 2026-10-23 for Pillow 13.0.0). Update the list when Pillow
 deprecates something new, and drop entries that only guard the minimum
 version when that minimum is raised. A line can opt out with the comment
 ``# pillow-compat: ok`` plus a reason.
@@ -29,13 +29,9 @@ OPT_OUT = "pillow-compat: ok"
 FORBIDDEN = [
     (r"\.getdata\(",
      "Image.getdata() is deprecated since Pillow 12.1 (removal planned)",
-     "tobytes(), getcolors(), point() or getchannel()"),
-    (r"\.get_flattened_data\(",
-     "get_flattened_data() only exists since Pillow 12.1; the minimum "
-     "supported version is 12.0",
-     "tobytes(), getcolors(), point() or getchannel()"),
+     "tobytes(), get_flattened_data(), getcolors(), point() or getchannel()"),
     (r"\.get_child_images\(",
-     "Image.get_child_images() is removed in Pillow 13",
+     "Image.get_child_images() is removed in Pillow 13; use ImageFile.get_child_images()",
      "ImageFile.ImageFile.get_child_images()"),
     (r"\._show\(", "Image._show is removed in Pillow 13", "show()"),
     (r"\.product_(name|info)\b",
@@ -45,7 +41,7 @@ FORBIDDEN = [
      "isinstance(im, Image.Image)"),
     (r"ImageMath\.eval\(", "ImageMath.eval() was removed in Pillow 12",
      "ImageMath.lambda_eval()"),
-    (r"IFD\.Makernote\b", "ExifTags.IFD.Makernote is deprecated",
+    (r"IFD\.Makernote\b", "ExifTags.IFD.Makernote was removed in Pillow 13",
      "ExifTags.IFD.MakerNote"),
     (r"\braise_oserror\b", "ImageFile.raise_oserror was removed in Pillow 12",
      "nothing (decoders raise by themselves)"),
@@ -56,6 +52,15 @@ FORBIDDEN = [
      'features.check("webp")'),
     (r"USE_CFFI_ACCESS|PyAccess", "PyAccess was removed in Pillow 11",
      "the C API (img.load())"),
+    (r"Image\.IM\b",
+     "IM image format is deprecated since Pillow 13.0 (removal planned in 15.0)",
+     "convert to a supported format"),
+    (r"\.load_djpeg\b",
+     "JpegImageFile.load_djpeg is deprecated since Pillow 13.0 (removal in 14)",
+     "the built-in JPEG decoder or call djpeg directly"),
+    (r"align8to32\(",
+     "ImageQt.align8to32() is deprecated since Pillow 13.0",
+     "no replacement (undocumented internal helper)"),
 ]
 
 

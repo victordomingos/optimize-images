@@ -26,7 +26,7 @@ def read_readme(file_name):
 
 def get_requirements():
     install_requirements = []  # ['piexif>=1.1.3']
-    install_requirements.append('Pillow>=12.0.0')
+    install_requirements.append('Pillow>=13.0.0')
     install_requirements.append('watchdog>=6.0.0')
     return install_requirements
 
