@@ -70,7 +70,7 @@ puro, sendo que esses pacotes serão tratados como opcionais, tais como as funci
 Para executar esta aplicação é necessária uma instalação do Python 3.11 ou superior. Procuramos manter no mínimo as
 dependências externas, de modo a manter a compatibilidade com diferentes plataformas. Neste momento, requer:
 
-- Pillow>=12.0.0
+- Pillow>=13.0.0
 - watchdog>=6.0.0
 
 A forma mais simples de instalar num único passo esta aplicação, incluindo quaisquer requisitos, é através deste
@@ -91,8 +91,9 @@ gasto com cada imagem. O que muda é o aproveitamento de vários núcleos num lo
   grandes de vários formatos 4,4 s em vez de 5,1 s (cerca de 1,2x). Uma imagem isolada, ou uma execução com
   `-jobs 1`, demora o mesmo tempo. O pico de memória foi 20-35 % mais alto. O ganho é maior com ficheiros JPEG,
   porque o codificador JPEG do Pillow só deixa o Python normal codificar uma imagem de cada vez.
-- **O Python 3.13t** também funciona, mas o Pillow 12.3 já não publica *wheels* para essa versão: o pip compila então
-  o Pillow a partir do código-fonte (é preciso um compilador), ou pode instalar `pillow<=12.2`.
+- **O Python 3.13t** também funciona, mas o Pillow 13 não publica *wheels* para essa versão: o pip compila então
+  o Pillow a partir do código-fonte (é preciso um compilador). Para *free-threaded*, prefira o Python 3.14t ou 3.15t,
+  que têm *wheels* publicados.
 - Se usar `--ssim-min`, confirme que o scikit-image disponibiliza *wheels* para a sua versão do Python.
 - No modo de monitorização de pastas (`-wd`) em macOS, o watchdog volta a ativar o GIL nas versões *free-threaded*
   (o Python mostra um aviso sobre isso).
@@ -134,7 +135,7 @@ original pela sua versão processada se o seu tamanho de ficheiro for menor que 
 Se para um determinado ficheiro não tiver sido obtida qualquer poupança de espaço, será antes mantida a versão original.
 
 Para além das configurações predefinidas, poderá reduzir o tamanho das imagens, fazendo-as ajustarem-se à largura e/ou à
-altura máxima(s) pretendida(s). Este redimensionamento de imagens é realizado como o primeiro passo no processo de
+altura máxima (s) pretendida (s). Este redimensionamento de imagens é realizado como o primeiro passo no processo de
 otimização de imagem.
 
 Também poderá optar por manter os dados EXIF originais (se existirem) nos ficheiros otimizados. De notar, contudo, que
@@ -227,7 +228,7 @@ Os seguintes argumentos opcionais podem ser utilizados para limitar o tamanho fi
 * Largura máxima: `-mw`
 * Altura máxima: `-mh`
 
-O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da Largura e/ou altura especificada(s). Se o
+O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da Largura e/ou altura especificada (s). Se o
 utilizador introduzir valores para ambas as dimensões, serão calculadas as proporções da imagem para cada caso e será
 aplicada a que resulte num tamanho menor.
 
@@ -271,8 +272,16 @@ optimize-images -nc -q 80 ./
 
 Utilize esta opção quando tiver uma pasta onde pretenda monitorizar o aparecimento de novos ficheiros de imagem e
 processá-los logo que possível. A aplicação Optimize Images irá vigiar a pasta especificada de forma contínua e
-otimizará de forma autmática qualquer ficheiro acabado de criar. Os caminhos dos ficheiros são guardados numa lista
-temporária em memória, de modo a que cada ficheiro seja processado uma única vez por sessão.
+otimizará de forma automática qualquer novo ficheiro de imagem: criado na pasta, movido de outra pasta ou colocado no
+lugar com uma mudança de nome (como fazem os browsers e muitos editores, que gravam primeiro um ficheiro temporário).
+Cada ficheiro é processado quando acabar de ser escrito, ou seja, quando não tiver mudado durante meio segundo. Os
+ficheiros escritos pela própria otimização (o ficheiro otimizado, ou a cópia convertida com `-ca`/`-cb`) e os ficheiros
+já processados que apenas mudam de nome não são processados de novo, mas um ficheiro novo com o nome de um anterior é.
+Se não for possível tratar um ficheiro, o erro é mostrado e a monitorização continua com o seguinte. Se um programa
+fizer uma pausa de mais de meio segundo enquanto escreve um ficheiro, este pode ser lido antes de estar completo; nesse
+caso, é indicado como ignorado e não volta a ser tentado. Ao arrancar, a monitorização cria e apaga um pequeno ficheiro
+temporário na pasta, para medir o relógio do sistema de ficheiros (que pode ser diferente do do computador numa pasta
+partilhada em rede).
 
 Geralmente, os ficheiros que já existam quando inicia Optimized Images com esta opção não serão processados, mas é
 possível forçar esse processamento. Para tal, basta usar dois comandos consecutivos: primeiro, uma passagem normal sem o
@@ -371,7 +380,8 @@ rejeitados. Para o desativar, omita a opção. Sem o scikit-image, esta opção 
 erro clara.
 
 Os intervalos recomendados diferem conforme o regime. Medido em 224 fotografias com o codificador por omissão atual
-(qualidade dinâmica, ajustada para a web, tabelas JPEG padrão), as pontuações in situ variaram entre 0.929 e 1.0 (mediana 0.981): 0.90 não
+(qualidade dinâmica, ajustada para a web, tabelas JPEG padrão), as pontuações in situ variaram entre 0.929 e 1.0
+(mediana 0.981): 0.90 não
 rejeita nada, e os valores úteis são **0.93-0.97** — a rejeição começa acima de 0.92 e cresce depressa (0.95 rejeita
 cerca de 2,2% dos ficheiros, em torno de 2,5% do total das poupanças de espaço; 0.96 cerca de 5,5%; 0.97 cerca de
 17,6%). As pontuações de conversão são mais baixas: 0.95 rejeita 16,6% dos ficheiros com `-ca` e 32,3% com
@@ -382,7 +392,8 @@ Com o valor por defeito `-jt auto`, estes valores continuam a aplicar-se. O SSIM
 ligeiramente mais baixa do que à tabela padrão (mediana cerca de 0.003 menor) para um resultado com um aspeto
 praticamente igual, por isso um JPEG codificado com a tabela do mozjpeg que fique abaixo do limite é codificado de novo
 com as tabelas padrão antes de se manter o original. Nas imagens de teste do projeto, os ficheiros JPEG otimizados no
-lugar com `auto` ficaram mais pequenos no total do que com `-jt standard` em todos os limites de 0.93 a 0.97, e nenhum ficheiro
+lugar com `auto` ficaram mais pequenos no total do que com `-jt standard` em todos os limites de 0.93 a 0.97, e nenhum
+ficheiro
 ficou maior.
 
 A pontuação é calculada com a função `structural_similarity` do scikit-image, que usa por omissão uma janela uniforme de
@@ -468,7 +479,8 @@ Aplica-se à otimização de ficheiros JPEG no lugar (qualidade automática, `-q
 Porquê `auto`: voltar a codificar um JPEG com as mesmas tabelas e uma qualidade próxima quase não perde nada, enquanto
 mudar de tabela o comprime uma segunda vez. Nos ficheiros JPEG já gravados com as tabelas padrão à qualidade
 automática, `mozjpeg3` perdeu cerca de 7 pontos de SSIMULACRA 2 (uma medida de qualidade percetual de 0 a 100; 90
-significa sem perda visível), o suficiente para se notar com ampliação; `auto` trata-os como antes. Com `--ssim-min`, `auto` também volta a codificar
+significa sem perda visível), o suficiente para se notar com ampliação; `auto` trata-os como antes. Com `--ssim-min`,
+`auto` também volta a codificar
 um ficheiro com as tabelas padrão quando a tabela do mozjpeg fica abaixo do limite. Medido nas imagens
 de teste do projeto (80 ficheiros JPEG, 126 ficheiros PNG): com `auto`, os ficheiros JPEG ficam cerca de 12% mais
 pequenos no total do que com `standard`, com uma perda mediana de 0,2 pontos de SSIMULACRA 2 (4,5 no máximo); as
@@ -575,7 +587,8 @@ optimize-images -cb -fd ./
 ##### Mudar a cor de fundo predefinida
 
 Por defeito, é aplicado um fundo branco ao remover a transparência, ao converter para JPEG e ao calcular o SSIM de uma
-imagem com transparência. É possível escolher uma cor de fundo diferente usando o argumento `-bg` seguido de 3 números inteiros, separados por espaços, entre
+imagem com transparência. É possível escolher uma cor de fundo diferente usando o argumento `-bg` seguido de 3 números
+inteiros, separados por espaços, entre
 0 e 255, para Vermelho, Verde e Azul (RGB). Por exemplo: `255 0 0` (para aplicar um vermelho vivo).
 
 Para converter uma imagem PNG grande com alguma transparência (como, por exemplo, capturas de ecrã do macOS) aplicando
@@ -709,14 +722,15 @@ from optimize_images.api import optimize_image_data
 
 optimized, result = optimize_image_data(original_bytes, quality=70, max_w=1920)
 if result.was_optimized:
-    store(optimized)   # imagem mais pequena; caso contrário, `optimized` é a original
+    store(optimized)  # imagem mais pequena; caso contrário, `optimized` é a original
 ```
 
 Mantém o formato original e aceita as mesmas opções de processamento que o
 `optimize_single_image`, exceto as específicas de ficheiro/conversão: `quality`,
 `max_w`, `max_h`, `reduce_colors`, `max_colors`, `remove_transparency`,
 `bg_color`, `grayscale`, `keep_exif`, `fast_mode`, `ignore_size_comparison`,
-`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e ainda um `name` opcional que é devolvido no
+`webp_quality`, `webp_lossless`, `webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e ainda um `name` opcional que é
+devolvido no
 resultado. Quando otimizar não compensa (e a comparação de tamanho não foi desativada), os bytes originais são
 devolvidos inalterados. Se faltar memória (MemoryError), os bytes originais são também devolvidos e `result.error` é
 `"out_of_memory"`. A conversão de formato não é suportada por este ponto de entrada.
@@ -742,7 +756,8 @@ formato da origem otimiza-a no lugar; e fontes multi-fotograma (animações) sã
 comuns
 `quality`, `max_w`, `max_h`, `remove_transparency`, `bg_color`, `grayscale`,
 `keep_exif`, `ignore_size_comparison`, `webp_quality`, `webp_lossless`,
-`webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e um `name` opcional. Se faltar memória (MemoryError), os bytes originais são
+`webp_method`, `ssim_min`, `show_ssim`, `jpeg_tables`, e um `name` opcional. Se faltar memória (MemoryError), os bytes
+originais são
 também devolvidos e `result.error` é `"out_of_memory"`.
 
 #### Otimizar uma pasta (em fluxo)
@@ -807,7 +822,8 @@ for section, tags in format_exif(meta.exif).items():
 #### Opções e resultados
 
 `PublicBatchOptions` reúne todas as definições; apenas `src_path` é obrigatório (as predefinições incluem
-`recursive=True`, `jobs=0`, que significa deteção automática, e `jpeg_tables='auto'`). A qualidade predefine para `None`, o que significa
+`recursive=True`, `jobs=0`, que significa deteção automática, e `jpeg_tables='auto'`). A qualidade predefine para
+`None`, o que significa
 que a qualidade é escolhida automaticamente. Cada imagem otimizada é reportada através de um
 `PublicTaskResult` com: `img`, `orig_format`/`result_format`, `orig_mode`/`result_mode`, `orig_colors`/`final_colors`,
 `orig_size`/`final_size` (em bytes), `ssim` (a pontuação de semelhança estrutural, ou None quando não foi
@@ -823,7 +839,13 @@ tempo decorrido.
 - O número de processos de trabalho é determinado automaticamente a partir da plataforma (CPU), exceto se definir
   `options.jobs` com um valor diferente de zero.
 - `watch_directory` escreve uma legenda e um cabeçalho na saída padrão e utiliza o pacote `watchdog` (uma
-  dependência principal); se este estiver em falta, é lançada a exceção `ImportError`.
+  dependência principal); se este estiver em falta, é lançada a exceção `ImportError`. O `on_result` é chamado a
+  partir da thread do watchdog, um ficheiro de cada vez. Uma exceção lançada ao tratar um ficheiro, incluindo uma
+  lançada pelo `on_result`, é escrita no erro padrão com o respetivo traceback e a monitorização continua (tal como
+  faz o `concurrent.futures` com um done-callback que falha). Se o próprio mecanismo de monitorização parar
+  inesperadamente, `watch_directory` lança `optimize_images.exceptions.OIWatchStoppedError` (uma `RuntimeError`).
+  Ao arrancar, cria e apaga um pequeno ficheiro temporário (`.~temp~clock-…`) na pasta, para medir o relógio do
+  sistema de ficheiros.
 - O SSIM só está disponível quando o pacote opcional scikit-image está instalado (ou com o extra `[ssim]`): o
   `ssim_min` lança `optimize_images.exceptions.OISSIMNotAvailableError` quando ele falta, enquanto o `show_ssim` produz
   simplesmente pontuações `None`; a CLI mostra um aviso uma vez quando `--show-ssim` foi pedido sem ele. Um `ssim_min`
@@ -889,7 +911,7 @@ criar os ambientes selecionados, por exemplo depois de uma nova versão do Pytho
 os requisitos um a um e preferem pacotes já compilados (*wheels*), pelo que um pacote que ainda não tenha *wheel* para
 uma nova versão do Python (por exemplo, o scikit-image no 3.15) apenas faz ignorar os respetivos testes, o que fica
 indicado na tabela. O `--jobs` define quantos ambientes são testados ao mesmo tempo. A entrada `3.11-min` (`venv311min`)
-instala as versões mais antigas suportadas de todas as dependências, a partir do `requirements-min.txt` (Pillow 12.0.0,
+instala as versões mais antigas suportadas de todas as dependências, a partir do `requirements-min.txt` (Pillow 13.0.0,
 scikit-image 0.24.0, ...). Os testes tratam qualquer `DeprecationWarning` como erro, para que código que deixaria de
 funcionar na próxima versão do Pillow ou do Python falhe logo. O script usa apenas a biblioteca padrão. As imagens de
 teste em `tests/test-images/` nunca devem ser alteradas: os testes trabalham sobre cópias.

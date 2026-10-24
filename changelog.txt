@@ -3,7 +3,12 @@ Version history:
 
 
 ---
-v.2.2.0 - 2026-09-21
+v.2.2.0 - 2026-10-24
+ * Minimum Pillow is now 13.0.0, for its security fixes (including
+   CVE-2026-112403: with older Pillow versions, a crafted lossless JPEG
+   resized with -mw/-mh could crash the process). Python 3.13t users now
+   need to build Pillow from source, since Pillow 13 has no wheels for
+   that Python.
  * Behaviour change (JPEG): smaller JPEG files by default. New
    -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'auto' (the default),
    'standard' or 'mozjpeg3'. 'mozjpeg3' encodes with the default quantization
@@ -105,6 +110,22 @@ v.2.2.0 - 2026-09-21
    worker could leave an image truncated to 0 bytes in place of the original.
    Public API: stopping optimize_as_batch_stream() early (break, an exception
    or Ctrl-C) now also cancels the files not started yet.
+ * Watch mode (-wd) is more reliable. Files renamed into place (a temporary
+   file renamed when complete, as browsers and many editors save) are now
+   processed; before, they were ignored. A new file that reuses the name of
+   an earlier one is processed again; before, each name was processed only
+   once per session. The copy written by -ca/-cb and already processed files
+   that are only renamed are no longer optimized a second time. A file is
+   processed only after it has not changed for half a second, instead of 10
+   ms, so files copied slowly are no longer read half-written and skipped. To
+   tell a finished file from one still being written, watch mode measures the
+   file system's clock when it starts, by creating and removing a small
+   temporary file in the folder. An error while handling one file no longer
+   ends the watch silently: it is shown and watching goes on. Public API: the
+   same applies to watch_directory(), where an exception raised by on_result
+   is printed to standard error with its traceback, and a watcher that stops
+   unexpectedly raises the new OIWatchStoppedError instead of waiting
+   forever.
  * Running out of memory (for instance with a high -jobs value on big
    images), or an image above Pillow's pixel limit, no longer aborts the
    whole batch with an error: the file is skipped, its original is kept, the

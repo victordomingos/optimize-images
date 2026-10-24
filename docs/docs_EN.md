@@ -70,7 +70,7 @@ pure Python, but those packages and the features depending on them should be tre
 To install and run this application, you need to have a working Python 3.11+ installation. We try to keep the external
 dependencies at a minimum, in order to keep compatibility with different platforms. At this moment, we require:
 
-- Pillow>=12.0.0
+- Pillow>=13.0.0
 - watchdog>=6.0.0
 
 The easiest way to install it in a single step, including any dependencies, is by using this command:
@@ -89,8 +89,8 @@ spent on each image. What changes is how well a batch uses several cores:
   small web images 0.29 s instead of 0.69 s (about 2.4x), and 36 large mixed files 4.4 s instead of 5.1 s (about
   1.2x). A single image, or a run with `-jobs 1`, takes the same time. Peak memory was 20-35 % higher. The gain is
   largest with JPEG files, because Pillow's JPEG encoder lets regular Python encode only one image at a time.
-- **Python 3.13t** also works, but Pillow 12.3 no longer publishes wheels for it: pip then builds Pillow from source
-  (a compiler is needed), or you can install `pillow<=12.2`.
+- **Python 3.13t** also works, but Pillow 13 has no wheels for it: pip builds Pillow from source (a compiler
+  is needed). For free-threaded use, prefer Python 3.14t or 3.15t, which have published wheels.
 - If you use `--ssim-min`, check that scikit-image provides wheels for your Python build.
 - In watch mode (`-wd`) on macOS, watchdog turns the GIL back on in free-threaded builds (Python prints a warning
   about it).
@@ -258,9 +258,15 @@ optimize-images -nc -q 80 ./
 #### Watch directory for new files:
 
 Use this option when you have a folder which you would like to monitor for new image files and process them as soon as
-possible. Optimize Images will watch the specified directory continuously and will optimize automatically any newly
-created file. File paths are saved in a temporary list in memory, so that each file should just be processed once per
-session.
+possible. Optimize Images will watch the specified directory continuously and will optimize automatically any new image
+file: created there, moved in from another folder, or renamed into place (as browsers and many editors do when they save
+a temporary file first). Each file is processed once it has been completely written, that is, when it has not changed
+for half a second. Files written by the optimization itself (the optimized file, or the converted copy with `-ca`/`-cb`)
+and already processed files that are only renamed are not processed again, but a new file that reuses the name of an
+earlier one is. If one file cannot be handled, the error is shown and watching goes on with the next one. If a program
+pauses for more than half a second while writing a file, the file can be read before it is complete; it is then reported
+as skipped and not tried again. When it starts, watch mode creates and removes a small temporary file in the folder, to
+measure the file system's clock (which can differ from the computer's on a network share).
 
 Files that exist when Optimized Images is started using this option will generally not be processed, but you can force
 it, by issuing two consecutive shell commands, first doing a regular pass without the `-wd`
@@ -809,7 +815,14 @@ returns a `PublicBatchResult` with the file list plus aggregate counts, total si
   `options.jobs` to a non-zero value.
 - `watch_directory` prints a legend and banner to standard output, and uses the
   `watchdog` package (a core dependency); if it is missing it raises
-  `ImportError`.
+  `ImportError`. `on_result` is called from watchdog's thread, one file at a
+  time. An exception raised while handling a file, including one raised by
+  `on_result`, is printed to standard error with its traceback and watching goes
+  on (as `concurrent.futures` does with a failing done-callback). If the watcher
+  itself stops unexpectedly, `watch_directory` raises
+  `optimize_images.exceptions.OIWatchStoppedError` (a `RuntimeError`). When it
+  starts, it creates and removes a small temporary file (`.~temp~clock-…`) in
+  the folder to measure the file system's clock.
 - SSIM is only available when the optional scikit-image package is installed (or with the `[ssim]` extra): `ssim_min`
   raises `optimize_images.exceptions.OISSIMNotAvailableError` when it is missing, while `show_ssim` simply yields `None`
   scores; the CLI prints a warning once when `--show-ssim` was requested without it. An `ssim_min` outside 0.0-1.0
@@ -873,7 +886,7 @@ the newest patch release is used; on Windows, create the venvs by hand with the 
 the selected venvs, for instance after a new Python release. `--install` and `--create` install the requirements one by
 one and prefer released wheels, so a package that has no wheel yet for a new Python (e.g. scikit-image on 3.15) only
 skips its tests, which the table reports. `--jobs` sets how many venvs are tested at the same time. The `3.11-min` entry
-(`venv311min`) installs the oldest supported versions of every dependency from `requirements-min.txt` (Pillow 12.0.0,
+(`venv311min`) installs the oldest supported versions of every dependency from `requirements-min.txt` (Pillow 13.0.0,
 scikit-image 0.24.0, ...). The test suite treats every `DeprecationWarning` as an error, so code that would break in the
 next Pillow or Python release fails early. The script uses only the standard library. The test images in
 `tests/test-images/` must never be modified: the tests work on copies.
