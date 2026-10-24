@@ -135,7 +135,7 @@ original pela sua versão processada se o seu tamanho de ficheiro for menor que 
 Se para um determinado ficheiro não tiver sido obtida qualquer poupança de espaço, será antes mantida a versão original.
 
 Para além das configurações predefinidas, poderá reduzir o tamanho das imagens, fazendo-as ajustarem-se à largura e/ou à
-altura máxima (s) pretendida (s). Este redimensionamento de imagens é realizado como o primeiro passo no processo de
+altura máxima(s) pretendida(s). Este redimensionamento de imagens é realizado como o primeiro passo no processo de
 otimização de imagem.
 
 Também poderá optar por manter os dados EXIF originais (se existirem) nos ficheiros otimizados. De notar, contudo, que
@@ -228,7 +228,7 @@ Os seguintes argumentos opcionais podem ser utilizados para limitar o tamanho fi
 * Largura máxima: `-mw`
 * Altura máxima: `-mh`
 
-O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da Largura e/ou altura especificada (s). Se o
+O tamanho da imagem será reduzido para o tamanho máximo que caiba dentro da Largura e/ou altura especificada(s). Se o
 utilizador introduzir valores para ambas as dimensões, serão calculadas as proporções da imagem para cada caso e será
 aplicada a que resulte num tamanho menor.
 
