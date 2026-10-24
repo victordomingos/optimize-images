@@ -151,6 +151,17 @@ def transform_convert(task: Task, img, orig_format: str, orig_mode: str,
                           img.mode, 0, 0, was_downsized, had_exif, has_exif, ssim)
 
 
+def converted_path(task: Task) -> str:
+    """Where convert_image() saves the converted copy of ``task.src_path``:
+    next to it, with the target format's main extension."""
+    info = FORMATS[_normalize_target(task)]
+    folder, base = os.path.split(task.src_path)
+    if folder == '':
+        folder = os.getcwd()
+    name = os.path.splitext(base)[0]
+    return os.path.join(folder, name + '.' + info.extensions[0])
+
+
 def convert_image(task: Task, img, orig_format: str, orig_mode: str,
                   orig_size: int, had_exif: bool = False, exif=None) -> TaskResult:
     """Convert an already-open image to ``task.convert_to``.
@@ -170,13 +181,7 @@ def convert_image(task: Task, img, orig_format: str, orig_mode: str,
                           img_mode, 0, 0, orig_size, orig_size, False, False,
                           had_exif, had_exif, task.output_config, None)
 
-    target = _normalize_target(task)
-    info = FORMATS[target]
-    folder, base = os.path.split(task.src_path)
-    if folder == '':
-        folder = os.getcwd()
-    name = os.path.splitext(base)[0]
-    output_path = os.path.join(folder, name + '.' + info.extensions[0])
+    output_path = converted_path(task)
 
     img.close()
 

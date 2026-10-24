@@ -5,15 +5,20 @@ This module exposes stable, UI-free entry points to the image optimization
 logic of this package. Prefer using these functions over lower-level modules.
 """
 import os
+import sys
+import tempfile
 import threading
+import time
+import traceback
 from concurrent.futures import as_completed
 from dataclasses import dataclass
 from optimize_images.batch_core import build_tasks as _build_tasks
 from optimize_images.data_structures import TaskResult as _TaskResult, \
     Task as _Task, BatchOptions as _BatchOptions
 from optimize_images.do_optimization import do_optimization
-from optimize_images.exceptions import OIImagesNotFoundError
+from optimize_images.exceptions import OIImagesNotFoundError, OIWatchStoppedError
 from optimize_images.exif_format import format_exif
+from optimize_images.img_convert import converted_path
 from optimize_images.formats import (
     normalize_target as _normalize_convert_to,
     available_input_formats,
@@ -483,35 +488,111 @@ def watch_directory(
             extension = os.path.splitext(filepath)[1][1:]
             return extension.lower() in ['jpg', 'jpeg', 'png', 'webp']
 
-    # Create our own event handler directly
+    folder = os.path.abspath(base_task.src_path)
+    real_folder = os.path.realpath(folder)
+
+    def in_watched_folder(path):
+        try:
+            return os.path.commonpath([real_folder, os.path.realpath(path)]) == real_folder
+        except ValueError:  # e.g. another drive on Windows
+            return False
+
+    converts = internal.convert_all or internal.conv_big
+
     class APIOptimizeImageEventHandler(FileSystemEventHandler):
+        """Optimizes each new image file in the watched folder.
+
+        watchdog calls the handler from its single observer thread, so files
+        are processed one at a time, in event order. That order is also what
+        lets the signatures recognise our own writes: the event for a file
+        written here is dispatched only after the handler returns. (Moving the
+        work to an executor would need another way to recognise them.)
+        """
+
         def __init__(self, task):
             super().__init__()
             self.task = task
-            self.paths_to_ignore = []
+            # (size, mtime_ns) of each file as this handler left it. An event
+            # for a file that still matches is our own write (in-place save,
+            # converted copy) or a repeated event, not a new file.
+            self.signatures = {}
+            # File-system clock minus local clock, measured with a probe file
+            # at start and refreshed by our own writes (None while unknown):
+            # lets the write-finish wait trust a file's mtime age even on a
+            # share whose clock disagrees with ours.
+            self.clock_offset = None
             self.symbols_shown = False
-            self._lock = threading.Lock()
-
-            self.line_width, pool_ex, default_workers = adjust_for_platform()
 
         def on_created(self, event):
-            if (event.is_directory
-                    or not is_image(event.src_path)
-                    or '~temp~' in event.src_path):
+            if not event.is_directory:
+                self._handle(event.src_path)
+
+        def on_moved(self, event):
+            if event.is_directory:
+                return
+            # A renamed file keeps its contents and mtime: carry its signature
+            # along, so renaming an optimized file does not optimize it again.
+            signature = self.signatures.pop(event.src_path, None)
+            if signature is not None:
+                self.signatures[event.dest_path] = signature
+            # Atomic saves (a temp file renamed into place, as browsers and
+            # many editors do) only arrive as moves.
+            self._handle(event.dest_path)
+
+        def on_deleted(self, event):
+            if event.is_directory:
+                prefix = os.path.join(event.src_path, '')
+                for path in [p for p in self.signatures if p.startswith(prefix)]:
+                    del self.signatures[path]
+            else:
+                self.signatures.pop(event.src_path, None)
+
+        def _handle(self, path):
+            # An exception escaping a handler kills watchdog's observer thread
+            # and silently ends the watch: report it and go on with the next
+            # file, as concurrent.futures does with a failing done-callback.
+            try:
+                self._process(path)
+            except Exception:
+                print(f"\nError while handling a watched file: {path}",
+                      file=sys.stderr)
+                traceback.print_exc()
+
+        def _learn_clock_offset(self, path):
+            # The file was just written, so its mtime is "now" on the file
+            # system's clock. Taken after the write, the estimate is a little
+            # low, which only makes the age test more cautious.
+            now = time.time()
+            try:
+                offset = _clock_offset_from(os.stat(path), now)
+            except OSError:
+                return
+            if offset is not None:
+                self.clock_offset = offset
+
+        def _remember(self, path):
+            signature = _file_signature(path)
+            if signature is None:
+                self.signatures.pop(path, None)
+            else:
+                self.signatures[path] = signature
+
+        def _process(self, path):
+            if (not is_image(path)
+                    or '~temp~' in path
+                    or not in_watched_folder(path)):
                 return
 
-            with self._lock:
-                if event.src_path in self.paths_to_ignore:
-                    return
-                self.paths_to_ignore.append(event.src_path)
+            # Our own unchanged write needs no wait (its mtime is recent).
+            known = self.signatures.get(path)
+            if known is not None and _file_signature(path) == known:
+                return
+            signature = _wait_for_write_finish(path, self.clock_offset)
+            if signature is None or signature == known:
+                return
 
-            self._wait_for_write_finish(event.src_path)
-
-            with self._lock:
-                show_legend = not self.symbols_shown
-                if show_legend:
-                    self.symbols_shown = True
-
+            show_legend = not self.symbols_shown
+            self.symbols_shown = True
             if show_legend:
                 from optimize_images.platforms import IconGenerator
                 icons = IconGenerator()
@@ -520,64 +601,135 @@ def watch_directory(
                 print(
                     f"  {icons.skipped} Skipped file       {icons.downsized} Image was downsized     {icons.size_is_smaller} Size reduction (%)\n")
 
-            # Create task for this specific file
-            task = self.task
-            img_task = _Task(
-                event.src_path,
-                task.quality,
-                task.remove_transparency,
-                task.reduce_colors,
-                task.max_colors,
-                task.max_w,
-                task.max_h,
-                task.keep_exif,
-                task.convert_all,
-                task.conv_big,
-                task.force_del,
-                task.bg_color,
-                task.grayscale,
-                internal.ignore_size_comparison,
-                task.fast_mode,
-                task.output_config,
-                task.convert_to,
-                task.webp_quality,
-                task.webp_lossless,
-                task.webp_method,
-                task.ssim_min,
-                task.show_ssim,
-                task.jpeg_tables,
-            )
-
-            # Process the image
+            img_task = self.task._replace(src_path=path)
             result = do_optimization(img_task)
 
-            # Call the callback with our result
+            # Remember the files as left now, before the callback runs, so a
+            # failing callback cannot get them processed a second time. The
+            # converted copy only when the conversion wrote it: a file of the
+            # user's with that name is not ours (an in-place fallback keeps
+            # the original format).
+            self._remember(path)
+            written = path
+            if (converts and result.was_optimized
+                    and result.result_format != result.orig_format):
+                written = converted_path(img_task)
+                if written != path:
+                    self._remember(written)
+            if result.was_optimized:
+                self._learn_clock_offset(written)
+
             on_result(_to_public_result(result))
 
-        @staticmethod
-        def _wait_for_write_finish(filename):
-            """Wait until file has been completely written (when file size stabilizes)"""
-            import time
-            size = -1
-            while size != os.stat(filename).st_size:
-                size = os.stat(filename).st_size
-                time.sleep(0.01)
-
     # Set up our watcher
-    folder = os.path.abspath(base_task.src_path)
     print(f"\nPreparing to watch directory (press CTRL+C to quit):\n {folder}\n")
 
     event_handler = APIOptimizeImageEventHandler(base_task)
+    event_handler.clock_offset = _probe_clock_offset(folder)
     observer = Observer()
     observer.schedule(event_handler, folder, recursive=True)
     observer.start()
 
+    waiter = stop_event if stop_event is not None else threading.Event()
     try:
-        import time
-        while stop_event is None or not stop_event.is_set():
-            time.sleep(1)
+        while not waiter.wait(1):
+            emitters = tuple(observer.emitters)
+            if not observer.is_alive() or not all(e.is_alive() for e in emitters):
+                raise OIWatchStoppedError(
+                    "The folder watcher stopped unexpectedly; new files are "
+                    "no longer being noticed.")
     except KeyboardInterrupt:
         print("\b \n\n  == Operation was interrupted by the user. ==\n")
     finally:
         observer.stop()
         observer.join()
+
+
+# Watch mode: how long a new file must stay unchanged before it is processed,
+# how often to look, and when to give up waiting and process it anyway.
+WATCH_SETTLE_SECONDS = 0.5
+WATCH_POLL_SECONDS = 0.05
+WATCH_MAX_WAIT_SECONDS = 60.0
+
+
+def _clock_offset_from(stat: os.stat_result, now: float) -> Optional[float]:
+    """File-system clock minus ours, from a file written just before *now*
+    (so the estimate is a little low, which only makes the age test more
+    cautious); None on file systems that store whole seconds."""
+    if stat.st_mtime_ns % 1_000_000_000 == 0:
+        return None
+    return stat.st_mtime - now
+
+
+def _probe_clock_offset(folder: str) -> Optional[float]:
+    """Measure the file system's clock in *folder* with a small temporary
+    file, created and removed at once ('~temp~' in its name keeps the watcher
+    away from it). None when that is not possible (e.g. a read-only folder)."""
+    try:
+        handle, path = tempfile.mkstemp(prefix='.~temp~clock-', dir=folder)
+    except OSError:
+        return None
+    try:
+        os.write(handle, b'0')
+        offset = _clock_offset_from(os.fstat(handle), time.time())
+    except OSError:
+        offset = None
+    finally:
+        os.close(handle)
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+    return offset
+
+
+def _file_signature(path: str) -> Optional[Tuple[int, int]]:
+    """(size, mtime_ns) of a file, or None if it cannot be read."""
+    try:
+        stat = os.stat(path)
+    except OSError:
+        return None
+    return stat.st_size, stat.st_mtime_ns
+
+
+def _wait_for_write_finish(path: str,
+                           clock_offset: Optional[float] = None
+                           ) -> Optional[Tuple[int, int]]:
+    """Wait until a new file looks completely written.
+
+    Returns its (size, mtime_ns), or None if it disappeared meanwhile. The file
+    is ready when size and mtime stayed the same for WATCH_SETTLE_SECONDS, or
+    at once when its mtime is already that old: a writer that pauses briefly
+    between chunks is waited for, while a file written well before its event
+    is handled (for instance in a burst) costs no wait at all.
+
+    The age test needs the file system's clock: *clock_offset* is the file
+    system's time minus ours (measured with a probe file when watching starts,
+    then from the files we write). Without it (a read-only folder before our
+    first write) and on file systems that store whole seconds (HFS+, FAT), an
+    mtime can look old while the file is still being written, so only the
+    stability test is used.
+    After WATCH_MAX_WAIT_SECONDS the file is processed anyway.
+    """
+    start = time.monotonic()
+    previous = None
+    stable_since = start
+    while True:
+        try:
+            stat = os.stat(path)
+        except (FileNotFoundError, NotADirectoryError):
+            return None
+        signature = (stat.st_size, stat.st_mtime_ns)
+        now = time.monotonic()
+        if (clock_offset is not None
+                and stat.st_mtime_ns % 1_000_000_000
+                and time.time() + clock_offset - stat.st_mtime
+                >= WATCH_SETTLE_SECONDS):
+            return signature
+        if signature != previous:
+            previous, stable_since = signature, now
+        elif now - stable_since >= WATCH_SETTLE_SECONDS:
+            return signature
+        if now - start >= WATCH_MAX_WAIT_SECONDS:
+            return signature
+        time.sleep(WATCH_POLL_SECONDS)

@@ -186,9 +186,10 @@ def get_args():
 
     parser.add_argument('-wd', '--watch-directory', action='store_true',
                         help='Watch a directory continuously for new files and '
-                             'optimize any file as soon as it is created (file '
-                             'paths are saved in a temporary list, so that each '
-                             'file should just be processed once per session).')
+                             'optimize each one as soon as it has been '
+                             'completely written (created, moved in or renamed '
+                             'into place). Files written by the optimization '
+                             'itself are not processed again.')
 
     jobs_help = 'The max. number of simultaneous jobs to run at a given time. ' \
                 '0 (the default) means automatic: processes (CPUs + 1) on Linux ' \

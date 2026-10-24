@@ -45,3 +45,16 @@ class OISSIMNotAvailableError(ImportError):
     def __init__(self, message=""):
         self.message = message
         super().__init__(self.message)
+
+
+class OIWatchStoppedError(RuntimeError):
+    """Exception raised when the file-system watcher behind watch_directory()
+    stops unexpectedly, so new files would no longer be noticed.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message=""):
+        self.message = message
+        super().__init__(self.message)

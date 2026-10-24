@@ -44,7 +44,8 @@ from optimize_images.api import (
 from optimize_images.argument_parser import get_args
 from optimize_images.exceptions import (OIImagesNotFoundError,
                                         OIInvalidPathError,
-                                        OISSIMNotAvailableError)
+                                        OISSIMNotAvailableError,
+                                        OIWatchStoppedError)
 from optimize_images.exceptions import OIKeyboardInterrupt
 from optimize_images.img_ssim import ensure_ssim_available, ssim_available
 from optimize_images.platforms import adjust_for_platform, IconGenerator
@@ -64,7 +65,7 @@ def main():
     try:
         optimize_batch(*args)
     except (OIImagesNotFoundError, OIInvalidPathError, OIKeyboardInterrupt,
-            OISSIMNotAvailableError) as ex:
+            OISSIMNotAvailableError, OIWatchStoppedError) as ex:
         print(ex.message)
 
 
