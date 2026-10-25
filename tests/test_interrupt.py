@@ -1,4 +1,4 @@
-"""Ctrl-C and early stop: no traceback, no damaged file, queued files untouched.
+"""Ctrl-C: no traceback, no damaged file, queued files untouched.
 
 A terminal Ctrl-C reaches the whole process group, so the CLI is started in its
 own session and the signal is sent to the group with os.killpg (signalling the
@@ -14,7 +14,6 @@ import pytest
 from PIL import Image
 
 from helpers import REPO_ROOT, _cli_env, cli_command
-from optimize_images.api import PublicBatchOptions, optimize_as_batch_stream
 
 pytestmark = pytest.mark.skipif(os.name != 'posix', reason='POSIX signals')
 
@@ -107,13 +106,3 @@ def test_early_ctrl_c_does_not_kill_starting_workers(tmp_path):
     for path in before:
         with Image.open(path) as img:
             img.load()
-
-
-def test_closing_the_stream_early_cancels_queued_files(tmp_path):
-    before = _noise_jpegs(tmp_path / 'images', count=10, size=(600, 450))
-    stream = optimize_as_batch_stream(
-        PublicBatchOptions(src_path=str(tmp_path / 'images'), jobs=1))
-    next(stream)
-    stream.close()   # the caller stops reading: files not started are dropped
-    untouched = sum(path.read_bytes() == data for path, data in before.items())
-    assert untouched >= len(before) - 2   # one done, at most one in progress

@@ -10,8 +10,9 @@ import tempfile
 import threading
 import time
 import traceback
-from concurrent.futures import as_completed
+from concurrent.futures import FIRST_COMPLETED, wait
 from dataclasses import dataclass
+from itertools import islice
 from optimize_images.batch_core import build_tasks as _build_tasks
 from optimize_images.data_structures import TaskResult as _TaskResult, \
     Task as _Task, BatchOptions as _BatchOptions
@@ -199,16 +200,28 @@ def optimize_as_batch_stream(options: PublicBatchOptions) -> Iterator[PublicTask
         workers = effective_worker_count(workers,
                                          internal.ssim_min is not None
                                          or internal.show_ssim)
-    tasks = _build_tasks(internal)
+    # List the whole folder first, so files written by the optimization itself
+    # (e.g. conversions) are never picked up as new tasks.
+    tasks = iter(list(_build_tasks(internal)))
     with create_executor(our_pool_executor, workers) as executor:
-        # Submit every task and yield each result as soon as it finishes
-        # (completion order), so the report streams continuously instead of
-        # stalling on a slow image that happens to be early in the list.
+        # Keep at most `workers` files in the pool and yield each result as
+        # soon as it finishes (completion order), so the report streams
+        # continuously instead of stalling on a slow image that happens to be
+        # early in the list. Submitting every file at once would let a process
+        # pool move some of them to its internal call queue, where
+        # cancel_futures can no longer drop them.
         try:
             with sigint_deferred():
-                futures = [executor.submit(do_optimization, task) for task in tasks]
-            for future in as_completed(futures):
-                yield _to_public_result(future.result())
+                pending = {executor.submit(do_optimization, task)
+                           for task in islice(tasks, workers)}
+            while pending:
+                done, pending = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    # Refill before yielding, so the pool keeps working while
+                    # the caller handles this result.
+                    for task in islice(tasks, 1):
+                        pending.add(executor.submit(do_optimization, task))
+                    yield _to_public_result(future.result())
         except BaseException:
             # Ctrl-C, an error, or a caller that stops iterating (GeneratorExit):
             # drop the files not started yet; files in progress are finished.

@@ -173,7 +173,7 @@ def optimize_batch(src_path, watch_dir, recursive, quality, remove_transparency,
         return
 
     # Ctrl-C only sets a flag: an exception raised at an arbitrary point can
-    # land inside the thread pool's lock handling (as_completed) and corrupt it
+    # land inside the thread pool's lock handling (futures.wait) and corrupt it
     # (RuntimeError: release unlocked lock). The loop stops after the current
     # result; closing the stream cancels the files not started yet.
     stop = threading.Event()
