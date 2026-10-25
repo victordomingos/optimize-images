@@ -4,11 +4,18 @@ Version history:
 
 ---
 v.2.2.0 - 2026-10-24
- * Minimum Pillow is now 13.0.0, for its security fixes (including
-   CVE-2026-112403: with older Pillow versions, a crafted lossless JPEG
-   resized with -mw/-mh could crash the process). Python 3.13t users now
-   need to build Pillow from source, since Pillow 13 has no wheels for
-   that Python.
+ * Security: minimum Pillow is now 13.0.0, which fixes five vulnerabilities
+   in Pillow 12.3.0 and older. The critical one, CVE-2026-112403, could be
+   reached by optimize-images: a crafted lossless JPEG downscaled with
+   -mw/-mh (also when converting, or through max_w/max_h in the API) could
+   overflow a heap buffer. CVE-2026-112404 and CVE-2026-112897 (crafted
+   TIFF files) could only be reached through -ca with a TIFF file given an
+   image extension, or through convert_image_data(); CVE-2026-112397 and
+   CVE-2026-112896 affect Pillow features optimize-images does not use.
+   Users who cannot upgrade optimize-images yet are also protected by
+   upgrading Pillow alone (pip install -U Pillow); optimize-images 2.1.0
+   was tested with Pillow 13.0.0. Python 3.13t users now need to build
+   Pillow from source, since Pillow 13 has no wheels for that Python.
  * Behaviour change (JPEG): smaller JPEG files by default. New
    -jt/--jpeg-tables option (JPEG, conversion to JPEG): 'auto' (the default),
    'standard' or 'mozjpeg3'. 'mozjpeg3' encodes with the default quantization
