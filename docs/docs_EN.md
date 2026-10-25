@@ -870,8 +870,8 @@ python -m pytest --cov=optimize_images     # with a coverage report
 
 To test every supported Python version, with and without free-threading, use `scripts/test_matrix.py`. It runs the
 suite in one virtual environment per version, kept at the repository root and named after the version (`venv311`,
-`venv312`, `venv313`, `venv313t`, ... `venv315t`, where `t` is the free-threaded build), and prints a table with the
-results:
+`venv312`, `venv313`, `venv314t`, ... `venv315t`, where `t` is the free-threaded build), and prints a table with the
+results (3.13t is left out because Pillow 13 has no wheels for it):
 
 ```
 python scripts/test_matrix.py --create              # create missing venvs, then test them all
@@ -881,7 +881,7 @@ python scripts/test_matrix.py --only 3.14t,3.13 --fast
 python scripts/test_matrix.py -- -k watch           # arguments after -- go to pytest
 ```
 
-`--create` needs the matching interpreters on the `PATH` (`python3.11`, ..., `python3.13t`, ...; when there are several,
+`--create` needs the matching interpreters on the `PATH` (`python3.11`, ..., `python3.14t`, ...; when there are several,
 the newest patch release is used; on Windows, create the venvs by hand with the `py` launcher); `--recreate` rebuilds
 the selected venvs, for instance after a new Python release. `--install` and `--create` install the requirements one by
 one and prefer released wheels, so a package that has no wheel yet for a new Python (e.g. scikit-image on 3.15) only

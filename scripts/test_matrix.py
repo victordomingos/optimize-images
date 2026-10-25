@@ -2,7 +2,7 @@
 """Run the test suite in every local multi-Python venv and print a matrix.
 
 The venvs live at the repository root and are named after the Python version:
-venv311, venv312, venv313, venv313t, ... ("t" = free-threaded build). They
+venv311, venv312, venv313, venv314t, ... ("t" = free-threaded build). They
 are gitignored. Each one runs ``python -m pytest`` from the repository root,
 so pytest.ini applies and no editable install is needed.
 
@@ -32,7 +32,7 @@ from typing import List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTEST_TIMEOUT = 30 * 60  # seconds; a normal run takes about one minute
-VERSIONS = ["3.11", "3.12", "3.13", "3.13t", "3.14", "3.14t", "3.15", "3.15t",
+VERSIONS = ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t",
             "3.11-min"]
 MIN_SUFFIX = "-min"  # oldest supported dependencies (requirements-min.txt)
 DEV_REQUIREMENTS = REPO_ROOT / "requirements-dev.txt"
@@ -70,7 +70,7 @@ class Result:
 
 
 def venv_dir(version: str) -> Path:
-    # 3.13t -> venv313t, 3.11-min -> venv311min
+    # 3.14t -> venv314t, 3.11-min -> venv311min
     return REPO_ROOT / ("venv" + version.replace(".", "").replace("-", ""))
 
 
@@ -377,7 +377,7 @@ def main(argv=None) -> int:
                         + ", ".join(VERSIONS) + ")")
     parser.add_argument("--create", action="store_true",
                         help="create missing venvs with the newest python<version> "
-                             "on PATH (e.g. python3.13t) and install the dev "
+                             "on PATH (e.g. python3.14t) and install the dev "
                              "requirements; on Windows create them by hand "
                              "with the py launcher")
     parser.add_argument("--recreate", action="store_true",

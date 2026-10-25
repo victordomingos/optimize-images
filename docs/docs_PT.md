@@ -894,8 +894,8 @@ python -m pytest --cov=optimize_images     # com relatório de cobertura
 
 Para testar todas as versões de Python suportadas, com e sem *free-threading*, use o `scripts/test_matrix.py`. Este
 executa os testes num ambiente virtual por versão, guardado na raiz do repositório e com o nome da versão (`venv311`,
-`venv312`, `venv313`, `venv313t`, ... `venv315t`, em que `t` indica a versão *free-threaded*), e mostra uma tabela com
-os resultados:
+`venv312`, `venv313`, `venv314t`, ... `venv315t`, em que `t` indica a versão *free-threaded*), e mostra uma tabela com
+os resultados (o 3.13t fica de fora porque o Pillow 13 não publica *wheels* para essa versão):
 
 ```
 python scripts/test_matrix.py --create              # cria os ambientes em falta e testa todos
@@ -905,7 +905,7 @@ python scripts/test_matrix.py --only 3.14t,3.13 --fast
 python scripts/test_matrix.py -- -k watch           # os argumentos depois de -- vão para o pytest
 ```
 
-O `--create` precisa dos interpretadores correspondentes no `PATH` (`python3.11`, ..., `python3.13t`, ...; se houver
+O `--create` precisa dos interpretadores correspondentes no `PATH` (`python3.11`, ..., `python3.14t`, ...; se houver
 vários, é usada a versão mais recente; no Windows, crie os ambientes à mão com o lançador `py`); o `--recreate` volta a
 criar os ambientes selecionados, por exemplo depois de uma nova versão do Python. O `--install` e o `--create` instalam
 os requisitos um a um e preferem pacotes já compilados (*wheels*), pelo que um pacote que ainda não tenha *wheel* para
