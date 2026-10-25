@@ -3,7 +3,7 @@ Version history:
 
 
 ---
-v.2.2.0 - 2026-10-24
+v.2.2.0 - 2026-10-25
  * Security: minimum Pillow is now 13.0.0, which fixes five vulnerabilities
    in Pillow 12.3.0 and older. The critical one, CVE-2026-112403, could be
    reached by optimize-images: a crafted lossless JPEG downscaled with
